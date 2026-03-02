@@ -1,0 +1,13 @@
+{
+  "doc_type": "EPC",
+  "display_name": "Energy Performance Certificate (EPC)",
+  "fields": [
+    { "key": "property_address", "label": "Property Address", "type": "text" },
+    { "key": "current_rating", "label": "Current Energy Rating", "type": "text" },
+    { "key": "potential_rating", "label": "Potential Energy Rating", "type": "text" },
+    { "key": "date_of_assessment", "label": "Date of Assessment", "type": "text" },
+    { "key": "valid_until", "label": "Valid Until", "type": "text" },
+    { "key": "assessor_name", "label": "Assessor Name", "type": "text" },
+    { "key": "certificate_number", "label": "Certificate Reference Number", "type": "text" }
+  ]
+}

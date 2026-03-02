@@ -1,0 +1,54 @@
+# ScanStation System — Cursor Rules
+
+## What this project is
+ScanStation is a Windows-based document scanning and digital archiving system for letting agencies. It takes physical property documents, digitises them into searchable PDFs, extracts and verifies key fields per document type, and delivers structured digital archives with Excel spreadsheets.
+
+## Before making changes
+Read PROJECT_BRAIN.md for full system context, current state, and architecture.
+
+## Core architecture
+- **ScanStation** (scan_station.html): Browser-based capture app. Webcam + file browse. Doc type dropdown writes to `_doctype.txt` in the client's raw folder.
+- **Auto-watcher** (auto_ocr_watch.py): Python script polling `raw/` every 2 seconds. Reads `_doctype.txt`, loads matching JSON template from `Templates/`, preprocesses with ImageMagick, OCRs with OCRmyPDF, creates DOC-XXXXX folder with PDF + raw image + review.json.
+- **ReviewStation** (review_station.html): Browser-based verification. Loads DOC-XXXXX folder via File System Access API, renders fields dynamically from review.json, saves status back.
+- **Export** (export_client.py): Collects all Verified docs, packages PDFs into subfolders by doc type with clean filenames, generates dynamic Excel spreadsheet.
+
+## Core rules
+- Always preserve the document unit structure: DOC-XXXXX folder containing PDF + raw image + review.json
+- Use vanilla JavaScript only — no frameworks, no npm, no build tools
+- HTML apps must work locally via File System Access API — no server required
+- Python scripts must run on Windows with standard pip packages
+- Current root path is `C:\ScanSystem_v2` (there is a known inconsistency — some legacy files reference `C:\ScanSystem`)
+- Never break the auto_ocr_watch.py watcher loop — it must run continuously
+- review.json is the source of truth for each document's status and verified fields
+- DocID format is DOC-XXXXX (zero-padded, auto-incrementing per batch date)
+- Doc type is determined by `_doctype.txt` marker in raw folder, written by ScanStation
+- Template files in `Templates/` define fields per document type as JSON arrays
+
+## Template format
+Templates are JSON files in `Templates/` with this structure:
+```json
+{
+  "doc_type": "Display Name",
+  "display_name": "Full Display Name",
+  "fields": [
+    { "key": "field_key", "label": "Human Label", "type": "text" }
+  ]
+}
+```
+When adding new document types: create the template JSON, add an option to the ScanStation doc type dropdown, and add the folder name mapping to `DOC_TYPE_FOLDERS` in export_client.py.
+
+## Coding standards
+- Clear variable names, no abbreviations
+- Comment any non-obvious logic
+- Error handling on all file operations (files may be locked, missing, or still being written)
+- Log meaningful messages to pipeline.log for debugging
+- ImageMagick path is hardcoded: `C:\Program Files\ImageMagick-7.1.2-Q16\magick.exe`
+
+## Filip's working style
+- Non-technical founder — explain changes clearly in plain English
+- Step-by-step over abstraction
+- Always say what you changed, why, and what it affects
+- If a change touches multiple files, list all affected files
+
+## After any significant change
+Update PROJECT_BRAIN.md to reflect what was changed, added, or removed. Add a row to the CHANGE LOG table at the bottom. Keep it concise.

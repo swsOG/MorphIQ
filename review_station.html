@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>ReviewStation — Document Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e14;
+    --surface: #13161f;
+    --surface-2: #1a1e2a;
+    --surface-3: #242936;
+    --border: #2a3042;
+    --border-light: #353d54;
+    --text: #eaedf2;
+    --text-muted: #7b829a;
+    --text-dim: #4e5568;
+    --accent: #4f7df9;
+    --accent-glow: rgba(79, 125, 249, 0.12);
+    --accent-hover: #6b93ff;
+    --green: #2dd4a0;
+    --green-glow: rgba(45, 212, 160, 0.1);
+    --green-border: rgba(45, 212, 160, 0.25);
+    --amber: #f5a623;
+    --amber-glow: rgba(245, 166, 35, 0.1);
+    --amber-border: rgba(245, 166, 35, 0.25);
+    --red: #f06060;
+    --red-glow: rgba(240, 96, 96, 0.1);
+    --red-border: rgba(240, 96, 96, 0.25);
+    --blue-glow: rgba(79, 125, 249, 0.1);
+    --blue-border: rgba(79, 125, 249, 0.25);
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-lg: 14px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
+    --gradient-subtle: linear-gradient(135deg, rgba(79,125,249,0.05), rgba(45,212,160,0.03));
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .view { flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
+  .view:not(.active) { display: none !important; }
+  .view.active { display: flex !important; }
+
+  /* ─── VIEW 1: CLIENT PICKER ─── */
+  .client-picker {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 32px;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .client-picker h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #eaedf2 0%, #7b829a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+
+  .client-picker .subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 48px;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .client-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    width: 100%;
+  }
+
+  .client-card {
+    padding: 22px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    text-align: left;
+  }
+
+  .client-card:hover {
+    border-color: var(--accent);
+    background: var(--surface-2);
+    box-shadow: 0 0 0 2px var(--accent-glow), var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .client-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    background: var(--gradient-subtle);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .client-card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .client-picker .loading, .client-picker .error {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 16px;
+  }
+
+  .client-picker .error { color: var(--red); }
+
+  /* ─── VIEW 2: DASHBOARD ─── */
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .dashboard-header-left { display: flex; align-items: center; gap: 14px; }
+  .dashboard-header h1 { font-size: 16px; font-weight: 700; }
+  .dashboard-header .client-name { color: var(--accent); }
+
+  .btn-back {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-back:hover { border-color: var(--border-light); color: var(--text); }
+
+  .status-cards {
+    display: flex;
+    gap: 12px;
+    padding: 24px 28px 16px;
+    background: var(--surface);
+    flex-wrap: wrap;
+  }
+
+  .status-card {
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .status-card.active { transform: translateY(-1px); }
+  .status-card-new { background: var(--blue-glow); color: var(--accent); border-color: var(--blue-border); }
+  .status-card-new:hover, .status-card-new.active { box-shadow: 0 2px 12px var(--accent-glow); }
+  .status-card-review { background: var(--amber-glow); color: var(--amber); border-color: var(--amber-border); }
+  .status-card-review:hover, .status-card-review.active { box-shadow: 0 2px 12px var(--amber-glow); }
+  .status-card-failed { background: var(--red-glow); color: var(--red); border-color: var(--red-border); }
+  .status-card-failed:hover, .status-card-failed.active { box-shadow: 0 2px 12px var(--red-glow); }
+  .status-card-verified { background: var(--green-glow); color: var(--green); border-color: var(--green-border); }
+  .status-card-verified:hover, .status-card-verified.active { box-shadow: 0 2px 12px var(--green-glow); }
+  .status-card-rescan { background: var(--red-glow); color: var(--red); border-color: var(--red-border); }
+  .status-card-rescan:hover, .status-card-rescan.active { box-shadow: 0 2px 12px var(--red-glow); }
+  .status-card-all { background: var(--surface-2); color: var(--text-muted); border-color: var(--border); }
+  .status-card-all:hover { border-color: var(--border-light); }
+  .status-card .count, .status-card .status-count { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; }
+
+  .dashboard-actions {
+    padding: 4px 28px 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--surface);
+  }
+
+  .btn-review-all-new {
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, #4f7df9, #3b6ce7);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 12px rgba(79, 125, 249, 0.25);
+  }
+
+  .date-filter {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .date-filter label {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 10px;
+  }
+  .date-filter select {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    color: var(--text);
+    font-size: 11px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer;
+  }
+  .date-filter select:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-glow);
+  }
+
+  .btn-review-all-new:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79, 125, 249, 0.3); }
+  .btn-review-all-new:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .doc-table-wrap { flex: 1; overflow: auto; padding: 0 28px 28px; }
+
+  .doc-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    font-size: 13px;
+  }
+
+  .doc-table thead th {
+    background: var(--surface-2);
+    padding: 12px 18px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .doc-table tbody tr { transition: background 0.15s; cursor: pointer; }
+  .doc-table tbody tr:hover { background: var(--surface-2); }
+  .doc-table tbody td {
+    padding: 14px 18px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .doc-table tbody tr:last-child td { border-bottom: none; }
+
+  .doc-id-cell, .doc-table .doc-id-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .doc-type-cell { font-weight: 500; }
+  .batch-date-cell {
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .time-row { white-space: nowrap; }
+  .time-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-right: 6px;
+  }
+
+  .status-cell-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+
+  .badge-new, .badge-verified, .badge-needs-review, .badge-failed { border: 1px solid transparent; }
+  .badge-new { background: var(--blue-glow); color: var(--accent); border-color: var(--blue-border); }
+  .badge-verified { background: var(--green-glow); color: var(--green); border-color: var(--green-border); }
+  .badge-needs-review { background: var(--amber-glow); color: var(--amber); border-color: var(--amber-border); }
+  .badge-failed { background: var(--red-glow); color: var(--red); border-color: var(--red-border); }
+
+  .export-section {
+    flex-shrink: 0;
+    margin: 0 28px 28px;
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .export-status { font-size: 13px; color: var(--text-muted); margin: 0; font-weight: 500; }
+  .export-status.ready { color: var(--green); }
+  .export-status.blocked { color: var(--amber); }
+
+  .btn-export-client {
+    align-self: flex-start;
+    padding: 12px 28px;
+    border: none;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, #2dd4a0, #26b88a);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0c0e14;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 12px rgba(45, 212, 160, 0.25);
+  }
+
+  .btn-export-client:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(45, 212, 160, 0.3); }
+  .btn-export-client:disabled {
+    background: var(--surface-3);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-export-client.exporting {
+    background: var(--amber);
+    color: #0c0e14;
+    cursor: wait;
+    box-shadow: 0 2px 12px rgba(245, 166, 35, 0.25);
+  }
+
+  .export-history {
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .export-history-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .export-history-list {
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .export-history-empty {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+  .export-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 0;
+  }
+  .export-history-date {
+    color: var(--text-secondary);
+  }
+  .export-history-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ─── VIEW 3: DOCUMENT REVIEW ─── */
+  .review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .review-header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .review-header .doc-id-badge { font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 4px 10px; border-radius: 20px; background: var(--blue-glow); color: var(--accent); border: 1px solid var(--blue-border); }
+  .review-header .client-name-badge { font-size: 13px; font-weight: 600; color: var(--accent); }
+  .review-header .counter { font-size: 13px; color: var(--text-muted); }
+
+  .main-split { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+
+  .fields-panel {
+    width: 420px;
+    min-width: 420px;
+    height: 100%;
+    min-height: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .fields-header { flex-shrink: 0; padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .fields-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 16px 20px; }
+  .fields-panel .reviewer-section { flex-shrink: 0; }
+  .fields-panel .nav-and-actions { flex-shrink: 0; }
+
+  .field-group { margin-bottom: 14px; }
+  .field-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+  .field-group input, .field-group textarea {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+  }
+  .field-group input:focus, .field-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+  .field-group textarea { resize: vertical; min-height: 56px; }
+
+  .reviewer-section { padding: 16px 20px; border-top: 1px solid var(--border); }
+  .reviewer-section h3 { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+
+  .nav-and-actions {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    grid-column-gap: 8px;
+    grid-row-gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .btn-nav {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-nav:hover { background: var(--surface-3); }
+
+  .btn-status {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-status:active { transform: scale(0.98); }
+  .btn-status.btn-verified { background: var(--green); color: #0c0e14; }
+  .btn-status.btn-verified:hover { box-shadow: 0 2px 12px rgba(45, 212, 160, 0.3); transform: translateY(-1px); }
+  .btn-status.btn-needs-review { background: var(--amber); color: #0c0e14; }
+  .btn-status.btn-needs-review:hover { box-shadow: 0 2px 12px rgba(245, 166, 35, 0.3); transform: translateY(-1px); }
+  .btn-status.btn-failed { background: var(--red); color: white; }
+  .btn-status.btn-failed:hover { box-shadow: 0 2px 12px rgba(240, 96, 96, 0.3); transform: translateY(-1px); }
+
+  .btn-status.btn-reprocess {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red-border);
+  }
+  .btn-status.btn-reprocess:hover {
+    background: rgba(240, 96, 96, 0.08);
+    box-shadow: 0 2px 10px var(--red-glow);
+  }
+
+  .preview-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+  .preview-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-header-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .btn-toggle-ocr {
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-toggle-ocr.active {
+    background: var(--surface-3);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .preview-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .preview-main iframe,
+  .preview-main embed {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  .ocr-text-panel {
+    display: none;
+    max-height: 40%;
+    overflow-y: auto;
+    padding: 8px 14px;
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .ocr-text-panel.visible { display: block; }
+  .ocr-text-panel pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .preview-loading { color: var(--text-muted); font-size: 14px; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 200;
+    box-shadow: var(--shadow-md);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast-success { background: var(--green); color: #0c0e14; }
+  .toast-error { background: var(--red); color: white; }
+  .toast-info { background: var(--accent); color: white; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; align-items: center; justify-content: center; z-index: 300;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 24px; max-width: 420px; width: 90%;
+    box-shadow: var(--shadow-md);
+  }
+  .modal-box h3 { font-size: 15px; margin-bottom: 16px; color: var(--text); }
+  .modal-reason-option {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    cursor: pointer; border-radius: var(--radius-sm); padding-left: 8px;
+  }
+  .modal-reason-option:hover { background: var(--surface-2); }
+  .modal-reason-option input[type="radio"] { accent-color: var(--accent); }
+  .modal-reason-other-wrap { margin-top: 8px; margin-left: 28px; }
+  .modal-reason-other-wrap input {
+    width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text);
+    font-size: 13px;
+  }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .modal-actions button {
+    padding: 10px 20px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .modal-btn-cancel {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted);
+  }
+  .modal-btn-cancel:hover { background: var(--surface-3); color: var(--text); }
+  .modal-btn-submit {
+    background: var(--red); color: white; border: none;
+  }
+  .modal-btn-submit:hover { box-shadow: 0 2px 12px var(--red-glow); }
+
+  .doc-table-wrap::-webkit-scrollbar,
+  .fields-body::-webkit-scrollbar { width: 6px; }
+  .doc-table-wrap::-webkit-scrollbar-thumb,
+  .fields-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- VIEW 1: Client Picker -->
+<div id="viewPicker" class="view client-picker">
+  <h1>ReviewStation</h1>
+  <p class="subtitle">Select a client to review documents</p>
+  <div id="clientGrid" class="client-grid"></div>
+  <p id="pickerLoading" class="loading">Loading...</p>
+  <p id="pickerError" class="error" style="display:none;"></p>
+</div>
+
+<!-- VIEW 2: Document Dashboard -->
+<div id="viewDashboard" class="view">
+  <div class="dashboard-header">
+    <div class="dashboard-header-left">
+      <h1>Documents — <span id="dashboardClientName" class="client-name"></span></h1>
+    </div>
+    <button type="button" class="btn-back" onclick="showView(1)">← Back to clients</button>
+  </div>
+  <div class="status-cards" id="statusCards"></div>
+  <div class="dashboard-actions">
+    <button type="button" class="btn-review-all-new" id="btnReviewAllNew" onclick="startReviewAllNew()">Review All New</button>
+    <div class="date-filter">
+      <label for="batchDateFilter">Date</label>
+      <select id="batchDateFilter">
+        <option value="">All dates</option>
+      </select>
+    </div>
+  </div>
+  <div class="doc-table-wrap">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Doc ID</th><th>Doc Type</th><th>Timeline (Scan / Review / Export)</th><th>Status</th></tr>
+      </thead>
+      <tbody id="docTableBody"></tbody>
+    </table>
+  </div>
+  <div class="export-section">
+    <p id="exportStatusMessage" class="export-status">—</p>
+    <button type="button" id="btnExportClient" class="btn-export-client" disabled onclick="exportClientPackage()">Export Client Package</button>
+    <div class="export-history">
+      <div class="export-history-title">Export History</div>
+      <div class="export-history-list" id="exportHistoryList">
+        <div class="export-history-empty" id="exportHistoryEmpty">No exports yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW 3: Document Review -->
+<div id="viewReview" class="view">
+  <div class="review-header">
+    <div class="review-header-left">
+      <button type="button" class="btn-back" onclick="showView(2)">← Back to list</button>
+      <span id="reviewClientName" class="client-name-badge"></span>
+      <span id="reviewDocId" class="doc-id-badge">—</span>
+      <span id="reviewStatusBadge" class="badge badge-new">New</span>
+      <span id="reviewDocType" style="font-size:13px; color:var(--text-muted);">—</span>
+      <span id="reviewCounter" class="counter">—</span>
+    </div>
+  </div>
+  <div class="main-split">
+    <div class="fields-panel">
+      <div class="fields-header">Verify key fields</div>
+      <div class="fields-body" id="fieldsBody"></div>
+      <div class="reviewer-section">
+        <h3>Review info</h3>
+        <div class="field-group">
+          <label>Reviewed by</label>
+          <input type="text" id="reviewedBy" value="Filip" placeholder="Name">
+        </div>
+        <div class="field-group">
+          <label>Notes</label>
+          <textarea id="reviewNotes" placeholder="Optional notes..."></textarea>
+        </div>
+      </div>
+      <div class="nav-and-actions">
+        <button type="button" class="btn-nav" onclick="prevDoc()">← Previous</button>
+        <button type="button" class="btn-nav" onclick="nextDoc()">Next →</button>
+        <button type="button" class="btn-status btn-verified" onclick="saveAndAdvance('Verified')">Verified</button>
+        <button type="button" class="btn-status btn-needs-review" onclick="saveAndAdvance('Needs Review')">Needs Review</button>
+        <button type="button" class="btn-status btn-failed" onclick="saveAndAdvance('Failed')">Failed</button>
+        <button type="button" class="btn-status btn-reprocess" id="btnReprocess" onclick="reprocessDoc()">Request re-scan</button>
+      </div>
+    </div>
+    <div class="preview-panel">
+      <div class="preview-body" id="previewBody">
+        <div class="preview-header">
+          <span class="preview-header-title">Document Preview</span>
+          <button type="button" class="btn-toggle-ocr" id="btnToggleOcr">Show OCR Text</button>
+        </div>
+        <div class="preview-main">
+          <p class="preview-loading" id="previewLoading">Loading PDF...</p>
+        </div>
+        <div class="ocr-text-panel" id="ocrTextPanel">
+          <pre id="ocrTextContent"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="rescanModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Why does this need rescanning?</h3>
+    <form id="rescanReasonForm">
+      <label class="modal-reason-option">
+        <input type="radio" name="rescanReason" value="Blurry / out of focus">
+        <span>Blurry / out of focus</span>
+      </label>
+      <label class="modal-reason-option">
+        <input type="radio" name="rescanReason" value="Cropped / cut off">
+        <span>Cropped / cut off</span>
+      </label>
+      <label class="modal-reason-option">
+        <input type="radio" name="rescanReason" value="Wrong document">
+        <span>Wrong document</span>
+      </label>
+      <label class="modal-reason-option">
+        <input type="radio" name="rescanReason" value="Too dark / too light">
+        <span>Too dark / too light</span>
+      </label>
+      <label class="modal-reason-option">
+        <input type="radio" name="rescanReason" value="__other__">
+        <span>Other:</span>
+      </label>
+      <div class="modal-reason-other-wrap">
+        <input type="text" id="rescanReasonOther" placeholder="Specify reason..." style="display:none;">
+      </div>
+    </form>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-cancel" id="rescanModalCancel">Cancel</button>
+      <button type="button" class="modal-btn-submit" id="rescanModalSubmit">Submit Rescan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "http://127.0.0.1:8765";
+
+  let clients = [];
+  let selectedClient = "";
+  let docsData = { docs: [], counts: {} };
+  let statusFilter = null;
+  let batchDateFilter = null;
+  let filteredDocs = [];
+  let currentDocIndex = -1;
+  let refreshIntervalId = null;
+  let rescanDocIds = new Set();
+
+  function showView(n) {
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    const view = n === 1 ? "viewPicker" : n === 2 ? "viewDashboard" : "viewReview";
+    document.getElementById(view).classList.add("active");
+    if (n === 1) { stopDocsPolling(); loadClients(); }
+    if (n === 2 && selectedClient) {
+      document.getElementById("dashboardClientName").textContent = selectedClient;
+      loadDocs();
+      startDocsPolling();
+    }
+    if (n === 3) renderReviewDoc();
+  }
+
+  function startDocsPolling() {
+    if (refreshIntervalId) return;
+    refreshIntervalId = setInterval(pollDocs, 5000);
+  }
+
+  function stopDocsPolling() {
+    if (refreshIntervalId) { clearInterval(refreshIntervalId); refreshIntervalId = null; }
+  }
+
+  async function pollDocs() {
+    if (!selectedClient) return;
+    try {
+      const res = await fetch(`${API_URL}/docs/${encodeURIComponent(selectedClient)}`, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return;
+      const data = await res.json();
+      const newDocs = data.docs || [];
+      const newCounts = data.counts || {};
+      docsData = { docs: newDocs, counts: newCounts };
+
+      const viewReview = document.getElementById("viewReview");
+      if (viewReview.classList.contains("active")) {
+        // View 3: update in background only; don't re-render or change current doc
+        filteredDocs = statusFilter ? newDocs.filter(d => d.status === statusFilter) : newDocs.slice();
+        const currentDoc = getCurrentDoc();
+        if (currentDoc) {
+          const idx = filteredDocs.findIndex(d => d.doc_id === currentDoc.doc_id);
+          if (idx >= 0) currentDocIndex = idx;
+        }
+        const total = filteredDocs.length;
+        const pos = currentDocIndex + 1;
+        const counterEl = document.getElementById("reviewCounter");
+        if (counterEl) counterEl.textContent = pos + " of " + total + (statusFilter ? " " + statusFilter : "");
+        return;
+      }
+
+      const viewDashboard = document.getElementById("viewDashboard");
+      if (viewDashboard.classList.contains("active")) {
+        // View 2: update counts and table, preserve scroll and filter
+        const wrap = document.querySelector(".doc-table-wrap");
+        const scrollTop = wrap ? wrap.scrollTop : 0;
+        applyFilterAndRender();
+        if (wrap) wrap.scrollTop = scrollTop;
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  async function loadClients() {
+    const grid = document.getElementById("clientGrid");
+    const loading = document.getElementById("pickerLoading");
+    const errEl = document.getElementById("pickerError");
+    grid.innerHTML = "";
+    errEl.style.display = "none";
+    loading.style.display = "block";
+    try {
+      const res = await fetch(`${API_URL}/clients`, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) throw new Error("Server error");
+      const data = await res.json();
+      clients = data.clients || [];
+      loading.style.display = "none";
+      if (clients.length === 0) {
+        grid.innerHTML = "<p class=\"loading\">No clients found. Create one in ScanStation first.</p>";
+        return;
+      }
+      clients.forEach(name => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "client-card";
+        const initial = (name.charAt(0) || "?").toUpperCase();
+        card.innerHTML = `<span class="client-icon">${escapeHtml(initial)}</span><span class="client-card-name">${escapeHtml(name)}</span>`;
+        card.onclick = () => selectClient(name);
+        grid.appendChild(card);
+      });
+    } catch (e) {
+      loading.style.display = "none";
+      errEl.textContent = "Cannot reach server. Is it running at " + API_URL + "?";
+      errEl.style.display = "block";
+    }
+  }
+
+  function selectClient(name) {
+    selectedClient = name;
+    showView(2);
+  }
+
+  async function loadDocs() {
+    document.getElementById("docTableBody").innerHTML = "<tr><td colspan=\"4\" style=\"text-align:center; color:var(--text-muted);\">Loading...</td></tr>";
+    try {
+      const res = await fetch(`${API_URL}/docs/${encodeURIComponent(selectedClient)}`, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) throw new Error(res.status === 404 ? "Client not found" : "Server error");
+      const data = await res.json();
+      docsData = { docs: data.docs || [], counts: data.counts || {} };
+      statusFilter = null;
+      batchDateFilter = null;
+
+      // Load rescan queue for this client so we can show a "Sent to rescan" bucket.
+      rescanDocIds = new Set();
+      try {
+        const rq = await fetch(`${API_URL}/rescan-queue/${encodeURIComponent(selectedClient)}`, {
+          signal: AbortSignal.timeout(8000)
+        });
+        if (rq.ok) {
+          const rqData = await rq.json();
+          (rqData.queue || []).forEach(item => {
+            if (item.doc_id) rescanDocIds.add(item.doc_id);
+          });
+          docsData.counts["Sent to Rescan"] = rescanDocIds.size;
+        }
+      } catch (e) {
+        // ignore rescan errors; just won't show
+      }
+
+      applyFilterAndRender();
+      loadExportHistory();
+    } catch (e) {
+      document.getElementById("docTableBody").innerHTML = "<tr><td colspan=\"4\" style=\"text-align:center; color:var(--red);\">Error loading documents: " + escapeHtml(e.message) + "</td></tr>";
+    }
+  }
+
+  function applyFilterAndRender() {
+    renderDateFilterOptions();
+    filteredDocs = docsData.docs.filter(d => {
+      let byStatus = true;
+      if (statusFilter === "__rescan__") {
+        byStatus = rescanDocIds.has(d.doc_id);
+      } else if (statusFilter) {
+        byStatus = d.status === statusFilter;
+      }
+      const byDate = !batchDateFilter || d.batch_date === batchDateFilter;
+      return byStatus && byDate;
+    });
+    renderStatusCards();
+    renderDocTable();
+    updateExportSection();
+  }
+
+  function updateExportSection() {
+    const counts = docsData.counts;
+    const verified = counts.Verified || 0;
+    const newCount = counts.New || 0;
+    const needsReview = counts["Needs Review"] || 0;
+    const failed = counts.Failed || 0;
+    const sentRescan = counts["Sent to Rescan"] || 0;
+    const msgEl = document.getElementById("exportStatusMessage");
+    const btn = document.getElementById("btnExportClient");
+
+    const canExport = verified > 0;
+
+    if (verified === 0) {
+      msgEl.textContent = "No verified documents to export.";
+      msgEl.className = "export-status";
+    } else {
+      let text = verified + " Verified document" + (verified === 1 ? "" : "s") + " ready to export.";
+      const excluded = [];
+      if (newCount > 0) excluded.push(newCount + " New");
+      if (needsReview > 0) excluded.push(needsReview + " Needs Review");
+      if (failed > 0) excluded.push(failed + " Failed");
+      if (sentRescan > 0) excluded.push(sentRescan + " Sent to rescan");
+      if (excluded.length > 0) {
+        text += " " + excluded.join(" and ") + " will be excluded.";
+      }
+      msgEl.textContent = text;
+      msgEl.className = "export-status ready";
+    }
+
+    btn.disabled = !canExport;
+  }
+
+  async function loadExportHistory() {
+    const list = document.getElementById("exportHistoryList");
+    const empty = document.getElementById("exportHistoryEmpty");
+    if (!list || !empty || !selectedClient) return;
+    list.innerHTML = "";
+    empty.textContent = "Loading export history...";
+    empty.style.display = "block";
+    try {
+      const res = await fetch(`${API_URL}/exports/${encodeURIComponent(selectedClient)}`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      if (!res.ok) {
+        empty.textContent = "No exports yet.";
+        return;
+      }
+      const data = await res.json();
+      const exportsArr = data.exports || [];
+      if (!exportsArr.length) {
+        empty.textContent = "No exports yet.";
+        return;
+      }
+      empty.style.display = "none";
+      exportsArr.forEach(ex => {
+        const item = document.createElement("div");
+        item.className = "export-history-item";
+        const date = document.createElement("span");
+        date.className = "export-history-date";
+        date.textContent = ex.date || ex.folder_name;
+        const count = document.createElement("span");
+        count.className = "export-history-count";
+        count.textContent = (ex.document_count || 0) + " docs";
+        item.appendChild(date);
+        item.appendChild(count);
+        list.appendChild(item);
+      });
+    } catch (e) {
+      empty.textContent = "No exports yet.";
+    }
+  }
+
+  function renderDateFilterOptions() {
+    const select = document.getElementById("batchDateFilter");
+    if (!select) return;
+    const previous = batchDateFilter;
+    const dates = Array.from(new Set((docsData.docs || []).map(d => d.batch_date).filter(Boolean)))
+      .sort((a, b) => b.localeCompare(a));
+    select.innerHTML = '<option value=\"\">All dates</option>';
+    dates.forEach(date => {
+      const opt = document.createElement("option");
+      opt.value = date;
+      opt.textContent = date;
+      select.appendChild(opt);
+    });
+    if (previous && dates.includes(previous)) {
+      select.value = previous;
+    } else {
+      batchDateFilter = null;
+    }
+  }
+
+  async function exportClientPackage() {
+    if (!selectedClient) return;
+    const btn = document.getElementById("btnExportClient");
+    if (btn.disabled) return;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Exporting...";
+    btn.classList.add("exporting");
+    try {
+      const res = await fetch(`${API_URL}/export`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client: selectedClient }),
+        signal: AbortSignal.timeout(60000)
+      });
+      const result = await res.json();
+      if (result.success) {
+        const path = result.delivery_folder ? result.delivery_folder : "";
+        showToast(`Exported ${result.document_count} docs → ${result.spreadsheet}. ${path}`, "success");
+        loadDocs();
+        if (result.delivery_folder && confirm("Export complete. Open the delivery folder?")) {
+          try {
+            await fetch(`${API_URL}/open-folder`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ path: result.delivery_folder })
+            });
+            if (result.viewer_url) window.open(result.viewer_url, "_blank");
+          } catch (_) { /* ignore */ }
+        }
+      } else {
+        showToast(`Export failed: ${result.error || "Unknown error"}`, "error");
+      }
+    } catch (e) {
+      showToast("Export failed: Cannot reach API server. Is it running?", "error");
+    } finally {
+      btn.textContent = originalText;
+      btn.classList.remove("exporting");
+      updateExportSection();
+    }
+  }
+
+  function setStatusFilter(status) {
+    statusFilter = status;
+    applyFilterAndRender();
+  }
+
+  function renderStatusCards() {
+    const counts = docsData.counts;
+    const cards = [
+      { key: "New", label: "New", cls: "status-card-new" },
+      { key: "Needs Review", label: "Needs Review", cls: "status-card-review" },
+      { key: "Failed", label: "Failed", cls: "status-card-failed" },
+      { key: "Verified", label: "Verified", cls: "status-card-verified" },
+      { key: "__rescan__", label: "Sent to rescan", cls: "status-card-rescan" },
+      { key: null, label: "All", cls: "status-card-all" }
+    ];
+    const html = cards.map(c => {
+      const count = c.key === null
+        ? counts.total
+        : (c.key === "__rescan__" ? (counts["Sent to Rescan"] || 0) : (counts[c.key] || 0));
+      const active = (statusFilter === c.key) ? " active" : "";
+      return `<button type="button" class="status-card ${c.cls}${active}" onclick="setStatusFilter(${c.key === null ? "null" : JSON.stringify(c.key)})">${c.label}<span class="status-count">${count}</span></button>`;
+    }).join("");
+    document.getElementById("statusCards").innerHTML = html;
+    document.getElementById("btnReviewAllNew").disabled = !(counts.New > 0);
+  }
+
+  function renderDocTable() {
+    const tbody = document.getElementById("docTableBody");
+    tbody.innerHTML = "";
+    filteredDocs.forEach((doc, i) => {
+      const tr = document.createElement("tr");
+      tr.onclick = () => openReviewAt(i);
+      const badgeClass = "badge-" + (doc.status === "Needs Review" ? "needs-review" : doc.status.toLowerCase().replace(" ", "-"));
+      const scanAt = doc.scanned_at || "";
+      const reviewedAt = doc.reviewed_at || (doc.review && doc.review.reviewed_at) || "";
+      const exportedAt = doc.exported_at || (doc.review && doc.review.exported_at) || "";
+      const fmt = (value) => {
+        if (!value) return "—";
+        const asIso = value.includes("T") ? value : value.replace(" ", "T");
+        const d = new Date(asIso);
+        if (isNaN(d.getTime())) return escapeHtml(value);
+        return d.toLocaleString("en-GB", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        });
+      };
+      const scanText = fmt(scanAt || doc.batch_date);
+      const reviewText = fmt(reviewedAt);
+      const exportText = fmt(exportedAt);
+      tr.innerHTML =
+        `<td class="doc-id-cell"><span class="doc-id-badge">${escapeHtml(doc.doc_id)}</span></td>` +
+        `<td class="doc-type-cell">${escapeHtml(doc.doc_type)}</td>` +
+        `<td class="batch-date-cell">` +
+          `<div class="time-row"><span class="time-label">Scan</span><span>${escapeHtml(scanText)}</span></div>` +
+          `<div class="time-row"><span class="time-label">Review</span><span>${escapeHtml(reviewText)}</span></div>` +
+          `<div class="time-row"><span class="time-label">Export</span><span>${escapeHtml(exportText)}</span></div>` +
+        `</td>` +
+        `<td><span class="status-cell-badge ${badgeClass}">${escapeHtml(doc.status)}</span></td>`;
+      tbody.appendChild(tr);
+    });
+    if (filteredDocs.length === 0) {
+      tbody.innerHTML = "<tr><td colspan=\"4\" style=\"text-align:center; color:var(--text-muted);\">No documents in this filter.</td></tr>";
+    }
+  }
+
+  function startReviewAllNew() {
+    const newDocs = docsData.docs.filter(d => d.status === "New");
+    if (newDocs.length === 0) {
+      showToast("No documents with status New", "info");
+      return;
+    }
+    statusFilter = "New";
+    applyFilterAndRender();
+    currentDocIndex = 0;
+    showView(3);
+  }
+
+  function openReviewAt(index) {
+    currentDocIndex = index;
+    showView(3);
+  }
+
+  function getCurrentDoc() {
+    if (currentDocIndex < 0 || currentDocIndex >= filteredDocs.length) return null;
+    return filteredDocs[currentDocIndex];
+  }
+
+  function renderReviewDoc() {
+    const doc = getCurrentDoc();
+    if (!doc) {
+      showToast("No document selected", "error");
+      showView(2);
+      return;
+    }
+    document.getElementById("reviewClientName").textContent = selectedClient;
+    document.getElementById("reviewDocId").textContent = doc.doc_id;
+    document.getElementById("reviewDocType").textContent = doc.doc_type;
+    updateReviewStatusBadge(doc.status);
+    const total = filteredDocs.length;
+    const pos = currentDocIndex + 1;
+    document.getElementById("reviewCounter").textContent = pos + " of " + total + (statusFilter ? " " + statusFilter : "");
+    renderFields(doc.fields || {});
+    document.getElementById("reviewedBy").value = (doc.review && doc.review.reviewed_by) || "Filip";
+    document.getElementById("reviewNotes").value = (doc.review && doc.review.notes) || "";
+    loadPdfPreview(doc);
+    // reset OCR panel
+    const ocrPanel = document.getElementById("ocrTextPanel");
+    const ocrBtn = document.getElementById("btnToggleOcr");
+    const ocrContent = document.getElementById("ocrTextContent");
+    if (ocrPanel && ocrBtn && ocrContent) {
+      ocrPanel.classList.remove("visible");
+      ocrContent.textContent = "";
+      ocrBtn.classList.remove("active");
+      ocrBtn.textContent = "Show OCR Text";
+    }
+
+    const reBtn = document.getElementById("btnReprocess");
+    if (reBtn) {
+      reBtn.style.display = "inline-flex";
+    }
+  }
+
+  function updateReviewStatusBadge(status) {
+    const el = document.getElementById("reviewStatusBadge");
+    el.textContent = status;
+    el.className = "badge ";
+    if (status === "Verified") el.classList.add("badge-verified");
+    else if (status === "Needs Review") el.classList.add("badge-needs-review");
+    else if (status === "Failed") el.classList.add("badge-failed");
+    else el.classList.add("badge-new");
+  }
+
+  function labelFromKey(key) {
+    return key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function renderFields(fields) {
+    const container = document.getElementById("fieldsBody");
+    container.innerHTML = "";
+    for (const [key, value] of Object.entries(fields)) {
+      const label = labelFromKey(key);
+      const div = document.createElement("div");
+      div.className = "field-group";
+      const val = (value == null) ? "" : String(value);
+      div.innerHTML = `<label>${escapeHtml(label)}</label><input type="text" data-field="${escapeHtml(key)}" value="${escapeHtml(val)}" placeholder="${escapeHtml(label)}...">`;
+      container.appendChild(div);
+    }
+  }
+
+  function loadPdfPreview(doc) {
+    const main = document.querySelector(".preview-main");
+    if (!main) return;
+
+    const url = `${API_URL}/pdf/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.doc_id)}#toolbar=0&navpanes=0&view=FitH`;
+    let loading = document.getElementById("previewLoading");
+    if (!loading) {
+      loading = document.createElement("p");
+      loading.id = "previewLoading";
+      loading.className = "preview-loading";
+    }
+    loading.textContent = "Loading PDF...";
+
+    main.innerHTML = "";
+    main.appendChild(loading);
+    const iframe = document.createElement("iframe");
+    iframe.title = "PDF";
+    iframe.style.cssText = "width:100%;height:100%;min-height:0;border:none;display:block;";
+    iframe.onload = () => {
+      if (loading && loading.parentElement) {
+        loading.parentElement.removeChild(loading);
+      }
+    };
+    main.appendChild(iframe);
+    // Set src after the view is visible and laid out so the PDF loads immediately
+    requestAnimationFrame(() => {
+      iframe.src = url;
+    });
+  }
+
+  async function toggleOcrText() {
+    const panel = document.getElementById("ocrTextPanel");
+    const btn = document.getElementById("btnToggleOcr");
+    const content = document.getElementById("ocrTextContent");
+    if (!panel || !btn || !content) return;
+    const nowVisible = !panel.classList.contains("visible");
+    if (!nowVisible) {
+      panel.classList.remove("visible");
+      btn.classList.remove("active");
+      btn.textContent = "Show OCR Text";
+      return;
+    }
+    const doc = getCurrentDoc();
+    if (!doc) return;
+    btn.classList.add("active");
+    btn.textContent = "Hide OCR Text";
+    panel.classList.add("visible");
+    content.textContent = "Loading OCR text...";
+    try {
+      const res = await fetch(`${API_URL}/ocr-text/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.doc_id)}`, {
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!res.ok) {
+        content.textContent = "Error loading OCR text.";
+        return;
+      }
+      const data = await res.json();
+      if (data.error) {
+        content.textContent = data.text ? data.text : `Error: ${data.error}`;
+      } else {
+        content.textContent = data.text || "(No OCR text found)";
+      }
+    } catch (e) {
+      content.textContent = "Error loading OCR text.";
+    }
+  }
+
+  async function reprocessDoc() {
+    const doc = getCurrentDoc();
+    if (!doc) return;
+    document.getElementById("rescanModal").classList.add("visible");
+    document.querySelectorAll("#rescanReasonForm input[name=rescanReason]").forEach(r => {
+      r.checked = false;
+    });
+    document.getElementById("rescanReasonOther").value = "";
+    document.getElementById("rescanReasonOther").style.display = "none";
+  }
+
+  function getRescanReasonValue() {
+    const form = document.getElementById("rescanReasonForm");
+    const radio = form && form.querySelector("input[name=rescanReason]:checked");
+    const otherInput = document.getElementById("rescanReasonOther");
+    if (radio && radio.value === "__other__" && otherInput) {
+      const v = (otherInput.value || "").trim();
+      return v || "Other";
+    }
+    return (radio && radio.value) ? radio.value : "No reason given";
+  }
+
+  function closeRescanModal() {
+    document.getElementById("rescanModal").classList.remove("visible");
+  }
+
+  async function submitRescanRequest() {
+    const doc = getCurrentDoc();
+    if (!doc) {
+      closeRescanModal();
+      return;
+    }
+    const reason = getRescanReasonValue();
+    closeRescanModal();
+    try {
+      const res = await fetch(`${API_URL}/reprocess/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.doc_id)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        const msg = data && data.error ? data.error : "Re-process failed";
+        showToast(msg, "error");
+        return;
+      }
+      showToast("Document sent for rescan. Replacement can be captured in ScanStation.", "info");
+      loadDocs();
+      showView(2);
+    } catch (e) {
+      showToast("Re-process failed: " + e.message, "error");
+    }
+  }
+
+  async function saveAndAdvance(status) {
+    const doc = getCurrentDoc();
+    if (!doc) return;
+    const payload = {
+      status: status,
+      fields: {},
+      review: {
+        reviewed_by: document.getElementById("reviewedBy").value.trim() || "Filip",
+        reviewed_at: new Date().toISOString().slice(0, 19).replace("T", " "),
+        notes: document.getElementById("reviewNotes").value.trim()
+      }
+    };
+    document.querySelectorAll("#fieldsBody [data-field]").forEach(input => {
+      payload.fields[input.dataset.field] = input.value.trim();
+    });
+    try {
+      const res = await fetch(`${API_URL}/review/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.doc_id)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(5000)
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Save failed");
+      showToast("Saved as " + status, "success");
+      doc.status = status;
+      doc.fields = payload.fields;
+      doc.review = payload.review;
+      currentDocIndex++;
+      if (currentDocIndex >= filteredDocs.length) {
+        showToast("All done!", "success");
+        loadDocs();
+        showView(2);
+      } else {
+        renderReviewDoc();
+      }
+    } catch (e) {
+      showToast("Save failed: " + e.message, "error");
+    }
+  }
+
+  function prevDoc() {
+    if (currentDocIndex <= 0) return;
+    currentDocIndex--;
+    renderReviewDoc();
+  }
+
+  function nextDoc() {
+    if (currentDocIndex >= filteredDocs.length - 1) return;
+    currentDocIndex++;
+    renderReviewDoc();
+  }
+
+  document.addEventListener("keydown", e => {
+    if (document.getElementById("viewReview").classList.contains("active")) {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.key === "1") { e.preventDefault(); saveAndAdvance("Verified"); }
+      if (e.key === "2") { e.preventDefault(); saveAndAdvance("Needs Review"); }
+      if (e.key === "3") { e.preventDefault(); saveAndAdvance("Failed"); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); prevDoc(); }
+      if (e.key === "ArrowRight") { e.preventDefault(); nextDoc(); }
+    }
+  });
+
+  document.getElementById("btnToggleOcr").addEventListener("click", toggleOcrText);
+
+  (function wireRescanModal() {
+    const overlay = document.getElementById("rescanModal");
+    const cancelBtn = document.getElementById("rescanModalCancel");
+    const submitBtn = document.getElementById("rescanModalSubmit");
+    const otherInput = document.getElementById("rescanReasonOther");
+    const form = document.getElementById("rescanReasonForm");
+    if (cancelBtn) cancelBtn.addEventListener("click", closeRescanModal);
+    if (submitBtn) submitBtn.addEventListener("click", submitRescanRequest);
+    if (form) form.querySelectorAll("input[name=rescanReason]").forEach(radio => {
+      radio.addEventListener("change", () => {
+        if (otherInput) otherInput.style.display = (radio.value === "__other__") ? "block" : "none";
+      });
+    });
+    if (overlay) overlay.addEventListener("click", e => {
+      if (e.target === overlay) closeRescanModal();
+    });
+  })();
+
+  function showToast(msg, type) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast toast-" + type + " show";
+    setTimeout(() => t.classList.remove("show"), 2500);
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  showView(1);
+</script>
+</body>
+</html>

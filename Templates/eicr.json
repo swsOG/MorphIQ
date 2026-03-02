@@ -1,0 +1,14 @@
+{
+  "doc_type": "EICR",
+  "display_name": "Electrical Installation Condition Report (EICR)",
+  "fields": [
+    { "key": "property_address", "label": "Property Address", "type": "text" },
+    { "key": "electrician_name", "label": "Electrician Name", "type": "text" },
+    { "key": "company_name", "label": "Company Name", "type": "text" },
+    { "key": "registration_number", "label": "Registration Number (NICEIC/NAPIT)", "type": "text" },
+    { "key": "inspection_date", "label": "Date of Inspection", "type": "text" },
+    { "key": "next_inspection_date", "label": "Next Inspection Due", "type": "text" },
+    { "key": "overall_result", "label": "Overall Result (Satisfactory/Unsatisfactory)", "type": "text" },
+    { "key": "observations", "label": "Observations (C1/C2/C3 codes)", "type": "text" }
+  ]
+}

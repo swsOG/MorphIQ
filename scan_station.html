@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>ScanStation — Document Capture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --bg-deep: #060a12;
+    --bg-primary: #0b1120;
+    --bg-secondary: #111a2e;
+    --bg-card: #162036;
+    --bg-hover: #1d2b47;
+    --accent: #00e5cc;
+    --accent-dim: rgba(0, 229, 204, 0.12);
+    --text-primary: #e8ecf4;
+    --text-secondary: #8b97b0;
+    --text-muted: #566380;
+    --border: #1a2540;
+    --border-light: #243355;
+    --success: #00d68f;
+    --warning: #ffb347;
+    --danger: #ff5c6a;
+    --quality-good: #00d68f;
+    --quality-ok: #ffb347;
+    --quality-bad: #ff5c6a;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 52px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 20px; }
+
+  .logo {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+  }
+  .logo::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.5;
+  }
+
+  .header-divider { width: 1px; height: 24px; background: var(--border-light); }
+
+  .header-controls { display: flex; align-items: center; gap: 6px; }
+
+  .control-group {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--bg-secondary);
+    padding: 4px 4px 4px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+
+  .control-label {
+    font-size: 10px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600;
+  }
+
+  .control-group select {
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-primary); padding: 4px 8px; border-radius: 4px;
+    font-size: 12px; font-family: var(--font-body); height: 28px; cursor: pointer;
+    outline: none;
+  }
+  .control-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-dim);
+  }
+
+  .header-right { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-secondary); }
+
+  .mode-toggle {
+    display: flex; background: var(--bg-secondary);
+    border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border);
+  }
+  .mode-toggle button {
+    background: none; border: none; color: var(--text-muted);
+    padding: 5px 14px; font-size: 11px; font-family: var(--font-body);
+    font-weight: 500; cursor: pointer; transition: all 0.2s;
+  }
+  .mode-toggle button.active { background: var(--accent-dim); color: var(--accent); }
+
+  .status-indicator { display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: var(--font-mono); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+  .status-dot.on { background: var(--success); box-shadow: 0 0 6px var(--success); }
+
+  .session-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex; align-items: center; gap: 24px;
+    padding: 7px 20px; background: var(--bg-primary);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px; color: var(--text-secondary); flex-shrink: 0;
+  }
+  .stat-item { display: flex; align-items: center; gap: 6px; }
+  .stat-icon { font-size: 13px; opacity: 0.8; }
+  .stat-value { color: var(--text-primary); font-weight: 600; font-family: var(--font-mono); font-size: 12px; }
+  .stat-label { color: var(--text-muted); font-size: 11px; }
+
+  /* MAIN BODY */
+  .app-body { flex: 1; display: flex; overflow: hidden; }
+
+  /* LEFT COLUMN */
+  .col-left {
+    width: 280px; min-width: 280px;
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: var(--bg-primary);
+  }
+
+  .camera-preview {
+    width: 100%; aspect-ratio: 4/3;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    position: relative; flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  #videoFeed {
+    width: 100%; height: 100%; object-fit: contain;
+    background: #000;
+  }
+
+  .camera-live-badge {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(255, 92, 106, 0.9); color: white;
+    font-size: 9px; font-weight: 700; font-family: var(--font-mono);
+    padding: 2px 7px; border-radius: 3px; letter-spacing: 0.5px;
+  }
+
+  .camera-offline {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; color: var(--text-secondary); background: radial-gradient(circle at top, rgba(11,17,32,0.9), rgba(6,10,18,0.98));
+    font-size: 12px;
+  }
+  .camera-offline.hidden { display: none; }
+  .camera-offline span:last-child { font-size: 10px; color: var(--text-muted); }
+
+  .session-queue { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 600; }
+  .section-count {
+    background: var(--accent); color: var(--bg-deep);
+    font-size: 10px; font-weight: 700; font-family: var(--font-mono);
+    padding: 2px 8px; border-radius: 10px; min-width: 24px; text-align: center;
+  }
+
+  .queue-scroll { flex: 1; overflow-y: auto; padding: 6px 8px; }
+  .queue-scroll::-webkit-scrollbar { width: 4px; }
+  .queue-scroll::-webkit-scrollbar-track { background: transparent; }
+  .queue-scroll::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+  .queue-empty-msg {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 30px 16px; gap: 6px; color: var(--text-muted); font-size: 12px;
+  }
+
+  .q-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px; border-radius: var(--radius-sm);
+    cursor: pointer; transition: all 0.15s;
+    margin-bottom: 2px; border: 1px solid transparent;
+  }
+  .q-item:hover { background: var(--bg-hover); }
+  .q-item.active { background: var(--accent-dim); border-color: rgba(0,229,204,0.25); }
+
+  .q-thumb-wrap { position: relative; flex-shrink: 0; }
+  .q-thumb {
+    display: none;
+  }
+  .q-thumb img { display: none; }
+
+  .q-dot {
+    display: none;
+  }
+  .q-dot.good { background: var(--quality-good); }
+  .q-dot.ok { background: var(--quality-ok); }
+  .q-dot.bad { background: var(--quality-bad); }
+
+  .q-info { flex: 1; min-width: 0; }
+  .q-name { font-size: 11px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q-meta { font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); margin-top: 2px; }
+
+  .q-score { font-size: 10px; font-family: var(--font-mono); font-weight: 600; flex-shrink: 0; display: none; }
+  .q-score.good { color: var(--quality-good); }
+  .q-score.ok { color: var(--quality-ok); }
+  .q-score.bad { color: var(--quality-bad); }
+
+  /* CENTER COLUMN */
+  .col-center { flex: 1; display: flex; flex-direction: column; padding: 14px 16px; gap: 10px; }
+
+  .center-view {
+    flex: 1; background: var(--bg-secondary);
+    border-radius: var(--radius); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .center-view.flash-good { border-color: var(--quality-good); box-shadow: 0 0 40px rgba(0,214,143,0.28); }
+  .center-view.flash-ok { border-color: var(--quality-ok); box-shadow: 0 0 40px rgba(255,179,71,0.28); }
+  .center-view.flash-bad { border-color: var(--quality-bad); box-shadow: 0 0 40px rgba(255,92,106,0.3); }
+
+  .center-empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+  }
+  .center-empty-ring {
+    width: 64px; height: 64px;
+    border: 2px solid var(--border-light); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .center-empty-ring svg { width: 26px; height: 26px; stroke: var(--text-muted); fill: none; stroke-width: 1.5; }
+  .center-empty-text { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+  .center-empty-sub { font-size: 12px; color: var(--text-muted); }
+  .center-empty.hidden { display: none; }
+
+  .preview-content {
+    display: none; width: 100%; height: 100%;
+    align-items: center; justify-content: center; position: relative;
+    overflow: hidden;
+  }
+  .preview-content.active { display: flex; }
+
+  .preview-content img,
+  .preview-content #previewCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+  #previewCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    background: #000;
+  }
+  .pdf-frame-wrap {
+    aspect-ratio: 210/297;
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    min-height: 0;
+    background: #000;
+  }
+  #previewPdfFrame {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #000;
+  }
+
+  .quality-overlay {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; z-index: 2;
+    background: linear-gradient(180deg, rgba(6,10,18,0.9) 0%, transparent 100%);
+  }
+
+  .quality-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; backdrop-filter: blur(8px);
+  }
+  .quality-badge.good { background: rgba(0,214,143,0.18); border: 1px solid rgba(0,214,143,0.4); color: var(--quality-good); }
+  .quality-badge.ok { background: rgba(255,179,71,0.18); border: 1px solid rgba(255,179,71,0.4); color: var(--quality-ok); }
+  .quality-badge.bad { background: rgba(255,92,106,0.18); border: 1px solid rgba(255,92,106,0.5); color: var(--quality-bad); }
+
+  .quality-score-tag {
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 700;
+    padding: 5px 11px; border-radius: 999px;
+    border: 1px solid var(--border-light);
+    background: rgba(6,10,18,0.75);
+  }
+  .quality-score-tag.good { border-color: rgba(0,214,143,0.5); color: var(--quality-good); }
+  .quality-score-tag.ok { border-color: rgba(255,179,71,0.6); color: var(--quality-ok); }
+  .quality-score-tag.bad { border-color: rgba(255,92,106,0.7); color: var(--quality-bad); }
+
+  .quality-details { display: none; }
+
+  /* ACTION + SHORTCUTS */
+  .action-bar {
+    display: flex; align-items: center;
+    gap: 8px; padding-top: 4px;
+  }
+  .btn {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: var(--bg-hover); border-color: var(--border-light); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #28ffd9);
+    border-color: rgba(0,229,204,0.9);
+    color: #021012;
+    font-weight: 700;
+    box-shadow: 0 2px 12px rgba(0,229,204,0.35);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(0,229,204,0.45); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+  .naming-input {
+    flex: 1;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    font-size: 12px;
+    outline: none;
+  }
+  .naming-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-dim);
+  }
+
+  .shortcut-bar {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .shortcut-bar kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+
+  /* RIGHT COLUMN */
+  .col-right {
+    width: 300px; min-width: 300px;
+    background: var(--bg-primary);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 12px 14px 12px 12px;
+    gap: 10px;
+  }
+
+  .dash-header { display: flex; align-items: center; justify-content: space-between; }
+  .dash-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); font-weight: 600; }
+
+  .dash-progress {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+  .progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .progress-label { color: var(--text-secondary); font-size: 11px; }
+  .progress-count { font-family: var(--font-mono); font-size: 11px; color: var(--text-primary); }
+  .progress-bar-bg {
+    width: 100%; height: 6px;
+    background: #0b1220;
+    border-radius: 999px; overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .progress-bar-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), #5bffda);
+    border-radius: 999px;
+    transition: width 0.25s ease-out;
+  }
+  .progress-eta { display: flex; align-items: center; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+
+  .session-summary { margin-top: 10px; }
+  .session-summary-content { font-size: 11px; }
+  .session-summary-empty { color: var(--text-muted); padding: 6px 0; }
+  .session-summary-list { display: none; }
+  .session-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; color: var(--text-secondary); }
+  .session-summary-row.session-summary-sub { padding-left: 10px; }
+  .session-summary-label { color: var(--text-primary); }
+  .session-summary-count { font-family: var(--font-mono); font-weight: 600; color: var(--text-primary); }
+  .session-summary-divider { height: 1px; background: var(--border); margin: 4px 0; }
+  .session-summary-property { font-weight: 600; color: var(--text-primary); padding: 4px 0 2px; margin-top: 4px; }
+  .session-summary-row.session-summary-total { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--border); font-weight: 600; }
+
+  .rescan-requests { margin-top: 10px; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.06); }
+  .rescan-header .progress-label { color: #b45309; font-weight: 600; }
+  .rescan-count-badge {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px;
+    background: rgba(245, 158, 11, 0.25); color: #92400e;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+  }
+  .rescan-empty { font-size: 11px; color: var(--text-muted); padding: 6px 0; }
+  .rescan-list { display: none; font-size: 11px; }
+  .rescan-list.visible { display: block; }
+  .rescan-card {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 10px; margin-bottom: 8px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.3);
+    transition: background 0.15s;
+  }
+  .rescan-card:hover { background: var(--bg-hover); }
+  .rescan-thumb {
+    width: 60px; height: 80px; flex-shrink: 0;
+    background: var(--bg-secondary); border-radius: 4px;
+    object-fit: cover; border: 1px solid var(--border);
+  }
+  .rescan-thumb-placeholder {
+    width: 60px; height: 80px; flex-shrink: 0;
+    background: var(--bg-secondary); border-radius: 4px; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--text-muted);
+  }
+  .rescan-card-body { flex: 1; min-width: 0; }
+  .rescan-card-doctype { font-weight: 600; color: var(--text-primary); font-size: 12px; }
+  .rescan-card-name { font-size: 11px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rescan-card-id { font-size: 10px; font-family: var(--font-mono); color: var(--text-muted); margin-top: 2px; }
+  .rescan-card-reason { font-size: 10px; color: #b45309; margin-top: 4px; }
+  .rescan-btn-now {
+    flex-shrink: 0; padding: 6px 12px; font-size: 11px; font-weight: 600;
+    border-radius: var(--radius-sm); border: 1px solid rgba(245, 158, 11, 0.6);
+    background: rgba(245, 158, 11, 0.2); color: #b45309;
+    cursor: pointer; font-family: var(--font-body); transition: all 0.15s;
+  }
+  .rescan-btn-now:hover { background: rgba(245, 158, 11, 0.35); }
+  .rescan-banner {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+    padding: 10px 16px; background: rgba(245, 158, 11, 0.9); color: #1a0f00;
+    font-size: 13px; font-weight: 600; display: none;
+  }
+  .rescan-banner.visible { display: block; }
+  .btn-rescan-capture {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    border-color: rgba(245, 158, 11, 0.9) !important;
+    color: #1a0f00 !important;
+    box-shadow: 0 2px 12px rgba(245, 158, 11, 0.4) !important;
+  }
+  .btn-rescan-capture:hover { box-shadow: 0 4px 18px rgba(245, 158, 11, 0.5) !important; }
+  .rescan-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 0; cursor: pointer;
+    color: var(--text-primary);
+    border-radius: 3px;
+    transition: background 0.15s;
+  }
+  .rescan-row:hover { background: rgba(245, 158, 11, 0.12); }
+  .rescan-row-label { font-weight: 500; }
+  .rescan-row-count { font-family: var(--font-mono); font-weight: 600; color: #92400e; }
+  .rescan-doc-ids {
+    display: none; padding-left: 10px; padding-bottom: 6px;
+    font-size: 10px; font-family: var(--font-mono); color: var(--text-muted);
+    border-left: 2px solid rgba(245, 158, 11, 0.4); margin-left: 4px; margin-top: 2px;
+  }
+  .rescan-doc-ids.visible { display: block; }
+  .rescan-doc-id { padding: 1px 0; }
+
+  .dash-tracker {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 9px 9px 10px;
+  }
+  .tracker-cards { display: flex; gap: 8px; }
+  .tracker-card {
+    flex: 1;
+    border-radius: var(--radius-sm);
+    padding: 8px 8px 7px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+    cursor: pointer; border: 1px solid transparent;
+    background: var(--bg-secondary);
+    transition: all 0.15s;
+  }
+  .tracker-card.active { box-shadow: 0 0 0 1px var(--accent-dim), 0 0 18px rgba(0,0,0,0.4); }
+  .card-good { border-color: rgba(0,214,143,0.35); }
+  .card-ok { border-color: rgba(255,179,71,0.4); }
+  .card-bad { border-color: rgba(255,92,106,0.5); }
+  .tracker-icon { font-size: 13px; }
+  .tracker-count { font-family: var(--font-mono); font-size: 14px; font-weight: 700; }
+  .tracker-count.good { color: var(--quality-good); }
+  .tracker-count.ok { color: var(--quality-ok); }
+  .tracker-count.bad { color: var(--quality-bad); }
+  .tracker-label { font-size: 11px; color: var(--text-muted); }
+
+  .dash-retake {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    max-height: 150px;
+    display: flex; flex-direction: column;
+  }
+  .retake-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px; font-size: 11px;
+  }
+  .retake-title { color: var(--text-secondary); }
+  .retake-count {
+    background: rgba(255,92,106,0.15);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--danger);
+  }
+  .retake-empty { font-size: 11px; color: var(--text-muted); padding: 6px 0; }
+  .retake-list { flex: 1; overflow-y: auto; padding-top: 2px; }
+  .retake-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 0;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .retake-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--quality-bad);
+  }
+  .retake-main { flex: 1; min-width: 0; }
+  .retake-name { color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .retake-reason { font-size: 10px; color: var(--text-muted); }
+  .retake-score { font-family: var(--font-mono); font-size: 11px; color: var(--quality-bad); }
+
+  .dash-filtered {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    flex: 1;
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  .filtered-header {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; margin-bottom: 4px;
+  }
+  .filtered-title { color: var(--text-secondary); }
+  .filtered-clear {
+    background: none; border: none;
+    font-size: 10px; color: var(--accent);
+    cursor: pointer;
+  }
+  .filtered-list { flex: 1; overflow-y: auto; font-size: 11px; }
+  .filtered-empty { font-size: 11px; color: var(--text-muted); padding: 6px 0; }
+
+  .filtered-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 0;
+    cursor: pointer;
+  }
+  .filtered-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+  .filtered-dot.good { background: var(--quality-good); }
+  .filtered-dot.ok { background: var(--quality-ok); }
+  .filtered-dot.bad { background: var(--quality-bad); }
+  .filtered-name { flex: 1; min-width: 0; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .filtered-score { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+
+  /* FOOTER */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .footer-left { font-family: var(--font-mono); }
+  .footer-right { display: flex; align-items: center; gap: 12px; }
+
+  .footer-btn {
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .footer-btn:hover { background: var(--bg-hover); border-color: var(--border-light); }
+  .footer-btn.export {
+    background: linear-gradient(135deg, var(--accent), #28ffd9);
+    border-color: rgba(0,229,204,0.9);
+    color: #021012;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0,229,204,0.3);
+  }
+  .footer-btn.export:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 200;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast-success { background: var(--success); color: #021012; }
+  .toast-error { background: var(--danger); color: #ffffff; }
+  .toast-info { background: var(--accent); color: #021012; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <span class="logo">ScanStation</span>
+    <div class="header-divider"></div>
+    <div class="header-controls">
+      <div class="control-group">
+        <span class="control-label">Camera</span>
+        <select id="cameraSelect"><option value="">Loading...</option></select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">Client</span>
+        <select id="clientSelect">
+          <option value="">— Select Client —</option>
+          <option value="__add__">+ Add New Client</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">Doc Type</span>
+        <select id="docTypeSelect">
+          <option value="tenancy_agreement">Tenancy Agreement</option>
+          <option value="gas_safety_certificate">Gas Safety (CP12)</option>
+          <option value="eicr">EICR</option>
+          <option value="epc">EPC</option>
+          <option value="general_document">General Document</option>
+        </select>
+      </div>
+      <div class="control-group property-wrap">
+        <span class="control-label">PROPERTY</span>
+        <div class="property-input-wrap">
+          <input type="text" id="propertyInput" list="propertySuggestions" placeholder="e.g. 12 Oak Street" autocomplete="off" />
+          <datalist id="propertySuggestions"></datalist>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="mode-toggle">
+      <button id="modeQuickBtn">⚡ Quick</button>
+      <button id="modeCarefulBtn" class="active">🔍 Careful</button>
+    </div>
+    <div class="status-indicator">
+      <span class="status-dot" id="cameraStatusDot"></span>
+      <span id="cameraStatusText">Camera: Off</span>
+    </div>
+    <span id="sessionLabel" class="session-label">Session: 0</span>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <span class="stat-icon">📄</span>
+    <span class="stat-value" id="statCount">0</span>
+    <span class="stat-label">captured</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-icon">⏱</span>
+    <span class="stat-value" id="statTime">00:00:00</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-icon">📋</span>
+    <span class="stat-label">Last:</span>
+    <span class="stat-value" id="statLast">—</span>
+  </div>
+</div>
+
+<!-- MAIN BODY -->
+<div class="app-body">
+
+  <!-- LEFT COLUMN -->
+  <div class="col-left">
+    <div class="camera-preview">
+      <span class="camera-live-badge">● LIVE</span>
+      <video id="videoFeed" autoplay playsinline></video>
+      <canvas id="captureCanvas" style="display:none;"></canvas>
+      <div class="camera-offline" id="cameraOffline">
+        <svg width="32" height="32" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5">
+          <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span>Select a camera to start</span>
+        <span>Connect via Camo, then select above</span>
+      </div>
+    </div>
+    <div class="session-queue">
+      <div class="section-header">
+        <span class="section-title">Session Queue</span>
+        <span class="section-count" id="queueCount">0</span>
+      </div>
+      <div class="queue-scroll" id="queueBody">
+        <div class="queue-empty-msg" id="queueEmpty">
+          <span>No documents yet</span>
+          <span style="font-size:10px;">Capture your first document</span>
+        </div>
+        <div id="queueList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER COLUMN -->
+  <div class="col-center">
+    <div class="center-view" id="centerView">
+      <div class="rescan-banner" id="rescanBanner"></div>
+      <div class="center-empty" id="centerEmpty">
+        <div class="center-empty-ring">
+          <svg viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <span class="center-empty-text">Captured documents appear here</span>
+        <span class="center-empty-sub">Position document and press Space</span>
+      </div>
+      <div class="preview-content" id="previewContent">
+        <canvas id="previewCanvas"></canvas>
+        <div class="pdf-frame-wrap" id="pdfFrameWrap" style="display:none;">
+          <iframe id="previewPdfFrame" style="border:none;width:100%;height:100%;background:#000;"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <div id="defaultActions" style="display:flex;gap:8px;width:100%;align-items:center;">
+        <button class="btn" type="button" id="btnSelectFolder">Select Folder</button>
+        <button class="btn" type="button" id="btnBrowse">Browse Files</button>
+        <button class="btn btn-primary" type="button" id="btnCapture">📸 Capture Document</button>
+      </div>
+      <div id="previewActions" style="display:none;gap:8px;width:100%;align-items:center;">
+        <input class="naming-input" type="text" id="nameInput" placeholder="Document name (optional) — Enter to confirm">
+        <button class="btn" type="button" id="btnRetake">Retake</button>
+        <button class="btn btn-primary" type="button" id="btnConfirm">Confirm ↵</button>
+      </div>
+    </div>
+
+    <div class="shortcut-bar">
+      <span><kbd>Space</kbd> Capture</span>
+      <span><kbd>B</kbd> Browse</span>
+      <span><kbd>R</kbd> Retake</span>
+      <span><kbd>Tab</kbd> Name</span>
+      <span><kbd>↵</kbd> Confirm</span>
+      <span><kbd>Esc</kbd> Skip</span>
+      <span><kbd>C</kbd> Back to camera</span>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="col-right">
+    <div class="dash-header">
+      <span class="dash-title">Quality Dashboard</span>
+    </div>
+
+    <!-- Session progress -->
+    <div class="dash-progress">
+      <div class="progress-header">
+        <span class="progress-label">Session progress</span>
+        <span class="progress-count">
+          <span id="progCurrent">0</span>
+          <span>/ <input id="progTarget" type="number" value="50" min="1"
+            style="width:40px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);
+            border-radius:3px;font-family:var(--font-mono);font-size:12px;text-align:center;padding:1px;font-weight:700;" /></span>
+        </span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progFill"></div>
+      </div>
+      <div class="progress-eta">
+        <span id="progPercent">0%</span>
+        <span id="progEta">—</span>
+      </div>
+    </div>
+
+    <!-- Session Summary: doc type counts (and by property) -->
+    <div class="dash-progress session-summary" id="sessionSummaryBlock">
+      <div class="progress-header">
+        <span class="progress-label">Session Summary</span>
+      </div>
+      <div class="session-summary-content" id="sessionSummaryContent">
+        <div class="session-summary-empty" id="sessionSummaryEmpty">No documents yet</div>
+        <div class="session-summary-list" id="sessionSummaryList"></div>
+      </div>
+    </div>
+
+    <!-- Rescan Requests: doc type breakdown (amber/warning theme) -->
+    <div class="dash-progress rescan-requests" id="rescanRequestsBlock">
+      <div class="progress-header rescan-header">
+        <span class="progress-label">Rescan Requests</span>
+        <span class="rescan-count-badge" id="rescanRequestsCount">0</span>
+      </div>
+      <div class="rescan-content" id="rescanRequestsContent">
+        <div class="rescan-empty" id="rescanRequestsEmpty">No rescan requests</div>
+        <div class="rescan-list" id="rescanRequestsList"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span class="footer-left" id="footerMode">🔍 careful · ready</span>
+  <div class="footer-right">
+    <div class="status-indicator">
+      <span class="status-dot" id="serverDot"></span>
+      <span id="serverStatus">Pipeline: Offline</span>
+    </div>
+    <button class="footer-btn export" id="btnExport" disabled>Export Verified</button>
+    <button class="footer-btn review" id="btnOpenReview">Open Review Station</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.tiff,.tif,.bmp" multiple style="display:none;">
+
+<script>
+  const API_URL = "http://127.0.0.1:8765";
+  const BASE_PATH = "C:\\\\ScanSystem_v2"; // display-only; File System Access uses handles
+
+  let currentStream = null;
+  let selectedClient = "";
+  let baseFolderHandle = null;
+  let captureMode = "careful"; // careful | quick
+  let viewMode = "camera"; // camera | preview | queuePreview
+  let pendingCapture = null; // { blob, width, height, ts }
+  let sessionDocs = []; // { id, docId, name, createdAt, score, sharp, bright, contrast, align, qualityClass, thumbUrl }
+  let activeDocId = null;
+
+  let sessionCount = 0;
+  let sessionStartMs = null;
+  let sessionElapsedMs = 0;
+  let sessionLastStartAt = null;
+  let lastActivityTime = null;
+  let sessionTimerId = null;
+
+  let qualityFilter = null; // null | good | ok | bad (dashboard UI removed)
+
+  let serverCheckTimer = null;
+  let rescanPollTimer = null;
+  let lastServerOkAt = 0;
+  let pipelineStatus = "offline";
+  let lastProcessingDocLabel = "";
+  let rescanMode = false;
+  let rescanItem = null;
+
+  const DOC_TYPE_DISPLAY_NAMES = {
+    tenancy_agreement: "Tenancy Agreement",
+    gas_safety_certificate: "Gas Safety (CP12)",
+    eicr: "EICR",
+    epc: "EPC",
+    general_document: "General Document"
+  };
+  let sessionPropertyDocTypeCount = {}; // "property|docType" -> number
+  const PROPERTY_STORAGE_KEY = "scanstation_property_";
+  let propertySuggestionsDebounceTimer = null;
+
+  function getPropertyValue() {
+    const el = document.getElementById("propertyInput");
+    return el ? (el.value || "").trim() : "";
+  }
+
+  function setPropertyValue(val) {
+    const el = document.getElementById("propertyInput");
+    if (el) el.value = val || "";
+  }
+
+  function persistPropertyForClient() {
+    if (!selectedClient) return;
+    try {
+      sessionStorage.setItem(PROPERTY_STORAGE_KEY + selectedClient, getPropertyValue());
+    } catch (e) {}
+  }
+
+  function restorePropertyForClient() {
+    if (!selectedClient) return;
+    try {
+      const saved = sessionStorage.getItem(PROPERTY_STORAGE_KEY + selectedClient);
+      if (saved != null) setPropertyValue(saved);
+    } catch (e) {}
+  }
+
+  function getDisplayNameForDocType(value) {
+    return DOC_TYPE_DISPLAY_NAMES[value] || (value || "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function getNextDocName() {
+    const property = getPropertyValue() || "Unsorted";
+    const docType = document.getElementById("docTypeSelect").value;
+    const displayName = getDisplayNameForDocType(docType);
+    const key = property + "|" + docType;
+    const count = (sessionPropertyDocTypeCount[key] || 0) + 1;
+    return `${property} - ${displayName} ${count}`;
+  }
+
+  function incrementCountForCurrentPropertyDocType() {
+    const property = getPropertyValue() || "Unsorted";
+    const docType = document.getElementById("docTypeSelect").value;
+    const key = property + "|" + docType;
+    sessionPropertyDocTypeCount[key] = (sessionPropertyDocTypeCount[key] || 0) + 1;
+  }
+
+  async function fetchPropertySuggestions(query) {
+    if (!selectedClient || !query || query.length < 1) return;
+    try {
+      const res = await fetch(`${API_URL}/docs/${encodeURIComponent(selectedClient)}`, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) return;
+      const data = await res.json();
+      const docs = data.docs || [];
+      const addresses = new Set();
+      docs.forEach(d => {
+        const addr = (d.fields && d.fields.property_address) ? String(d.fields.property_address).trim() : "";
+        if (addr && addr.toLowerCase().includes(query.toLowerCase())) addresses.add(addr);
+      });
+      const list = document.getElementById("propertySuggestions");
+      if (!list) return;
+      list.innerHTML = "";
+      Array.from(addresses).sort().slice(0, 20).forEach(addr => {
+        const opt = document.createElement("option");
+        opt.value = addr;
+        list.appendChild(opt);
+      });
+    } catch (e) {}
+  }
+
+  function showToast(msg, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast toast-" + type + " show";
+    setTimeout(() => t.classList.remove("show"), 2600);
+  }
+
+  /* Camera */
+  async function loadCameras() {
+    const select = document.getElementById("cameraSelect");
+    select.innerHTML = "";
+    try {
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cams = devices.filter(d => d.kind === "videoinput");
+      if (cams.length === 0) {
+        select.innerHTML = '<option value="">No cameras found</option>';
+        setCameraStatus(false);
+        return;
+      }
+      select.innerHTML = '<option value="">— Select Camera —</option>';
+      cams.forEach((d, i) => {
+        const opt = document.createElement("option");
+        opt.value = d.deviceId;
+        opt.textContent = d.label || `Camera ${i + 1}`;
+        select.appendChild(opt);
+      });
+      if (cams.length === 1) {
+        select.value = cams[0].deviceId;
+        startCamera(cams[0].deviceId);
+      }
+    } catch (e) {
+      select.innerHTML = '<option value="">Camera access denied</option>';
+      setCameraStatus(false);
+    }
+  }
+
+  function setCameraStatus(on) {
+    const dot = document.getElementById("cameraStatusDot");
+    const txt = document.getElementById("cameraStatusText");
+    const offline = document.getElementById("cameraOffline");
+    if (on) {
+      dot.classList.add("on");
+      txt.textContent = "Camera: Live";
+      offline.classList.add("hidden");
+    } else {
+      dot.classList.remove("on");
+      txt.textContent = "Camera: Off";
+      offline.classList.remove("hidden");
+    }
+  }
+
+  async function startCamera(deviceId) {
+    if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+    if (!deviceId) {
+      setCameraStatus(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: deviceId }, width: { ideal: 3840 }, height: { ideal: 2160 } }
+      });
+      currentStream = stream;
+      const video = document.getElementById("videoFeed");
+      video.srcObject = stream;
+      setCameraStatus(true);
+      viewMode = "camera";
+    } catch (e) {
+      showToast("Camera error: " + e.message, "error");
+      setCameraStatus(false);
+    }
+  }
+
+  /* Client selection */
+  function addClientOption(name) {
+    const s = document.getElementById("clientSelect");
+    const o = document.createElement("option");
+    o.value = name;
+    o.textContent = name;
+    s.insertBefore(o, s.lastElementChild);
+  }
+
+  const SESSION_STORAGE_KEY = "scanstation_sessions_v1";
+  const clientSessions = {}; // per-client in-memory session state
+
+  function loadSessionsFromStorage() {
+    // Old localStorage-based session restore is no longer used.
+  }
+
+  function persistSessions() {
+    // Old localStorage-based session persistence is no longer used.
+  }
+
+  async function reloadClientFromRaw() {
+    sessionDocs = [];
+    sessionCount = 0;
+    activeDocId = null;
+    updateLeftQueue();
+    updateDashboardCounts();
+    updateProgress();
+    updateFilteredList();
+    updateRetakeQueue();
+    updateSessionStats();
+
+    if (!selectedClient) return;
+
+    try {
+      const res = await fetch(`${API_URL}/docs/${encodeURIComponent(selectedClient)}`, {
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const docs = data.docs || [];
+      docs.forEach(d => {
+        // Skip docs that have already been sent to rescan; those are tracked
+        // separately in the right-hand "Rescan requests" panel.
+        if (d.status === "Sent to Rescan") return;
+        const id = d.doc_id;
+        const name = (d.doc_name != null && d.doc_name !== "") ? d.doc_name : ((d.fields && (d.fields.doc_name || d.fields.document_name)) || d.doc_id);
+        const stamp = d.scanned_at || d.batch_date || "";
+        const doc = {
+          id,
+          docId: d.doc_id,
+          name,
+          createdAt: stamp,
+          score: 0,
+          sharp: 0,
+          bright: 0,
+          contrast: 0,
+          align: 0,
+          qualityClass: "ok",
+          rawName: null,
+          hasPdf: true,
+          blob: null,
+          thumbUrl: null,
+          docType: d.doc_type || "",
+          propertyAddress: (d.fields && d.fields.property_address) ? String(d.fields.property_address).trim() : ""
+        };
+        sessionDocs.push(doc);
+      });
+      sessionCount = sessionDocs.length;
+      if (sessionDocs.length > 0) {
+        activeDocId = sessionDocs[0].id;
+      }
+      updateLeftQueue();
+      updateDashboardCounts();
+      updateProgress();
+      updateFilteredList();
+      updateRetakeQueue();
+      updateSessionStats(sessionDocs.length ? sessionDocs[0].name : null);
+    } catch (e) {
+      // ignore fetch errors; queue will just start empty
+    }
+  }
+
+  function selectClient(name) {
+    selectedClient = name;
+    sessionPropertyDocTypeCount = {};
+    restorePropertyForClient();
+    reloadClientFromRaw();
+    updateExportBtn();
+  }
+
+  async function loadClientsFromApi() {
+    try {
+      const res = await fetch(`${API_URL}/clients`, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) return;
+      const data = await res.json();
+      const clients = data.clients || [];
+      if (!clients.length) return;
+      const select = document.getElementById("clientSelect");
+      const existing = new Set(Array.from(select.options).map(o => o.value));
+      clients.forEach(name => {
+        if (!name || existing.has(name)) return;
+        addClientOption(name);
+      });
+    } catch (e) {
+      // If the server is unreachable, leave the dropdown as-is
+    }
+  }
+
+  /* Folder / File System Access */
+  async function pickScanSystemFolder() {
+    try {
+      baseFolderHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+      showToast("ScanSystem folder selected", "success");
+    } catch (e) {
+      if (e.name !== "AbortError") showToast("Folder selection cancelled or failed", "error");
+    }
+  }
+
+  function browseFile() {
+    if (!selectedClient) {
+      showToast("Select a client first", "error");
+      return;
+    }
+    if (rescanMode && rescanItem) {
+      document.getElementById("fileInput").click();
+      return;
+    }
+    document.getElementById("fileInput").click();
+  }
+
+  async function saveFileToClient(filename, blob, docName = "", propertyAddress = "") {
+    if (!baseFolderHandle) {
+      showToast('Click "Select Folder" first (one-time setup)', "info");
+      return null;
+    }
+    if (!selectedClient) {
+      showToast("Select a client first", "error");
+      return null;
+    }
+    try {
+      const clientsDir = await baseFolderHandle.getDirectoryHandle("Clients", { create: true });
+      const clientDir = await clientsDir.getDirectoryHandle(selectedClient, { create: true });
+      const rawDir = await clientDir.getDirectoryHandle("raw", { create: true });
+
+      const docType = document.getElementById("docTypeSelect").value;
+      // write _doctype.txt (fallback for watcher when no .meta.json)
+      const markerHandle = await rawDir.getFileHandle("_doctype.txt", { create: true });
+      const markerWritable = await markerHandle.createWritable();
+      await markerWritable.write(docType);
+      await markerWritable.close();
+
+      const ts = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 15);
+      const ext = filename.split(".").pop().toLowerCase();
+      const safeName = `scan_${ts}_${Math.random().toString(36).slice(2, 6)}.${ext}`;
+
+      const fh = await rawDir.getFileHandle(safeName, { create: true });
+      const w = await fh.createWritable();
+      await w.write(blob);
+      await w.close();
+
+      const prop = (propertyAddress || "").trim();
+      const nameToStore = (docName || "").trim() || null;
+      try {
+        const metaHandle = await rawDir.getFileHandle(`${safeName}.meta.json`, { create: true });
+        const metaWritable = await metaHandle.createWritable();
+        await metaWritable.write(JSON.stringify({
+          doc_name: nameToStore,
+          property_address: prop || null,
+          doc_type_template: docType
+        }, null, 2));
+        await metaWritable.close();
+      } catch (e) {
+        // non-fatal
+      }
+
+      return safeName;
+    } catch (e) {
+      if (e.name === "AbortError") return null;
+      showToast("Save error: " + e.message, "error");
+      return null;
+    }
+  }
+
+  /* Quality analysis (Layer 1) */
+  function analyzeImage(blob) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const fallback = () => {
+        // If the image cannot be decoded (e.g. unsupported format),
+        // return a safe, neutral quality score so we don't block the queue.
+        resolve({
+          brightness: 70,
+          contrast: 70,
+          sharpness: 70,
+          alignment: 70,
+          overall: 70
+        });
+      };
+      img.onload = () => {
+        const maxWidth = 500;
+        const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const data = imageData.data;
+
+        let sum = 0, sumSq = 0, count = data.length / 4;
+        const gray = new Float32Array(count);
+        for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+          const v = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          gray[j] = v;
+          sum += v;
+          sumSq += v * v;
+        }
+        const mean = sum / count;
+        const variance = sumSq / count - mean * mean;
+
+        // brightness score
+        let brightnessScore;
+        if (mean < 80) brightnessScore = Math.max(0, (mean / 80) * 60);
+        else if (mean > 220) brightnessScore = Math.max(0, (255 - mean) / 35 * 60);
+        else brightnessScore = 80 + ((mean - 80) / 140) * 20;
+        brightnessScore = Math.max(0, Math.min(100, brightnessScore));
+
+        // contrast score
+        const stddev = Math.sqrt(Math.max(0, variance));
+        let contrastScore;
+        if (stddev < 20) contrastScore = (stddev / 20) * 40;
+        else if (stddev > 100) contrastScore = 70 - ((stddev - 100) / 40) * 20;
+        else contrastScore = 70 + ((stddev - 20) / 80) * 30;
+        contrastScore = Math.max(0, Math.min(100, contrastScore));
+
+        // sharpness via simple Laplacian
+        const w2 = w, h2 = h;
+        let lapSum = 0, lapSq = 0, lapCount = 0;
+        const kernel = [0, -1, 0, -1, 4, -1, 0, -1, 0];
+        for (let y = 1; y < h2 - 1; y++) {
+          for (let x = 1; x < w2 - 1; x++) {
+            let v = 0, idx = 0;
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                const px = x + kx;
+                const py = y + ky;
+                const gi = py * w2 + px;
+                v += gray[gi] * kernel[idx++];
+              }
+            }
+            lapSum += v;
+            lapSq += v * v;
+            lapCount++;
+          }
+        }
+        const lapMean = lapSum / Math.max(1, lapCount);
+        const lapVar = lapSq / Math.max(1, lapCount) - lapMean * lapMean;
+        const lapStd = Math.sqrt(Math.max(0, lapVar));
+        let sharpScore;
+        if (lapStd < 5) sharpScore = (lapStd / 5) * 30;
+        else if (lapStd > 30) sharpScore = 90 + Math.min(10, (lapStd - 30));
+        else sharpScore = 40 + ((lapStd - 5) / 25) * 50;
+        sharpScore = Math.max(0, Math.min(100, sharpScore));
+
+        // alignment heuristic
+        let top = 0, bottom = 0, left = 0, right = 0;
+        const thirdH = Math.floor(h2 / 3);
+        const thirdW = Math.floor(w2 / 3);
+        for (let y = 0; y < h2; y++) {
+          for (let x = 0; x < w2; x++) {
+            const gi = y * w2 + x;
+            const v = gray[gi];
+            if (v > mean + 5) {
+              if (y < thirdH) top++;
+              else if (y >= 2 * thirdH) bottom++;
+              if (x < thirdW) left++;
+              else if (x >= 2 * thirdW) right++;
+            }
+          }
+        }
+        const totalEdge = top + bottom + left + right || 1;
+        const balance = Math.min(top, bottom) / Math.max(1, Math.max(top, bottom)) * 0.5 +
+                        Math.min(left, right) / Math.max(1, Math.max(left, right)) * 0.5;
+        let alignScore = 40 + balance * 60;
+        alignScore = Math.max(0, Math.min(100, alignScore));
+
+        const overall = Math.round(
+          sharpScore * 0.4 +
+          brightnessScore * 0.25 +
+          contrastScore * 0.25 +
+          alignScore * 0.1
+        );
+
+        resolve({
+          brightness: Math.round(brightnessScore),
+          contrast: Math.round(contrastScore),
+          sharpness: Math.round(sharpScore),
+          alignment: Math.round(alignScore),
+          overall
+        });
+      };
+      img.onerror = fallback;
+      img.src = URL.createObjectURL(blob);
+    });
+  }
+
+  function qualityClassFromScore(score) {
+    if (score >= 80) return "good";
+    if (score >= 55) return "ok";
+    return "bad";
+  }
+
+  function applyQualityToUI(metrics) {
+    const overall = metrics.overall;
+    const cls = qualityClassFromScore(overall);
+    const center = document.getElementById("centerView");
+    center.classList.remove("flash-good", "flash-ok", "flash-bad");
+    center.classList.add(cls === "good" ? "flash-good" : cls === "ok" ? "flash-ok" : "flash-bad");
+    setTimeout(() => {
+      center.classList.remove("flash-good", "flash-ok", "flash-bad");
+    }, 280);
+
+    const badge = document.getElementById("qualityBadge");
+    badge.className = "quality-badge " + cls;
+    const iconEl = document.getElementById("qualityIcon");
+    const textEl = document.getElementById("qualityText");
+    if (cls === "good") {
+      iconEl.textContent = "✓";
+      textEl.textContent = "Good quality";
+    } else if (cls === "ok") {
+      iconEl.textContent = "⚠";
+      textEl.textContent = "Medium — may need retake";
+    } else {
+      iconEl.textContent = "✕";
+      textEl.textContent = "Poor — retake recommended";
+    }
+    const tag = document.getElementById("qualityScoreTag");
+    tag.className = "quality-score-tag " + cls;
+    tag.textContent = overall;
+
+    function setMetric(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.width = Math.max(5, value) + "%";
+      el.classList.remove("good", "ok", "bad");
+      const c = qualityClassFromScore(value);
+      el.classList.add(c);
+    }
+    setMetric("mSharp", metrics.sharpness);
+    setMetric("mBright", metrics.brightness);
+    setMetric("mContrast", metrics.contrast);
+    setMetric("mAlign", metrics.alignment);
+  }
+
+  /* Session stats / timer */
+  function getSessionElapsedMs() {
+    if (sessionLastStartAt == null) return sessionElapsedMs;
+    return sessionElapsedMs + (Date.now() - sessionLastStartAt);
+  }
+
+  function formatDuration(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+    const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+    const s = String(totalSeconds % 60).padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  }
+
+  function ensureSessionTimerRunning() {
+    const now = Date.now();
+    lastActivityTime = now;
+    if (!sessionStartMs) sessionStartMs = now;
+    if (sessionLastStartAt == null) {
+      sessionLastStartAt = now;
+      if (!sessionTimerId) {
+        sessionTimerId = setInterval(() => {
+          if (sessionLastStartAt != null && lastActivityTime != null) {
+            const idleMs = Date.now() - lastActivityTime;
+            if (idleMs > 60000) {
+              sessionElapsedMs = getSessionElapsedMs();
+              sessionLastStartAt = null;
+            }
+          }
+          updateSessionStats();
+        }, 1000);
+      }
+    }
+  }
+
+  function updateSessionStats(lastName) {
+    if (lastName) {
+      document.getElementById("statLast").textContent = lastName;
+    }
+    document.getElementById("statCount").textContent = String(sessionCount);
+    document.getElementById("sessionLabel").textContent = "Session: " + sessionCount;
+    const elapsed = getSessionElapsedMs();
+    document.getElementById("statTime").textContent = formatDuration(elapsed);
+  }
+
+  /* Queue + dashboard helpers */
+  function classifyScore(score) {
+    if (score >= 80) return "good";
+    if (score >= 55) return "ok";
+    return "bad";
+  }
+
+  function addDocToSession(doc) {
+    sessionDocs.unshift(doc);
+    sessionCount++;
+    ensureSessionTimerRunning();
+    updateSessionStats(doc.name || doc.docId);
+    activeDocId = doc.id;
+    updateLeftQueue();
+    updateDashboardCounts();
+    updateProgress();
+    updateSessionSummary();
+    updateFilteredList();
+    updateRetakeQueue();
+
+    if (selectedClient) {
+      clientSessions[selectedClient] = {
+        docs: sessionDocs.slice(),
+        sessionCount
+      };
+      persistSessions();
+    }
+  }
+
+  function updateLeftQueue() {
+    const list = document.getElementById("queueList");
+    const empty = document.getElementById("queueEmpty");
+    list.innerHTML = "";
+    if (sessionDocs.length === 0) {
+      empty.style.display = "flex";
+      document.getElementById("queueCount").textContent = "0";
+      return;
+    }
+    empty.style.display = "none";
+    document.getElementById("queueCount").textContent = String(sessionDocs.length);
+    sessionDocs.forEach(doc => {
+      const div = document.createElement("div");
+      div.className = "q-item" + (doc.id === activeDocId ? " active" : "");
+      const thumbWrap = document.createElement("div");
+      thumbWrap.className = "q-thumb-wrap";
+      const thumb = document.createElement("div");
+      thumb.className = "q-thumb";
+      if (doc.thumbUrl) {
+        const img = document.createElement("img");
+        img.src = doc.thumbUrl;
+        thumb.appendChild(img);
+      }
+      const dot = document.createElement("div");
+      dot.className = "q-dot " + doc.qualityClass;
+      thumbWrap.appendChild(thumb);
+      thumbWrap.appendChild(dot);
+      const info = document.createElement("div");
+      info.className = "q-info";
+      const nameEl = document.createElement("div");
+      nameEl.className = "q-name";
+      nameEl.textContent = doc.name || doc.docId;
+      const metaEl = document.createElement("div");
+      metaEl.className = "q-meta";
+      metaEl.textContent = `${doc.docId} · ${doc.createdAt}`;
+      info.appendChild(nameEl);
+      info.appendChild(metaEl);
+      const scoreEl = document.createElement("div");
+      scoreEl.className = "q-score " + doc.qualityClass;
+      scoreEl.textContent = doc.score.toString();
+      div.appendChild(thumbWrap);
+      div.appendChild(info);
+      div.appendChild(scoreEl);
+      div.addEventListener("click", () => {
+        activeDocId = doc.id;
+        showDocPreview(doc, "queuePreview");
+        updateLeftQueue();
+      });
+      list.appendChild(div);
+    });
+  }
+
+  function updateDashboardCounts() {
+    // Dashboard cards removed; nothing to do.
+  }
+
+  function updateProgress() {
+    const targetInput = document.getElementById("progTarget");
+    const fillEl = document.getElementById("progFill");
+    const etaEl = document.getElementById("progEta");
+    const pctEl = document.getElementById("progPercent");
+    if (!targetInput || !fillEl || !etaEl || !pctEl) return;
+    let target = parseInt(targetInput.value, 10);
+    if (!target || target < 1) target = 1;
+    const current = sessionDocs.length;
+    const pct = Math.min(100, Math.round((current / target) * 100));
+    document.getElementById("progCurrent").textContent = current;
+    pctEl.textContent = pct + "%";
+    fillEl.style.width = pct + "%";
+    // ETA
+    if (!sessionStartMs || current === 0) {
+      etaEl.textContent = "—";
+    } else {
+      const elapsedSec = (Date.now() - sessionStartMs) / 1000;
+      const perDoc = elapsedSec / current;
+      const remaining = Math.max(0, target - current) * perDoc;
+      etaEl.textContent = "ETA " + formatDuration(remaining * 1000);
+    }
+    updateSessionSummary();
+  }
+
+  function updateSessionSummary() {
+    const emptyEl = document.getElementById("sessionSummaryEmpty");
+    const listEl = document.getElementById("sessionSummaryList");
+    if (!emptyEl || !listEl) return;
+    const byType = {};
+    const byPropertyThenType = {};
+    sessionDocs.forEach(doc => {
+      const rawType = doc.docType || "";
+      const displayType = DOC_TYPE_DISPLAY_NAMES[rawType] || rawType || "Other";
+      byType[displayType] = (byType[displayType] || 0) + 1;
+      const prop = (doc.propertyAddress || "").trim() || "—";
+      if (!byPropertyThenType[prop]) byPropertyThenType[prop] = {};
+      byPropertyThenType[prop][displayType] = (byPropertyThenType[prop][displayType] || 0) + 1;
+    });
+    const types = Object.keys(byType).sort();
+    if (types.length === 0) {
+      emptyEl.style.display = "block";
+      listEl.style.display = "none";
+      listEl.innerHTML = "";
+      return;
+    }
+    emptyEl.style.display = "none";
+    listEl.style.display = "block";
+    let html = "";
+    types.forEach(t => {
+      html += `<div class="session-summary-row"><span class="session-summary-label">${escapeHtml(t)}</span><span class="session-summary-count">${byType[t]}</span></div>`;
+    });
+    const props = Object.keys(byPropertyThenType).filter(p => p !== "—").sort();
+    if (props.length > 0) {
+      html += '<div class="session-summary-divider"></div>';
+      props.forEach(prop => {
+        html += `<div class="session-summary-property">${escapeHtml(prop)}</div>`;
+        const sub = byPropertyThenType[prop];
+        Object.keys(sub).sort().forEach(t => {
+          html += `<div class="session-summary-row session-summary-sub"><span class="session-summary-label">${escapeHtml(t)}</span><span class="session-summary-count">${sub[t]}</span></div>`;
+        });
+      });
+    }
+    html += '<div class="session-summary-divider"></div>';
+    html += `<div class="session-summary-row session-summary-total"><span class="session-summary-label">Total</span><span class="session-summary-count">${sessionDocs.length}</span></div>`;
+    listEl.innerHTML = html;
+  }
+
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function updateRetakeQueue() {
+    const countEl = document.getElementById("rescanRequestsCount");
+    const emptyEl = document.getElementById("rescanRequestsEmpty");
+    const listEl = document.getElementById("rescanRequestsList");
+    if (!countEl || !emptyEl || !listEl || !selectedClient) return;
+
+    countEl.textContent = "0";
+    emptyEl.style.display = "block";
+    listEl.style.display = "none";
+    listEl.classList.remove("visible");
+    listEl.innerHTML = "";
+
+    fetch(`${API_URL}/rescan-queue/${encodeURIComponent(selectedClient)}`, { signal: AbortSignal.timeout(5000) })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const queue = (data && data.queue) ? data.queue : [];
+        countEl.textContent = String(queue.length);
+        if (queue.length === 0) {
+          emptyEl.style.display = "block";
+          listEl.style.display = "none";
+          listEl.classList.remove("visible");
+          return;
+        }
+        emptyEl.style.display = "none";
+        listEl.style.display = "block";
+        listEl.classList.add("visible");
+        queue.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "rescan-card";
+          const thumbUrl = `${API_URL}/doc-image/${encodeURIComponent(selectedClient)}/${encodeURIComponent(item.doc_id)}`;
+          const thumb = item.has_image
+            ? `<img class="rescan-thumb" src="${escapeHtml(thumbUrl)}" alt="">`
+            : `<div class="rescan-thumb-placeholder">📄</div>`;
+          card.innerHTML =
+            thumb +
+            `<div class="rescan-card-body">
+              <div class="rescan-card-doctype">${escapeHtml(item.doc_type)}</div>
+              <div class="rescan-card-name">${escapeHtml(item.doc_name)}</div>
+              <div class="rescan-card-id">${escapeHtml(item.doc_id)}</div>
+              <div class="rescan-card-reason">${escapeHtml(item.reason)}</div>
+            </div>
+            <button type="button" class="rescan-btn-now">Rescan Now</button>`;
+          const btn = card.querySelector(".rescan-btn-now");
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            enterRescanMode(item);
+          });
+          listEl.appendChild(card);
+        });
+      })
+      .catch(() => {});
+  }
+
+  function enterRescanMode(item) {
+    rescanItem = item;
+    rescanMode = true;
+    const banner = document.getElementById("rescanBanner");
+    if (banner) {
+      banner.textContent = `RESCANNING ${item.doc_id} — ${item.doc_name || item.doc_id}. Capture the replacement.`;
+      banner.classList.add("visible");
+    }
+    document.getElementById("centerEmpty").classList.add("hidden");
+    document.getElementById("previewContent").classList.add("active");
+    const canvas = document.getElementById("previewCanvas");
+    const pdfFrameWrap = document.getElementById("pdfFrameWrap");
+    if (canvas) canvas.style.display = "block";
+    if (pdfFrameWrap) pdfFrameWrap.style.display = "none";
+    const img = new Image();
+    img.onload = () => {
+      const ctx = canvas.getContext("2d");
+      const cw = canvas.parentElement ? canvas.parentElement.clientWidth : 800;
+      const ch = canvas.parentElement ? canvas.parentElement.clientHeight : 600;
+      const scale = Math.min(cw / img.width, ch / img.height, 1);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = `${API_URL}/doc-image/${encodeURIComponent(selectedClient)}/${encodeURIComponent(item.doc_id)}`;
+    const defaultActions = document.getElementById("defaultActions");
+    const btnCapture = document.getElementById("btnCapture");
+    if (btnCapture) {
+      btnCapture.textContent = "Capture Replacement";
+      btnCapture.classList.add("btn-rescan-capture");
+    }
+    if (defaultActions) defaultActions.style.display = "flex";
+    document.getElementById("previewActions").style.display = "none";
+    document.getElementById("footerMode").textContent = "Rescan mode — Capture replacement or press Esc to cancel";
+  }
+
+  function exitRescanMode() {
+    rescanMode = false;
+    rescanItem = null;
+    const banner = document.getElementById("rescanBanner");
+    if (banner) banner.classList.remove("visible");
+    const btnCapture = document.getElementById("btnCapture");
+    if (btnCapture) {
+      btnCapture.textContent = "📸 Capture Document";
+      btnCapture.classList.remove("btn-rescan-capture");
+    }
+    exitPreviewToCamera();
+    updateRetakeQueue();
+  }
+
+  async function captureRescanReplace(blob) {
+    if (!rescanItem || !selectedClient) return false;
+    const formData = new FormData();
+    formData.append("image", blob, "rescan.jpeg");
+    try {
+      const res = await fetch(
+        `${API_URL}/rescan-replace/${encodeURIComponent(selectedClient)}/${encodeURIComponent(rescanItem.doc_id)}`,
+        { method: "POST", body: formData, signal: AbortSignal.timeout(30000) }
+      );
+      const result = await res.json();
+      if (result.success) {
+        showToast(`${rescanItem.doc_id} replacement captured. Reprocessing...`, "success");
+        exitRescanMode();
+        return true;
+      }
+      showToast(result.error || "Rescan replace failed", "error");
+      return false;
+    } catch (e) {
+      showToast("Rescan replace failed: " + e.message, "error");
+      return false;
+    }
+  }
+
+  function updateFilteredList() {
+    // Filtered list UI removed; nothing to do.
+  }
+
+  function setQualityFilter(kind) {
+    qualityFilter = null;
+  }
+
+  /* Capture + preview */
+  async function captureImage() {
+    if (!selectedClient) return;
+    if (rescanMode && rescanItem) {
+      if (!currentStream) {
+        showToast("Camera not available for rescan capture", "error");
+        return;
+      }
+      const video = document.getElementById("videoFeed");
+      const canvas = document.getElementById("captureCanvas");
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.95));
+      if (blob && (await captureRescanReplace(blob))) {
+        updateRetakeQueue();
+      }
+      return;
+    }
+    if (!currentStream || viewMode !== "camera") return;
+    const video = document.getElementById("videoFeed");
+    const canvas = document.getElementById("captureCanvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.95));
+    if (!blob) {
+      showToast("Capture failed", "error");
+      return;
+    }
+    const metrics = await analyzeImage(blob);
+    applyQualityToUI(metrics);
+
+    const now = new Date();
+    const stamp = now.toTimeString().slice(0, 8);
+    const id = "local-" + now.getTime() + "-" + Math.random().toString(36).slice(2, 8);
+    const tmpUrl = URL.createObjectURL(blob);
+    const doc = {
+      id,
+      blob,
+      name: "",
+      docId: "",
+      createdAt: stamp,
+      score: metrics.overall,
+      sharp: metrics.sharpness,
+      bright: metrics.brightness,
+      contrast: metrics.contrast,
+      align: metrics.alignment,
+      qualityClass: classifyScore(metrics.overall),
+      thumbUrl: tmpUrl
+    };
+
+    pendingCapture = doc;
+    sessionCount = sessionDocs.length + 1; // predicted
+    if (captureMode === "quick") {
+      const name = getNextDocName();
+      const safeName = await saveFileToClient("capture.jpg", blob, name, getPropertyValue());
+      if (safeName) {
+        incrementCountForCurrentPropertyDocType();
+        doc.docId = deriveDocIdFromSafeName(safeName);
+        doc.name = name;
+        doc.rawName = safeName;
+        doc.docType = document.getElementById("docTypeSelect").value;
+        doc.propertyAddress = getPropertyValue();
+        addDocToSession(doc);
+        showDocPreview(doc, "camera");
+      }
+      pendingCapture = null;
+    } else {
+      showDocPreview(doc, "preview");
+      enterNamingMode();
+    }
+  }
+
+  function deriveDocIdFromSafeName(safeName) {
+    // We don't know DOC-XXXXX until watcher runs; for UI use filename stem
+    return safeName.replace(/\.[^.]+$/, "");
+  }
+
+  function showDocPreview(doc, mode) {
+    viewMode = mode;
+    const centerEmpty = document.getElementById("centerEmpty");
+    const previewContent = document.getElementById("previewContent");
+    if (!previewContent || !centerEmpty) return;
+
+    centerEmpty.classList.add("hidden");
+    previewContent.classList.add("active");
+    const canvas = document.getElementById("previewCanvas");
+    const pdfFrameWrap = document.getElementById("pdfFrameWrap");
+    const pdfFrame = document.getElementById("previewPdfFrame");
+
+    if (doc.hasPdf && selectedClient) {
+      // Show PDF in A4-proportioned wrapper so it doesn't stretch
+      canvas.style.display = "none";
+      pdfFrameWrap.style.display = "block";
+      pdfFrame.src = `${API_URL}/pdf/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.docId)}#toolbar=0&navpanes=0&view=Fit`;
+      return;
+    }
+
+    // Fallback to image preview (camera/browse in current run)
+    canvas.style.display = "block";
+    pdfFrameWrap.style.display = "none";
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      const container = canvas.parentElement;
+      const cw = container ? container.clientWidth : 800;
+      const ch = container ? container.clientHeight : 600;
+      const iw = img.width;
+      const ih = img.height;
+      const scale = Math.min(cw / iw, ch / ih, 1);
+      const drawW = Math.round(iw * scale);
+      const drawH = Math.round(ih * scale);
+      canvas.width = drawW;
+      canvas.height = drawH;
+      ctx.drawImage(img, 0, 0, iw, ih, 0, 0, drawW, drawH);
+    };
+    if (doc.thumbUrl) {
+      img.src = doc.thumbUrl;
+    } else if (doc.blob) {
+      img.src = URL.createObjectURL(doc.blob);
+    } else if (doc.rawName && selectedClient) {
+      img.src = `${API_URL}/raw-image/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.rawName)}`;
+    } else {
+      // No way to load an image; fall back to empty state
+      centerEmpty.classList.remove("hidden");
+      previewContent.classList.remove("active");
+    }
+  }
+
+  function enterNamingMode() {
+    const def = document.getElementById("defaultActions");
+    const prev = document.getElementById("previewActions");
+    if (def && prev) {
+      def.style.display = "none";
+      prev.style.display = "flex";
+    }
+    const input = document.getElementById("nameInput");
+    input.value = getNextDocName();
+    setTimeout(() => input.focus(), 30);
+    document.getElementById("footerMode").textContent = "🔍 careful · naming";
+  }
+
+  async function confirmCurrentName(skipName) {
+    if (!pendingCapture) return;
+    const input = document.getElementById("nameInput");
+    const name = skipName ? getNextDocName() : (input.value || "").trim() || getNextDocName();
+    const safeName = await saveFileToClient("capture.jpg", pendingCapture.blob, name, getPropertyValue());
+    if (!safeName) return;
+    incrementCountForCurrentPropertyDocType();
+    const doc = pendingCapture;
+    doc.docId = deriveDocIdFromSafeName(safeName);
+    doc.name = name || doc.docId;
+    doc.rawName = safeName;
+    doc.docType = document.getElementById("docTypeSelect").value;
+    doc.propertyAddress = getPropertyValue();
+    addDocToSession(doc);
+    pendingCapture = null;
+    exitPreviewToCamera();
+  }
+
+  function discardPendingCapture() {
+    if (!pendingCapture) return;
+    pendingCapture = null;
+    exitPreviewToCamera();
+    showToast("Capture discarded", "info");
+  }
+
+  function exitPreviewToCamera() {
+    viewMode = "camera";
+    const def = document.getElementById("defaultActions");
+    const prev = document.getElementById("previewActions");
+    if (def && prev) {
+      def.style.display = "flex";
+      prev.style.display = "none";
+    }
+    document.getElementById("previewContent").classList.remove("active");
+    document.getElementById("centerEmpty").classList.remove("hidden");
+    document.getElementById("footerMode").textContent =
+      (captureMode === "quick" ? "⚡ quick · ready" : "🔍 careful · ready");
+  }
+
+  /* Export + server status */
+  function updateExportBtn() {
+    document.getElementById("btnExport").disabled = !selectedClient;
+  }
+
+  async function checkServer() {
+    try {
+      const res = await fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(2000) });
+      if (res.ok) {
+        lastServerOkAt = Date.now();
+        pipelineStatus = "idle";
+        updatePipelineStatus();
+        updateExportBtn();
+        return;
+      }
+    } catch (e) {
+      // ignore
+    }
+    pipelineStatus = "offline";
+    updatePipelineStatus();
+    document.getElementById("btnExport").disabled = true;
+  }
+
+  function updatePipelineStatus() {
+    const dot = document.getElementById("serverDot");
+    const txt = document.getElementById("serverStatus");
+    if (pipelineStatus === "idle") {
+      dot.classList.add("on");
+      txt.textContent = "🟢 Pipeline: Idle";
+    } else if (pipelineStatus === "processing") {
+      dot.classList.add("on");
+      txt.textContent = lastProcessingDocLabel
+        ? `🟡 Pipeline: Processing ${lastProcessingDocLabel}...`
+        : "🟡 Pipeline: Processing...";
+    } else {
+      dot.classList.remove("on");
+      txt.textContent = "🔴 Pipeline: Offline";
+    }
+  }
+
+  function markPipelineProcessing(label) {
+    pipelineStatus = "processing";
+    lastProcessingDocLabel = label;
+    updatePipelineStatus();
+    setTimeout(() => {
+      if (pipelineStatus === "processing") {
+        pipelineStatus = "idle";
+        updatePipelineStatus();
+      }
+    }, 5000);
+  }
+
+  async function exportClient() {
+    if (!selectedClient) {
+      showToast("Select a client first", "error");
+      return;
+    }
+    const btn = document.getElementById("btnExport");
+    const prev = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Exporting...";
+    markPipelineProcessing("export");
+    try {
+      const res = await fetch(`${API_URL}/export`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client: selectedClient })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Exported ${data.document_count} docs → ${data.spreadsheet}`, "success");
+        if (data.delivery_folder && confirm("Export complete. Open the delivery folder?")) {
+          try {
+            await fetch(`${API_URL}/open-folder`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ path: data.delivery_folder })
+            });
+            if (data.viewer_url) window.open(data.viewer_url, "_blank");
+          } catch (_) { /* ignore */ }
+        }
+      } else {
+        showToast(`Export failed: ${data.error}`, "error");
+      }
+    } catch (e) {
+      showToast("Export failed: Cannot reach API server. Is it running?", "error");
+      pipelineStatus = "offline";
+      updatePipelineStatus();
+    } finally {
+      btn.textContent = prev;
+      updateExportBtn();
+    }
+  }
+
+  /* Keyboard */
+  document.addEventListener("keydown", (e) => {
+    const activeTag = document.activeElement && document.activeElement.tagName;
+    const inInput = activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT";
+    if (rescanMode && e.key === "Escape") {
+      e.preventDefault();
+      exitRescanMode();
+      return;
+    }
+    if (inInput && e.target === document.getElementById("nameInput")) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        confirmCurrentName(false);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        confirmCurrentName(true);
+      }
+      return;
+    }
+    if (inInput) return;
+
+    if (e.code === "Space" || e.code === "Enter") {
+      e.preventDefault();
+      captureImage();
+    } else if (e.code === "KeyB") {
+      browseFile();
+    } else if (e.code === "KeyR") {
+      if (pendingCapture) {
+        e.preventDefault();
+        discardPendingCapture();
+      }
+    } else if (e.code === "KeyC") {
+      if (viewMode !== "camera") {
+        e.preventDefault();
+        exitPreviewToCamera();
+      }
+    } else if (e.key === "Tab" && viewMode === "preview" && pendingCapture) {
+      e.preventDefault();
+      document.getElementById("nameInput").focus();
+    }
+  });
+
+  /* Event wiring + init */
+  document.getElementById("cameraSelect").addEventListener("change", e => startCamera(e.target.value));
+
+  document.getElementById("clientSelect").addEventListener("change", e => {
+    if (e.target.value === "__add__") {
+      const name = prompt("Enter new client name:");
+      if (name && name.trim()) {
+        addClientOption(name.trim());
+        e.target.value = name.trim();
+        selectClient(name.trim());
+      } else {
+        e.target.value = "";
+        selectClient("");
+      }
+    } else {
+      selectClient(e.target.value);
+    }
+  });
+
+  (function wirePropertyInput() {
+    const el = document.getElementById("propertyInput");
+    if (!el) return;
+    el.addEventListener("input", () => {
+      clearTimeout(propertySuggestionsDebounceTimer);
+      propertySuggestionsDebounceTimer = setTimeout(() => fetchPropertySuggestions(getPropertyValue()), 300);
+    });
+    el.addEventListener("blur", () => { persistPropertyForClient(); });
+  })();
+
+  document.getElementById("btnSelectFolder").addEventListener("click", pickScanSystemFolder);
+  document.getElementById("btnBrowse").addEventListener("click", browseFile);
+  document.getElementById("btnCapture").addEventListener("click", captureImage);
+  document.getElementById("btnRetake").addEventListener("click", discardPendingCapture);
+  document.getElementById("btnConfirm").addEventListener("click", () => confirmCurrentName(false));
+
+  document.getElementById("fileInput").addEventListener("change", e => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    if (rescanMode && rescanItem) {
+      captureRescanReplace(files[0]).then(() => updateRetakeQueue());
+      return;
+    }
+    showToast("Adding " + files.length + " file(s) to this session", "info");
+    for (const f of files) {
+      try {
+        const now = new Date();
+        const stamp = now.toTimeString().slice(0, 8);
+        const id = "local-" + now.getTime() + "-" + Math.random().toString(36).slice(2, 8);
+        const doc = {
+          id,
+          blob: f,
+          name: f.name,
+          docId: "",
+          createdAt: stamp,
+          score: 0,
+          sharp: 0,
+          bright: 0,
+          contrast: 0,
+          align: 0,
+          qualityClass: "ok",
+          thumbUrl: URL.createObjectURL(f),
+          docType: document.getElementById("docTypeSelect").value,
+          propertyAddress: getPropertyValue()
+        };
+
+        // Immediately add to session so every selected file appears in the queue,
+        // even if analysis or save runs slowly or fails.
+        addDocToSession(doc);
+        showDocPreview(doc, "queuePreview");
+
+        (async () => {
+          try {
+            const metrics = await analyzeImage(f);
+            const overall = metrics.overall;
+            doc.score = overall;
+            doc.sharp = metrics.sharpness;
+            doc.bright = metrics.brightness;
+            doc.contrast = metrics.contrast;
+            doc.align = metrics.alignment;
+            doc.qualityClass = qualityClassFromScore(overall);
+            updateLeftQueue();
+            updateDashboardCounts();
+            updateProgress();
+            updateFilteredList();
+            updateRetakeQueue();
+          } catch (err) {
+            // analysis failure is non-fatal; keep doc in queue
+          }
+
+          const safeName = await saveFileToClient(f.name, f, f.name, getPropertyValue());
+          if (safeName) {
+            doc.docId = deriveDocIdFromSafeName(safeName);
+            doc.rawName = safeName;
+            updateLeftQueue();
+          }
+        })();
+      } catch (err) {
+        showToast("Could not add " + (f && f.name ? f.name : "file") + ": " + err.message, "error");
+      }
+    }
+    e.target.value = "";
+  });
+
+  document.getElementById("modeQuickBtn").addEventListener("click", () => {
+    captureMode = "quick";
+    document.getElementById("modeQuickBtn").classList.add("active");
+    document.getElementById("modeCarefulBtn").classList.remove("active");
+    document.getElementById("footerMode").textContent = "⚡ quick · ready";
+  });
+  document.getElementById("modeCarefulBtn").addEventListener("click", () => {
+    captureMode = "careful";
+    document.getElementById("modeCarefulBtn").classList.add("active");
+    document.getElementById("modeQuickBtn").classList.remove("active");
+    document.getElementById("footerMode").textContent = "🔍 careful · ready";
+  });
+
+  document.getElementById("progTarget").addEventListener("change", updateProgress);
+
+  document.getElementById("btnExport").addEventListener("click", exportClient);
+  document.getElementById("btnOpenReview").addEventListener("click", () => {
+    window.open("review_station.html", "_blank");
+  });
+
+  loadSessionsFromStorage();
+  loadCameras();
+  loadClientsFromApi();
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener("devicechange", loadCameras);
+  }
+  checkServer();
+  serverCheckTimer = setInterval(checkServer, 5000);
+  rescanPollTimer = setInterval(updateRetakeQueue, 10000);
+  updateRetakeQueue();
+</script>
+</body>
+</html>
+

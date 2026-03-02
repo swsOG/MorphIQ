@@ -1,0 +1,14 @@
+{
+  "doc_type": "Tenancy Agreement",
+  "display_name": "Tenancy Agreement (AST)",
+  "fields": [
+    { "key": "property_address", "label": "Property Address", "type": "text" },
+    { "key": "tenant_full_name", "label": "Tenant Full Name(s)", "type": "text" },
+    { "key": "landlord_name", "label": "Landlord Name", "type": "text" },
+    { "key": "start_date", "label": "Start Date", "type": "text" },
+    { "key": "end_date", "label": "End Date", "type": "text" },
+    { "key": "monthly_rent_amount", "label": "Monthly Rent (£)", "type": "text" },
+    { "key": "deposit_amount", "label": "Deposit Amount (£)", "type": "text" },
+    { "key": "agreement_date", "label": "Agreement / Signature Date", "type": "text" }
+  ]
+}

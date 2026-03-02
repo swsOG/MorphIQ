@@ -1,0 +1,10 @@
+{
+  "doc_type": "General Document",
+  "display_name": "General Document (OCR Quality Check)",
+  "fields": [
+    { "key": "document_title", "label": "Document Title / Description", "type": "text" },
+    { "key": "ocr_quality", "label": "OCR Quality (Good / Partial / Poor)", "type": "text" },
+    { "key": "searchable", "label": "Text Searchable? (Yes / No)", "type": "text" },
+    { "key": "notes", "label": "Notes", "type": "text" }
+  ]
+}

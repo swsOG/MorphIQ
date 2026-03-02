@@ -1,0 +1,15 @@
+{
+  "doc_type": "Gas Safety Certificate",
+  "display_name": "Gas Safety Certificate (CP12)",
+  "fields": [
+    { "key": "property_address", "label": "Property Address", "type": "text" },
+    { "key": "landlord_name", "label": "Landlord Name", "type": "text" },
+    { "key": "engineer_name", "label": "Engineer Name", "type": "text" },
+    { "key": "gas_safe_reg", "label": "Gas Safe Reg Number", "type": "text" },
+    { "key": "inspection_date", "label": "Inspection Date", "type": "text" },
+    { "key": "expiry_date", "label": "Expiry Date", "type": "text" },
+    { "key": "appliances_tested", "label": "Appliances Tested", "type": "text" },
+    { "key": "result", "label": "Overall Result (Pass/Fail)", "type": "text" },
+    { "key": "defects_noted", "label": "Defects / Warnings", "type": "text" }
+  ]
+}
