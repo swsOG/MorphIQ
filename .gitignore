@@ -1,0 +1,7 @@
+Clients/
+Exports/
+Logs/
+*.log
+*.xlsx
+*.pdf
+*.jpeg
