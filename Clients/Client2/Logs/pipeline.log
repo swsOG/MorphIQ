@@ -1,0 +1,25 @@
+[2026-03-03 22:22:50] START: scan_20260303222248._s9zf.jpeg
+[2026-03-03 22:22:50]   Doc name: Assured_Shorthold_Tenancy_Agreement_Page_7.jpeg
+[2026-03-03 22:22:50]   Doc type: Tenancy Agreement (template: tenancy_agreement)
+[2026-03-03 22:22:50]   DocID: DOC-00001 -> C:\ScanSystem_v2\Clients\Client2\Batches\2026-03-03\DOC-00001
+[2026-03-03 22:22:50] ImageMagick: C:\Program Files\ImageMagick-7.1.2-Q16\magick.exe C:\ScanSystem_v2\Clients\Client2\raw\scan_20260303222248._s9zf.jpeg -strip -auto-orient -colorspace Gray -density 300 -trim +repage -bordercolor white -border 20 -contrast-stretch 1%x1% -adaptive-sharpen 0x1.0 C:\ScanSystem_v2\temp\Client2_scan_20260303222248._s9zf_ocr.png
+[2026-03-03 22:22:52] OCRmyPDF: ocrmypdf --image-dpi 300 --force-ocr --deskew --rotate-pages --tesseract-pagesegmode 4 -l eng C:\ScanSystem_v2\temp\Client2_scan_20260303222248._s9zf_ocr.png C:\ScanSystem_v2\Clients\Client2\Batches\2026-03-03\DOC-00001\scan_20260303222248._s9zf.pdf
+[2026-03-03 22:22:56] Input file is not a PDF, checking if it is an image...
+Input file is an image
+Image seems valid. Try converting to PDF...
+Successfully converted to PDF, processing...
+    1 page is facing \u21e9, confidence 5.36 - confidence too low to rotate
+Parsing 1 pages with HocrParser
+Postprocessing...
+[WinError 2] The system cannot find the file specified
+Auto mode: passing through as PDF/A (input already compliant)
+[WinError 2] The system cannot find the file specified
+[WinError 2] The system cannot find the file specified
+Image optimization ratio: 1.00 savings: 0.0%
+Total file size ratio: 0.97 savings: -3.2%
+Output file is a PDF (auto mode)
+
+[2026-03-03 22:22:56] SUCCESS: scan_20260303222248._s9zf.jpeg -> DOC-00001
+[2026-03-03 22:22:56]   PDF:    C:\ScanSystem_v2\Clients\Client2\Batches\2026-03-03\DOC-00001\scan_20260303222248._s9zf.pdf
+[2026-03-03 22:22:56]   Image:  C:\ScanSystem_v2\Clients\Client2\Batches\2026-03-03\DOC-00001\scan_20260303222248._s9zf.jpeg
+[2026-03-03 22:22:56]   Review: C:\ScanSystem_v2\Clients\Client2\Batches\2026-03-03\DOC-00001\review.json

@@ -1254,7 +1254,7 @@
     const main = document.querySelector(".preview-main");
     if (!main) return;
 
-    const url = `${API_URL}/pdf/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.doc_id)}#toolbar=0&navpanes=0&view=FitH`;
+    const url = `${API_URL}/pdf/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.doc_id)}#toolbar=0&navpanes=0&view=Fit&zoom=page-fit`;
     let loading = document.getElementById("previewLoading");
     if (!loading) {
       loading = document.createElement("p");

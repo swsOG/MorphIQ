@@ -1,0 +1,29 @@
+{
+  "doc_id": "DOC-00001",
+  "doc_type": "Tenancy Agreement",
+  "doc_type_template": "Tenancy Agreement (AST)",
+  "status": "New",
+  "quality_score": "",
+  "files": {
+    "pdf": "scan_20260303222248._s9zf.pdf",
+    "raw_image": "scan_20260303222248._s9zf.jpeg"
+  },
+  "fields": {
+    "property_address": "",
+    "tenant_full_name": "",
+    "landlord_name": "",
+    "start_date": "",
+    "end_date": "",
+    "monthly_rent_amount": "",
+    "deposit_amount": "",
+    "agreement_date": ""
+  },
+  "review": {
+    "reviewed_by": "",
+    "reviewed_at": "",
+    "exported_at": "",
+    "scanned_at": "2026-03-03 22:22:56",
+    "notes": ""
+  },
+  "doc_name": "Assured_Shorthold_Tenancy_Agreement_Page_7.jpeg"
+}
