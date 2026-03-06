@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="topbar">
+  <h2 id="panel-title">Dashboard</h2>
+  <div class="user-chip">Logged in: <strong id="user-label">Demo User</strong></div>
+</header>
+
+<section class="panel active">
+  <h3>Documents</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Doc ID</th>
+          <th>Document Name</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in documents %}
+        <tr>
+          <td>{{ doc.get('source_doc_id') or doc.get('id', '') }}</td>
+          <td>{{ doc.get('doc_name', '') }}</td>
+          <td>{{ doc.get('status', '') }}</td>
+          <td>{{ doc.get('scanned_at', '') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

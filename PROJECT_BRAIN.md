@@ -1,5 +1,5 @@
 # PROJECT BRAIN — ScanStation Document Archiving System
-> **Last updated:** 2026-02-23
+> **Last updated:** 2025-03-06
 > **Purpose:** Single source of truth for the current system. Read this before making changes.
 
 ---
@@ -32,6 +32,7 @@
 - 5 document type templates in Templates/ ✅
 - **Batch files:** Start_System_v2.bat (watcher + server minimised, open scan_station.html); Stop_System.bat (kill watcher + API); Stop_Watcher.bat (kill watcher only); setup_check.bat (Python, Tesseract, ImageMagick, ocrmypdf, openpyxl, C:\ScanSystem_v2, Templates, flask, flask-cors, pdfminer.six) ✅
 - **User_Guide/** folder with README, 01_ScanStation, 02_ReviewStation, 03_Viewer ✅
+- **MorphIQ portal** (Flask app in portal/api): Dark login page at GET /login (template portal/frontend/templates/login.html); POST /login redirects to /dashboard; GET /dashboard renders main portal (base.html). UI blueprint (ui_bp) registered in app.py; template_folder and static_folder set to portal/frontend so Flask finds templates and static files ✅
 
 ### What's NOT done yet:
 - Pricing not finalised; no paying clients; no business phone number
@@ -53,6 +54,16 @@
 - When inserting into portal.db, the watcher now looks up or creates the right client, property (by client + address), and document type rows instead of using hardcoded IDs, so source_doc_id remains unique per client.
 - The watcher now passes the current environment (including `ANTHROPIC_API_KEY`) into the `ai_prefill.py` subprocess so Claude prefill works reliably.
 - Next step: teach the AI prefill script how to handle more document types beyond tenancy agreements and monitor logs for any remaining watcher/db errors.
+
+### CURRENT STATE SNAPSHOT — 2025-03-06
+- MorphIQ portal login page and dashboard were added. Login page uses a dark theme (background #061617, card #0d2526, accent #7AAFA6), Inter font, and lives at portal/frontend/templates/login.html.
+- GET /login shows the login form; POST /login accepts any email/password and redirects to /dashboard (no real authentication yet).
+- GET /dashboard was added and renders the main portal layout (base.html) so users no longer see 404 after signing in.
+- The UI blueprint (ui_bp) that holds /login and /dashboard is now registered in portal/api/app.py so those routes work.
+- Flask app was configured with template_folder and static_folder pointing to portal/frontend so login.html and CSS are found.
+- Login and dashboard flow is working end to end: open /login, submit form, land on dashboard.
+- In progress: none.
+- Next: add real authentication for the portal when needed; no other portal changes planned in this snapshot.
 
 ---
 
@@ -297,6 +308,7 @@ Not yet built: Deposit Protection Certificate, Inventory/Check-in Report.
 | 2026-02-28 | PROJECT_BRAIN.md updated by scanning actual codebase — all sections verified against live code: server endpoints (open-folder, delivery, raw-image, raw-list, rescan-queue), export (property→doc type, archive_data, viewer embed, pdfplumber, field extraction), ScanStation (queue from /docs, rescan panel, PDF toolbar hidden, viewer_url), ReviewStation (Sent to rescan, FitH, toolbar=0), viewer (Document/Details tabs, PDF.js, search highlight when HTTP), rescan workflow, Templates table, dependencies (pdfplumber added) | Cursor |
 | 2026-02-23 | Five fixes: (1) ScanStation PDF preview: toolbar hidden via #toolbar=0&navpanes=0&view=FitH. (2) ScanStation: PROPERTY input with autocomplete (GET /docs/<client>, 300ms debounce), sessionStorage; auto-naming "Property - DocType N" per property+docType; .meta.json in raw/ with doc_name, property_address, doc_type_template; watcher reads .meta.json, writes doc_name and pre-fills property_address in review.json, uses doc_type_template, deletes .meta.json; server list_docs returns doc_name. (3) ScanStation: Session Summary in right panel (doc type counts, by-property breakdown). (4) ReviewStation: PDF preview loads immediately when entering View 3 (iframe src set in requestAnimationFrame). (5) Viewer: search-term highlighting in Details tab (full_text with <mark>) when opening from search; works from file://; Details tab shown by default when opening from search. | Cursor |
 | 2026-02-23 | Viewer (FIX 3): PDF.js upgraded to 3.11.174; search term highlighted on PDF in Document tab (text layer + .pdf-search-highlight). When PDF.js fails (offline/file://), fallback to iframe and show note: "Open from the server URL..." or "Connect to internet for PDF search highlighting." | Cursor |
+| 2025-03-06 | MorphIQ portal: login page (dark theme, login.html), GET/POST /login, GET /dashboard; ui_bp registered in app.py; Flask template_folder and static_folder set to portal/frontend. PROJECT_BRAIN CURRENT STATE and snapshot updated. | Cursor |
 | 2026-02-23 | Rescan workflow rebuild — replace in place, no duplicates. Server: GET /doc-image, POST /rescan-replace (save new image to DOC folder, .reprocess trigger); POST /reprocess no longer copies to raw, accepts JSON body { reason }; GET /rescan-queue returns { queue } with doc_name, doc_type, reason, has_image. Watcher: check_reprocess_triggers() processes .reprocess in DOC folders, runs OCR in place, removes from rescan_queue. ScanStation: rescan panel shows per-doc cards with thumbnail, Rescan Now; rescan mode shows old image, Capture Replacement, Browse Files → /rescan-replace; Esc cancels. ReviewStation: Request re-scan opens reason modal (Blurry, Cropped, Wrong document, Too dark/light, Other), POST reason to /reprocess. | Cursor |
 | 2026-02-23 | Added User_Guide folder for first-time users: README (overview, what is ScanStation/ReviewStation/Viewer, getting started), 01_ScanStation.md (capture, queue, rescan, export), 02_ReviewStation.md (dashboard, review, verify, request rescan, export), 03_Viewer.md (browse archive, search, delivery folder). | Cursor |
 | 2026-02-23 | PROJECT_BRAIN.md fully rebuilt from codebase scan — all sections verified against actual code. API endpoints table with request/response details; processing and reprocessing pipelines step-by-step; ScanStation (layout, property naming, session summary, rescan panel, quality note, Quick/Careful, keyboard shortcuts, API calls); ReviewStation (views, status types, rescan modal, export, keyboard, API calls); Viewer (data load, tabs, search, offline/online, PDF.js). Rescan workflow and document unit clarified. | Cursor |

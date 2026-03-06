@@ -1,24 +1,35 @@
 const state = {
   user: null,
-  docs: [
-    { id: 1, source_doc_id: 'DOC-00001', doc_name: '42 Oak Road - Tenancy Agreement 1', property_id: 1, property_address: '42 Oak Road, Harlow', tenant: 'John Smith', document_type: 'Tenancy Agreement', status: 'Verified', date: '2026-02-21', pdf_path: 'C:/ScanSystem_v2/Clients/Belvoir/Batches/2026-02-21/DOC-00001/document.pdf', fields: { landlord_name: 'ABC Properties Ltd', monthly_rent_amount: '£1,200' } },
-    { id: 2, source_doc_id: 'DOC-00017', doc_name: '14 Mill Lane - Gas Safety', property_id: 2, property_address: '14 Mill Lane, Harlow', tenant: 'Sarah Miles', document_type: 'Gas Safety Certificate', status: 'Verified', date: '2026-02-24', pdf_path: 'C:/ScanSystem_v2/Clients/Belvoir/Batches/2026-02-24/DOC-00017/document.pdf', fields: { expiry_date: '2026-03-10', engineer_name: 'D. Carter' } },
-    { id: 3, source_doc_id: 'DOC-00023', doc_name: '14 Mill Lane - EPC', property_id: 2, property_address: '14 Mill Lane, Harlow', tenant: 'Sarah Miles', document_type: 'EPC', status: 'Needs Review', date: '2026-03-02', pdf_path: 'C:/ScanSystem_v2/Clients/Belvoir/Batches/2026-03-02/DOC-00023/document.pdf', fields: { valid_until: '2026-03-01', current_rating: 'C' } }
-  ],
-  compliance: [
-    { record_type: 'gas_safety_expiry', property_address: '14 Mill Lane, Harlow', expiry_date: '2026-03-10', status: 'expiring_soon' },
-    { record_type: 'epc_expiry', property_address: '14 Mill Lane, Harlow', expiry_date: '2026-03-01', status: 'expired' },
-    { record_type: 'tenancy_end', property_address: '42 Oak Road, Harlow', expiry_date: '2026-12-31', status: 'valid' }
-  ],
+  docs: [],
+  compliance: [],
 };
+
+async function loadDocuments() {
+  try {
+    const response = await fetch('/api/documents/search');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch documents: ${response.status}`);
+    }
+    const data = await response.json();
+    const docs = Array.isArray(data.results) ? data.results : [];
+    state.docs = docs;
+    renderFilters();
+    renderDocs(docs);
+    renderProperties();
+  } catch (err) {
+    console.error(err);
+    const tbody = document.getElementById('documents-table');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7">Failed to load documents.</td></tr>';
+    }
+  }
+}
 
 function init() {
   bindNav();
   bindLogin();
   bindFilters();
-  renderFilters();
-  renderDocs(state.docs);
-  renderProperties();
+  loadDocuments();
   renderCompliance();
 }
 
@@ -71,13 +82,13 @@ function renderDocs(docs) {
   const tbody = document.getElementById('documents-table');
   tbody.innerHTML = docs.map(doc => `
     <tr data-id="${doc.id}">
-      <td>${doc.source_doc_id}</td>
-      <td>${doc.doc_name}</td>
-      <td>${doc.property_address}</td>
+      <td>${doc.source_doc_id || ''}</td>
+      <td>${doc.doc_name || ''}</td>
+      <td>${doc.property_address || ''}</td>
       <td>${doc.tenant || '-'}</td>
-      <td>${doc.document_type}</td>
-      <td>${doc.status}</td>
-      <td>${doc.date}</td>
+      <td>${doc.document_type || ''}</td>
+      <td>${doc.status || ''}</td>
+      <td>${doc.scanned_at || ''}</td>
     </tr>
   `).join('');
 

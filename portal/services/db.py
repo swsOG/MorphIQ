@@ -5,13 +5,16 @@ from __future__ import annotations
 import os
 import sqlite3
 from contextlib import contextmanager
+from pathlib import Path
 
 
 def get_database_url() -> str:
-    dsn = os.getenv("DATABASE_URL")
-    if not dsn:
-        raise RuntimeError("DATABASE_URL is not set")
-    return dsn
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        # Default to SQLite
+        db_path = Path(__file__).parent.parent.parent / "portal.db"
+        url = f"sqlite:///{db_path}"
+    return url
 
 
 @contextmanager

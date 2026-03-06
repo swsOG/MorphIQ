@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, redirect, render_template, request
 
 from portal.services import PortalQueryService, SearchFilters, parse_date_param
 
 api_bp = Blueprint("portal_api", __name__, url_prefix="/api")
+ui_bp = Blueprint("portal_ui", __name__)
 service = PortalQueryService()
 
 
@@ -71,6 +72,25 @@ def get_compliance_status():
         tenant=request.args.get("tenant"),
     )
     return jsonify(data)
+
+
+@ui_bp.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        return redirect("/dashboard")
+    return render_template("login.html")
+
+
+@ui_bp.route("/dashboard")
+def dashboard():
+    docs = service.search_documents(SearchFilters(limit=50))
+    return render_template("dashboard.html", documents=docs)
+
+
+@ui_bp.route("/documents")
+def documents():
+    docs = service.search_documents(SearchFilters(limit=100))
+    return render_template("documents.html", documents=docs)
 
 
 def _to_int(raw: str | None, default: int | None = None) -> int | None:

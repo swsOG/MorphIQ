@@ -53,28 +53,28 @@ class PortalQueryService:
 
         if filters.tenant:
             where.append(
-                "EXISTS (SELECT 1 FROM tenants t WHERE t.property_id = d.property_id AND t.client_id = d.client_id AND t.full_name ILIKE %s)"
+                "EXISTS (SELECT 1 FROM tenants t WHERE t.property_id = d.property_id AND t.client_id = d.client_id AND t.full_name LIKE %s)"
             )
             params.append(f"%{filters.tenant}%")
 
         if filters.address:
-            where.append("p.address ILIKE %s")
+            where.append("p.address LIKE %s")
             params.append(f"%{filters.address}%")
 
         if filters.document_type:
-            where.append("dt.label ILIKE %s")
+            where.append("dt.label LIKE %s")
             params.append(f"%{filters.document_type}%")
 
         if filters.date_from:
-            where.append("COALESCE(d.scanned_at::date, d.batch_date) >= %s")
+            where.append("COALESCE(date(d.scanned_at), d.batch_date) >= %s")
             params.append(filters.date_from)
 
         if filters.date_to:
-            where.append("COALESCE(d.scanned_at::date, d.batch_date) <= %s")
+            where.append("COALESCE(date(d.scanned_at), d.batch_date) <= %s")
             params.append(filters.date_to)
 
         if filters.q:
-            where.append("(d.doc_name ILIKE %s OR d.source_doc_id ILIKE %s OR COALESCE(d.full_text, '') ILIKE %s)")
+            where.append("(d.doc_name LIKE %s OR d.source_doc_id LIKE %s OR COALESCE(d.full_text, '') LIKE %s)")
             term = f"%{filters.q}%"
             params.extend([term, term, term])
 
@@ -276,7 +276,7 @@ class PortalQueryService:
 
         if tenant:
             where.append(
-                "EXISTS (SELECT 1 FROM tenants t WHERE t.property_id = cr.property_id AND t.client_id = cr.client_id AND t.full_name ILIKE %s)"
+                "EXISTS (SELECT 1 FROM tenants t WHERE t.property_id = cr.property_id AND t.client_id = cr.client_id AND t.full_name LIKE %s)"
             )
             params.append(f"%{tenant}%")
 

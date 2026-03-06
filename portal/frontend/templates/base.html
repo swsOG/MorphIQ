@@ -25,6 +25,7 @@
     </aside>
 
     <main class="content">
+      {% block content %}
       <header class="topbar">
         <h2 id="panel-title">Document Search</h2>
         <div class="user-chip">Logged in: <strong id="user-label">Demo User</strong></div>
@@ -82,6 +83,7 @@
         <h3>Compliance Alerts</h3>
         <div class="alerts" id="compliance-alerts"></div>
       </section>
+      {% endblock %}
     </main>
   </div>
 

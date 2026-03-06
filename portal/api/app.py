@@ -1,11 +1,16 @@
 from flask import Flask
 
-from .routes import api_bp
+from .routes import api_bp, ui_bp
 
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder="../frontend/templates",
+        static_folder="../frontend/static",
+    )
     app.register_blueprint(api_bp)
+    app.register_blueprint(ui_bp)
     return app
 
 
