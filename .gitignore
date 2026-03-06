@@ -4,4 +4,6 @@ Logs/
 *.log
 *.xlsx
 *.pdf
-*.jpegportal.db 
+*.jpeg
+portal.db
+.env

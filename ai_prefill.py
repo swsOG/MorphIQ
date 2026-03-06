@@ -9,6 +9,18 @@ import urllib.request
 import urllib.error
 
 
+env_path = Path(__file__).parent / ".env"
+if env_path.exists():
+    try:
+        with env_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                if "=" in line and not line.lstrip().startswith("#"):
+                    key, val = line.strip().split("=", 1)
+                    os.environ[key] = val
+    except Exception:
+        pass
+
+
 BASE = Path(r"C:\ScanSystem_v2")
 CLIENTS_DIR = BASE / "Clients"
 
@@ -196,9 +208,10 @@ def prefill_doc(doc_folder: Path) -> None:
         or review.get("doc_type")
         or ""
     ).strip()
-    normalized = doc_type.lower().replace(" ", "_")
+    doc_type_lower = doc_type.lower()
 
-    if normalized != "tenancy_agreement":
+    # Treat any doc_type containing the word "tenancy" as a tenancy agreement.
+    if "tenancy" not in doc_type_lower:
         log(f"Skipping AI prefill for doc_type '{doc_type}' (no template configured)", doc_folder)
         return
 

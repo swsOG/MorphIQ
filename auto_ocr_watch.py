@@ -4,8 +4,21 @@ import shutil
 import subprocess
 import sqlite3
 import sys
+import os
+import re
 from pathlib import Path
 from datetime import datetime
+
+env_path = Path(__file__).parent / ".env"
+if env_path.exists():
+    try:
+        with env_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                if "=" in line and not line.lstrip().startswith("#"):
+                    key, val = line.strip().split("=", 1)
+                    os.environ[key] = val
+    except Exception:
+        pass
 
 # ──────────────────────────────────────────────
 # CONFIGURATION
@@ -352,6 +365,54 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
             scanned_at_value = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             status_value = "verified"
 
+            # Look up or create client
+            cur.execute("SELECT id FROM clients WHERE name = ?", (client_name,))
+            row = cur.fetchone()
+            if row:
+                client_id = row[0]
+            else:
+                client_slug = client_name.strip().lower().replace(" ", "-") or "client"
+                cur.execute(
+                    "INSERT INTO clients (name, slug) VALUES (?, ?)",
+                    (client_name, client_slug),
+                )
+                client_id = cur.lastrowid
+
+            # Look up or create property for this client
+            property_address = initial_fields.get("property_address") if initial_fields else None
+            if not property_address:
+                property_address = "Unassigned property"
+            cur.execute(
+                "SELECT id FROM properties WHERE client_id = ? AND address = ?",
+                (client_id, property_address),
+            )
+            row = cur.fetchone()
+            if row:
+                property_id = row[0]
+            else:
+                cur.execute(
+                    "INSERT INTO properties (client_id, address) VALUES (?, ?)",
+                    (client_id, property_address),
+                )
+                property_id = cur.lastrowid
+
+            # Look up or create document type
+            doc_type_label = template.get("doc_type", doc_type_name)
+            cur.execute(
+                "SELECT id FROM document_types WHERE label = ?",
+                (doc_type_label,),
+            )
+            row = cur.fetchone()
+            if row:
+                document_type_id = row[0]
+            else:
+                doc_type_key = re.sub(r"[^a-z0-9]+", "-", doc_type_name.lower()).strip("-") or "document"
+                cur.execute(
+                    "INSERT INTO document_types (key, label) VALUES (?, ?)",
+                    (doc_type_key, doc_type_label),
+                )
+                document_type_id = cur.lastrowid
+
             cur.execute(
                 """
                 INSERT INTO documents (
@@ -368,9 +429,9 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    1,  # client_id
-                    1,  # property_id
-                    1,  # document_type_id
+                    client_id,
+                    property_id,
+                    document_type_id,
                     source_doc_id,
                     doc_name_value,
                     pdf_path_value,
@@ -390,6 +451,21 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
                     pass
 
         log(f"SUCCESS: {image_path.name} -> {doc_id}", client_name)
+        try:
+            env = os.environ.copy()
+            prefill_result = subprocess.run(
+                ["python", "ai_prefill.py", str(doc_folder)],
+                capture_output=True,
+                text=True,
+                cwd=r"C:\ScanSystem_v2",
+                env=env,
+            )
+            if prefill_result.returncode == 0:
+                log(f"AI PREFILL: success for {doc_id}", client_name)
+            else:
+                log(f"AI PREFILL WARN: {prefill_result.stderr}", client_name)
+        except Exception as e:
+            log(f"AI PREFILL ERROR: {e}", client_name)
         log(f"  PDF:    {output_pdf}", client_name)
         log(f"  Image:  {archived_image}", client_name)
         log(f"  Review: {review_path}", client_name)
@@ -397,7 +473,8 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
     except Exception as e:
         log(f"ERROR: {image_path.name}: {e}", client_name)
         if not image_path.exists() and (doc_folder / image_path.name).exists():
-            shutil.move(str(doc_folder / image_path.name), str(image_path))
+            if (doc_folder / image_path.name).exists():
+                shutil.move(str(doc_folder / image_path.name), str(image_path))
         try:
             if doc_folder.exists() and not any(doc_folder.iterdir()):
                 doc_folder.rmdir()

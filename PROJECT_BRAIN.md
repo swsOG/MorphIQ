@@ -44,6 +44,16 @@
 ### Known issues:
 - **[WinError 2]** in pipeline.log during OCR — non-fatal; PDF still generated. May relate to ghostscript/jbig2.
 
+### CURRENT STATE SNAPSHOT — 2026-02-23
+- After each successful scan, the watcher now calls `ai_prefill.py` for that DOC folder to try to fill in fields automatically.
+- OCR and review.json creation still work the same as before; the AI step runs afterwards.
+- AI prefill logs success, warnings, or errors into the existing client pipeline log so humans can see what happened.
+- A crash when trying to move the original image back on errors has been fixed; the move now only runs if the source file actually exists.
+- AI prefill now recognises any doc_type containing the word “Tenancy” (e.g. “Tenancy Agreement (AST)”) as a tenancy agreement and runs the correct field extraction.
+- When inserting into portal.db, the watcher now looks up or creates the right client, property (by client + address), and document type rows instead of using hardcoded IDs, so source_doc_id remains unique per client.
+- The watcher now passes the current environment (including `ANTHROPIC_API_KEY`) into the `ai_prefill.py` subprocess so Claude prefill works reliably.
+- Next step: teach the AI prefill script how to handle more document types beyond tenancy agreements and monitor logs for any remaining watcher/db errors.
+
 ---
 
 ## SYSTEM ARCHITECTURE
