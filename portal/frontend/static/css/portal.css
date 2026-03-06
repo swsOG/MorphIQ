@@ -1,0 +1,93 @@
+:root {
+  --bg: #0b1020;
+  --panel: #111a2e;
+  --panel-2: #17233d;
+  --muted: #9aa6c5;
+  --text: #e8edf8;
+  --accent: #3d7bf5;
+  --border: #253353;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--text);
+  background: linear-gradient(140deg, #08101f, #101a33 60%, #0b1020);
+  min-height: 100vh;
+}
+
+.app-shell { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+.sidebar { border-right: 1px solid var(--border); background: rgba(8, 14, 30, 0.95); padding: 20px 14px; }
+.brand { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+.brand-mark { width: 40px; height: 40px; border-radius: 10px; background: var(--accent); color: white; display:flex; align-items:center; justify-content:center; font-weight:700; }
+.brand h1 { margin: 0; font-size: 18px; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+
+nav { display: flex; flex-direction: column; gap: 8px; }
+.nav-item {
+  background: transparent; border: 1px solid var(--border); color: var(--text);
+  text-align: left; padding: 10px 12px; border-radius: 8px; cursor: pointer;
+}
+.nav-item.active, .nav-item:hover { background: var(--panel-2); border-color: var(--accent); }
+
+.content { padding: 22px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.topbar h2 { margin: 0; }
+.user-chip { color: var(--muted); }
+
+.panel { display: none; background: rgba(17, 26, 46, 0.8); border:1px solid var(--border); border-radius: 12px; padding: 16px; }
+.panel.active { display: block; }
+.panel h3 { margin-top: 0; }
+
+.panel-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.inline-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+input, select, button {
+  background: #0e162b; color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px;
+}
+button { background: var(--accent); border-color: var(--accent); cursor: pointer; }
+
+.table-wrap { margin-top: 12px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 14px; text-align: left; }
+tr:hover { background: rgba(61, 123, 245, 0.08); cursor: pointer; }
+
+.badge { border-radius: 100px; padding: 2px 8px; font-size: 12px; }
+.badge.valid { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+.badge.expiring_soon { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+.badge.expired { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+.card h4 { margin: 0 0 8px; }
+.card p { margin: 4px 0; color: var(--muted); }
+
+.viewer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.viewer-meta, .viewer-frame { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-height: 280px; }
+.placeholder { color: var(--muted); border: 1px dashed var(--border); border-radius: 8px; padding: 14px; }
+
+.alerts { display: flex; flex-direction: column; gap: 10px; }
+.alert { border-radius: 8px; padding: 10px 12px; border: 1px solid var(--border); background: var(--panel-2); }
+.alert.expired { border-color: rgba(239,68,68,0.5); }
+.alert.expiring_soon { border-color: rgba(245,158,11,0.6); }
+
+.login-overlay {
+  position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+  background: rgba(2, 6, 23, 0.82); backdrop-filter: blur(3px);
+}
+.login-overlay.active { display: flex; }
+.login-card {
+  width: min(420px, 90vw); background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;
+}
+.login-card p { margin-top: 0; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { border-right: 0; border-bottom: 1px solid var(--border); }
+  .viewer-grid { grid-template-columns: 1fr; }
+}

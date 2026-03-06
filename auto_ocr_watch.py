@@ -2,6 +2,8 @@ import time
 import json
 import shutil
 import subprocess
+import sqlite3
+import sys
 from pathlib import Path
 from datetime import datetime
 
@@ -148,6 +150,36 @@ def write_review_json(doc_folder: Path, doc_id: str, pdf_name: str, image_name: 
     with review_path.open("w", encoding="utf-8") as f:
         json.dump(review, f, indent=2, ensure_ascii=False)
     return review_path
+
+
+def run_ai_prefill(doc_folder: Path, client_name: str) -> None:
+    """Invoke ai_prefill.py for a completed DOC folder, if present.
+
+    This is best-effort: failures are logged but do not stop the pipeline.
+    """
+    script_path = BASE / "ai_prefill.py"
+    if not script_path.is_file():
+        log(f"AI prefill script not found at {script_path}, skipping.", client_name)
+        return
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(script_path), str(doc_folder)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=180,
+        )
+        output = (proc.stdout or "").strip()
+        if proc.returncode != 0:
+            log(f"AI prefill failed for {doc_folder.name} (exit {proc.returncode}): {output}", client_name)
+        else:
+            if output:
+                log(f"AI prefill output for {doc_folder.name}: {output}", client_name)
+            else:
+                log(f"AI prefill completed for {doc_folder.name}", client_name)
+    except Exception as e:
+        log(f"AI prefill error for {doc_folder.name}: {e}", client_name)
 
 # ──────────────────────────────────────────────
 # PROCESSING
@@ -302,6 +334,60 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
             doc_folder, doc_id, output_pdf.name, archived_image.name, template,
             doc_name=doc_name, initial_fields=initial_fields or None
         )
+
+        # Trigger AI pre-fill (best-effort, non-blocking for the main pipeline).
+        run_ai_prefill(doc_folder, client_name)
+
+        # Insert a row into the portal documents table for this newly scanned document.
+        db = r"C:\ScanSystem_v2\portal.db"
+        conn = None
+        try:
+            conn = sqlite3.connect(db)
+            cur = conn.cursor()
+
+            source_doc_id = doc_id
+            doc_name_value = doc_name or "Scanned Document"
+            pdf_path_value = str(output_pdf)
+            raw_image_path_value = str(archived_image)
+            scanned_at_value = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            status_value = "verified"
+
+            cur.execute(
+                """
+                INSERT INTO documents (
+                    client_id,
+                    property_id,
+                    document_type_id,
+                    source_doc_id,
+                    doc_name,
+                    pdf_path,
+                    raw_image_path,
+                    status,
+                    scanned_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    1,  # client_id
+                    1,  # property_id
+                    1,  # document_type_id
+                    source_doc_id,
+                    doc_name_value,
+                    pdf_path_value,
+                    raw_image_path_value,
+                    status_value,
+                    scanned_at_value,
+                ),
+            )
+            conn.commit()
+        except Exception as e:
+            log(f"WARN: failed to insert document into DB for {doc_id}: {e}", client_name)
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
         log(f"SUCCESS: {image_path.name} -> {doc_id}", client_name)
         log(f"  PDF:    {output_pdf}", client_name)

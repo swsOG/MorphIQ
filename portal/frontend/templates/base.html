@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Morph IQ Portal</title>
+  <link rel="stylesheet" href="../static/css/portal.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">MIQ</div>
+        <div>
+          <h1>Morph IQ</h1>
+          <p>Client Portal</p>
+        </div>
+      </div>
+      <nav>
+        <button class="nav-item active" data-panel="search-panel">Document Search</button>
+        <button class="nav-item" data-panel="property-panel">Property Dashboard</button>
+        <button class="nav-item" data-panel="viewer-panel">Document Viewer</button>
+        <button class="nav-item" data-panel="compliance-panel">Compliance Alerts</button>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <h2 id="panel-title">Document Search</h2>
+        <div class="user-chip">Logged in: <strong id="user-label">Demo User</strong></div>
+      </header>
+
+      <section id="search-panel" class="panel active">
+        <div class="panel-header">
+          <h3>Search Filters</h3>
+          <div class="inline-filters">
+            <input id="q" type="text" placeholder="Search doc name or text" />
+            <select id="property-filter"></select>
+            <input id="tenant-filter" type="text" placeholder="Tenant name" />
+            <button id="apply-filters">Apply</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>DOC ID</th>
+                <th>Document</th>
+                <th>Property</th>
+                <th>Tenant</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="documents-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="property-panel" class="panel">
+        <h3>Property Dashboard</h3>
+        <div class="cards" id="property-cards"></div>
+      </section>
+
+      <section id="viewer-panel" class="panel">
+        <h3>Document Viewer</h3>
+        <div class="viewer-grid">
+          <article class="viewer-meta">
+            <h4 id="viewer-name">Select a document</h4>
+            <p id="viewer-details">Choose a row from the table to load metadata and content.</p>
+            <div id="viewer-fields"></div>
+          </article>
+          <article class="viewer-frame">
+            <div class="placeholder" id="viewer-placeholder">PDF preview path will appear here.</div>
+          </article>
+        </div>
+      </section>
+
+      <section id="compliance-panel" class="panel">
+        <h3>Compliance Alerts</h3>
+        <div class="alerts" id="compliance-alerts"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="login-modal" class="login-overlay active">
+    <form id="login-form" class="login-card">
+      <h2>Portal Login</h2>
+      <p>Mock sign-in for Phase UI testing.</p>
+      <label>Email</label>
+      <input id="login-email" type="email" value="demo@morphiq.co.uk" required />
+      <label>Password</label>
+      <input type="password" value="password" required />
+      <button type="submit">Sign In</button>
+    </form>
+  </div>
+
+  <script src="../static/js/app.js"></script>
+</body>
+</html>
