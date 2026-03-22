@@ -107,6 +107,27 @@
     box-shadow: 0 0 0 2px var(--accent-dim);
   }
 
+  .camera-settings-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    transition: all 0.15s;
+  }
+  .camera-settings-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--bg-hover);
+  }
+
   .header-right { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-secondary); }
 
   .mode-toggle {
@@ -177,6 +198,131 @@
   }
   .camera-offline.hidden { display: none; }
   .camera-offline span:last-child { font-size: 10px; color: var(--text-muted); }
+
+  .camera-settings {
+    background: #0d2526;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 10px 8px;
+    font-size: 11px;
+  }
+  .camera-settings.hidden {
+    display: none;
+  }
+  .camera-settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .camera-settings-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .camera-settings-camera-name {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .camera-settings-presets {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .camera-preset-btn {
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 10px;
+    cursor: pointer;
+    font-family: var(--font-body);
+  }
+  .camera-preset-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .camera-settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .camera-setting-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .camera-setting-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: #9c9a92;
+  }
+  .camera-setting-value {
+    font-size: 10px;
+    color: #e8e6e0;
+    margin-left: 6px;
+  }
+  .camera-setting-input {
+    width: 100%;
+  }
+  .camera-setting-input input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    background: transparent;
+  }
+  .camera-setting-input input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    background: #1a3a3b;
+    border-radius: 999px;
+  }
+  .camera-setting-input input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #7AAFA6;
+    margin-top: -4px;
+  }
+  .camera-setting-input input[type="range"]::-moz-range-track {
+    height: 4px;
+    background: #1a3a3b;
+    border-radius: 999px;
+  }
+  .camera-setting-input input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #7AAFA6;
+    border: none;
+  }
+  .camera-setting-select {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-primary);
+    padding: 3px 6px;
+    font-size: 11px;
+    font-family: var(--font-body);
+  }
+  .camera-setting-select:focus {
+    border-color: var(--accent);
+    outline: none;
+  }
+  .camera-settings-footer {
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
 
   .session-queue { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
@@ -425,6 +571,7 @@
   .session-summary { margin-top: 10px; }
   .session-summary-content { font-size: 11px; }
   .session-summary-empty { color: var(--text-muted); padding: 6px 0; }
+  .session-summary-overview { display: none; margin-bottom: 6px; }
   .session-summary-list { display: none; }
   .session-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; color: var(--text-secondary); }
   .session-summary-row.session-summary-sub { padding-left: 10px; }
@@ -433,6 +580,14 @@
   .session-summary-divider { height: 1px; background: var(--border); margin: 4px 0; }
   .session-summary-property { font-weight: 600; color: var(--text-primary); padding: 4px 0 2px; margin-top: 4px; }
   .session-summary-row.session-summary-total { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--border); font-weight: 600; }
+  .session-summary-section-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-top: 4px;
+    margin-bottom: 2px;
+  }
 
   .rescan-requests { margin-top: 10px; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.06); }
   .rescan-header .progress-label { color: #b45309; font-weight: 600; }
@@ -643,6 +798,16 @@
     box-shadow: 0 2px 10px rgba(0,229,204,0.3);
   }
   .footer-btn.export:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+  .footer-btn.portal {
+    background: #7AAFA6;
+    border-color: #7AAFA6;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(122,175,166,0.3);
+  }
+  .footer-btn.portal:hover {
+    filter: brightness(1.05);
+  }
 
   /* TOAST */
   .toast {
@@ -677,22 +842,13 @@
       <div class="control-group">
         <span class="control-label">Camera</span>
         <select id="cameraSelect"><option value="">Loading...</option></select>
+        <button type="button" id="cameraSettingsToggle" class="camera-settings-btn" title="Camera settings">⚙</button>
       </div>
       <div class="control-group">
         <span class="control-label">Client</span>
         <select id="clientSelect">
           <option value="">— Select Client —</option>
           <option value="__add__">+ Add New Client</option>
-        </select>
-      </div>
-      <div class="control-group">
-        <span class="control-label">Doc Type</span>
-        <select id="docTypeSelect">
-          <option value="tenancy_agreement">Tenancy Agreement</option>
-          <option value="gas_safety_certificate">Gas Safety (CP12)</option>
-          <option value="eicr">EICR</option>
-          <option value="epc">EPC</option>
-          <option value="general_document">General Document</option>
         </select>
       </div>
       <div class="control-group property-wrap">
@@ -752,6 +908,19 @@
         <span>Select a camera to start</span>
         <span>Connect via Camo, then select above</span>
       </div>
+    </div>
+    <div id="cameraSettingsPanel" class="camera-settings hidden">
+      <div class="camera-settings-header">
+        <span class="camera-settings-title">Camera settings</span>
+        <span class="camera-settings-camera-name" id="cameraSettingsCameraName"></span>
+      </div>
+      <div class="camera-settings-presets">
+        <button type="button" class="camera-preset-btn" id="presetDocumentScan">Document scan</button>
+        <button type="button" class="camera-preset-btn" id="presetLowLight">Low light</button>
+        <button type="button" class="camera-preset-btn" id="presetReset">Reset</button>
+      </div>
+      <div id="cameraSettingsBody" class="camera-settings-body"></div>
+      <div class="camera-settings-footer" id="cameraSettingsInfo"></div>
     </div>
     <div class="session-queue">
       <div class="section-header">
@@ -840,13 +1009,14 @@
       </div>
     </div>
 
-    <!-- Session Summary: doc type counts (and by property) -->
+    <!-- Live Session Summary: overall counts, doc types, and property groupings -->
     <div class="dash-progress session-summary" id="sessionSummaryBlock">
       <div class="progress-header">
-        <span class="progress-label">Session Summary</span>
+        <span class="progress-label">Live Session Summary</span>
       </div>
       <div class="session-summary-content" id="sessionSummaryContent">
         <div class="session-summary-empty" id="sessionSummaryEmpty">No documents yet</div>
+        <div class="session-summary-overview" id="sessionSummaryOverview"></div>
         <div class="session-summary-list" id="sessionSummaryList"></div>
       </div>
     </div>
@@ -875,6 +1045,7 @@
       <span id="serverStatus">Pipeline: Offline</span>
     </div>
     <button class="footer-btn export" id="btnExport" disabled>Export Verified</button>
+    <button class="footer-btn portal" id="btnOpenPortal">Open Portal</button>
     <button class="footer-btn review" id="btnOpenReview">Open Review Station</button>
   </div>
 </div>
@@ -887,6 +1058,7 @@
   const BASE_PATH = "C:\\\\ScanSystem_v2"; // display-only; File System Access uses handles
 
   let currentStream = null;
+  let currentCameraId = null;
   let selectedClient = "";
   let baseFolderHandle = null;
   let captureMode = "careful"; // careful | quick
@@ -912,16 +1084,30 @@
   let rescanMode = false;
   let rescanItem = null;
 
+  // Legacy doc type display names for existing documents loaded from the API.
+  // New captures start as "Unknown" and are classified later by AI.
   const DOC_TYPE_DISPLAY_NAMES = {
     tenancy_agreement: "Tenancy Agreement",
     gas_safety_certificate: "Gas Safety (CP12)",
     eicr: "EICR",
     epc: "EPC",
-    general_document: "General Document"
+    general_document: "General Document",
+    Unknown: "Unknown",
   };
-  let sessionPropertyDocTypeCount = {}; // "property|docType" -> number
+
+  // Track how many documents we've captured per property for naming only.
+  // Document type is now detected automatically by AI later in the pipeline.
+  let sessionPropertyCount = {}; // "property" -> number
   const PROPERTY_STORAGE_KEY = "scanstation_property_";
   let propertySuggestionsDebounceTimer = null;
+
+  const DOC_TYPE_BUCKET_LABELS = [
+    "Tenancy Agreements",
+    "Gas Safety Certificates",
+    "EICR",
+    "EPC",
+    "Deposit Protection"
+  ];
 
   function getPropertyValue() {
     const el = document.getElementById("propertyInput");
@@ -931,6 +1117,17 @@
   function setPropertyValue(val) {
     const el = document.getElementById("propertyInput");
     if (el) el.value = val || "";
+  }
+
+  function getDocTypeBucketName(rawType) {
+    const t = (rawType || "").toLowerCase();
+    if (!t || t === "unknown") return "Unclassified";
+    if (t.includes("tenancy")) return "Tenancy Agreements";
+    if (t.includes("gas") && t.includes("safety")) return "Gas Safety Certificates";
+    if (t.includes("eicr")) return "EICR";
+    if (t.includes("epc")) return "EPC";
+    if (t.includes("deposit")) return "Deposit Protection";
+    return "Other";
   }
 
   function persistPropertyForClient() {
@@ -949,23 +1146,23 @@
   }
 
   function getDisplayNameForDocType(value) {
-    return DOC_TYPE_DISPLAY_NAMES[value] || (value || "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    // Doc type is now determined automatically by AI; this helper is kept
+    // for compatibility when rendering historical docs that still carry a
+    // template-based doc_type string.
+    return (value || "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   }
 
   function getNextDocName() {
     const property = getPropertyValue() || "Unsorted";
-    const docType = document.getElementById("docTypeSelect").value;
-    const displayName = getDisplayNameForDocType(docType);
-    const key = property + "|" + docType;
-    const count = (sessionPropertyDocTypeCount[key] || 0) + 1;
-    return `${property} - ${displayName} ${count}`;
+    const key = property;
+    const count = (sessionPropertyCount[key] || 0) + 1;
+    return `${property} - Document ${count}`;
   }
 
   function incrementCountForCurrentPropertyDocType() {
     const property = getPropertyValue() || "Unsorted";
-    const docType = document.getElementById("docTypeSelect").value;
-    const key = property + "|" + docType;
-    sessionPropertyDocTypeCount[key] = (sessionPropertyDocTypeCount[key] || 0) + 1;
+    const key = property;
+    sessionPropertyCount[key] = (sessionPropertyCount[key] || 0) + 1;
   }
 
   async function fetchPropertySuggestions(query) {
@@ -999,6 +1196,480 @@
   }
 
   /* Camera */
+  const CAMERA_SETTINGS_KEY = "scanstation_camera_settings";
+  const CAMERA_RESOLUTION_KEY = "scanstation_resolution";
+  let cameraCapabilities = null;
+  let cameraDefaultSettings = null;
+  let cameraSettings = {};
+
+  function getPreferredResolution() {
+    try {
+      const saved = localStorage.getItem(CAMERA_RESOLUTION_KEY);
+      if (saved && typeof saved === "string" && saved.includes("x")) {
+        const [w, h] = saved.split("x").map(v => parseInt(v.trim(), 10));
+        if (w && h) return { width: w, height: h };
+      }
+    } catch (e) {}
+    return { width: 1920, height: 1080 };
+  }
+
+  function setPreferredResolution(w, h) {
+    try {
+      localStorage.setItem(CAMERA_RESOLUTION_KEY, `${w}x${h}`);
+    } catch (e) {}
+  }
+
+  function loadSavedCameraSettings() {
+    try {
+      const saved = localStorage.getItem(CAMERA_SETTINGS_KEY);
+      cameraSettings = saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      cameraSettings = {};
+    }
+  }
+
+  function persistCameraSettings() {
+    try {
+      localStorage.setItem(CAMERA_SETTINGS_KEY, JSON.stringify(cameraSettings || {}));
+    } catch (e) {}
+  }
+
+  function applySavedSettings() {
+    if (!currentStream) return;
+    const track = currentStream.getVideoTracks()[0];
+    if (!track || !track.getCapabilities) return;
+    const capabilities = cameraCapabilities || track.getCapabilities();
+    if (!capabilities) return;
+
+    loadSavedCameraSettings();
+    if (!cameraSettings || Object.keys(cameraSettings).length === 0) return;
+
+    const advanced = {};
+    Object.entries(cameraSettings).forEach(([key, value]) => {
+      if (key in capabilities) {
+        advanced[key] = value;
+      }
+    });
+    if (Object.keys(advanced).length === 0) return;
+
+    track.applyConstraints({ advanced: [advanced] }).catch(err => {
+      console.warn("Could not apply saved camera settings:", err);
+    });
+  }
+
+  function updateCameraSetting(key, value) {
+    if (!currentStream) return;
+    const track = currentStream.getVideoTracks()[0];
+    if (!track || !cameraCapabilities || !(key in cameraCapabilities)) return;
+    cameraSettings = cameraSettings || {};
+    cameraSettings[key] = value;
+    persistCameraSettings();
+    const constraints = { advanced: [{}] };
+    constraints.advanced[0][key] = value;
+    track.applyConstraints(constraints).catch(err => {
+      console.warn("applyConstraints failed for", key, err);
+    });
+  }
+
+  function updateCameraSettingsBatch(obj) {
+    if (!currentStream) return;
+    const track = currentStream.getVideoTracks()[0];
+    if (!track || !cameraCapabilities) return;
+    const payload = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      if (key in cameraCapabilities) {
+        payload[key] = value;
+        cameraSettings[key] = value;
+      }
+    });
+    persistCameraSettings();
+    if (Object.keys(payload).length === 0) return;
+    track.applyConstraints({ advanced: [payload] }).catch(err => {
+      console.warn("applyConstraints batch failed", err);
+    });
+  }
+
+  function buildCameraSettingsUI() {
+    const panel = document.getElementById("cameraSettingsPanel");
+    const body = document.getElementById("cameraSettingsBody");
+    const info = document.getElementById("cameraSettingsInfo");
+    const nameEl = document.getElementById("cameraSettingsCameraName");
+    if (!panel || !body || !info || !nameEl) return;
+    if (!currentStream) {
+      body.innerHTML = "<div class=\"camera-setting-row\"><span class=\"camera-setting-label\">No active camera</span></div>";
+      info.textContent = "";
+      nameEl.textContent = "";
+      return;
+    }
+
+    const track = currentStream.getVideoTracks()[0];
+    if (!track || !track.getCapabilities) {
+      body.innerHTML = "<div class=\"camera-setting-row\"><span class=\"camera-setting-label\">Camera does not expose advanced controls.</span></div>";
+      info.textContent = "";
+      nameEl.textContent = "";
+      return;
+    }
+
+    cameraCapabilities = track.getCapabilities() || {};
+    const settings = track.getSettings ? track.getSettings() : {};
+    if (!cameraDefaultSettings) {
+      cameraDefaultSettings = settings || {};
+    }
+
+    nameEl.textContent = track.label || "";
+    const actualW = settings.width || "?";
+    const actualH = settings.height || "?";
+    const fps = settings.frameRate || "?";
+    info.textContent = `Actual: ${actualW}×${actualH} @ ${fps}fps`;
+
+    loadSavedCameraSettings();
+
+    const caps = cameraCapabilities;
+    let html = "";
+
+    // Resolution dropdown (always show)
+    const resOptions = [
+      { label: "1280 × 720 (HD)", w: 1280, h: 720 },
+      { label: "1920 × 1080 (Full HD)", w: 1920, h: 1080 },
+      { label: "2560 × 1440 (QHD)", w: 2560, h: 1440 },
+    ];
+    // 4K only if supported by capabilities
+    if (caps.width && caps.height && caps.width.max >= 3840 && caps.height.max >= 2160) {
+      resOptions.push({ label: "3840 × 2160 (4K)", w: 3840, h: 2160 });
+    }
+    const storedRes = getPreferredResolution();
+    let currentResKey = `${storedRes.width}x${storedRes.height}`;
+    html += `<div class="camera-setting-row">
+      <div class="camera-setting-label">
+        <span>Resolution</span>
+      </div>
+      <div class="camera-setting-input">
+        <select id="camResolution" class="camera-setting-select">`;
+    resOptions.forEach(o => {
+      const key = `${o.w}x${o.h}`;
+      const selected = key === currentResKey ? "selected" : "";
+      html += `<option value="${key}" ${selected}>${o.label}</option>`;
+    });
+    html += `</select></div></div>`;
+
+    function addSlider(id, label, key, capKey, unitFormatter) {
+      if (!(capKey in caps)) return;
+      const c = caps[capKey];
+      if (!c || typeof c.min === "undefined" || typeof c.max === "undefined") return;
+      const min = c.min;
+      const max = c.max;
+      const step = c.step || (typeof min === "number" && typeof max === "number" ? (max - min) / 100 || 1 : 1);
+      let val = (cameraSettings && typeof cameraSettings[key] !== "undefined")
+        ? cameraSettings[key]
+        : (settings[key] ?? min);
+      if (typeof val !== "number") val = min;
+      if (val < min) val = min;
+      if (val > max) val = max;
+      const displayVal = unitFormatter ? unitFormatter(val) : val;
+      html += `<div class="camera-setting-row">
+        <div class="camera-setting-label">
+          <span>${label}</span>
+          <span class="camera-setting-value" id="${id}Value">${displayVal}</span>
+        </div>
+        <div class="camera-setting-input">
+          <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}">
+        </div>
+      </div>`;
+    }
+
+    // Zoom
+    addSlider("camZoom", "Zoom", "zoom", "zoom", v => v.toFixed(2));
+    // Brightness
+    addSlider("camBrightness", "Brightness", "brightness", "brightness");
+    // Contrast
+    addSlider("camContrast", "Contrast", "contrast", "contrast");
+    // Sharpness
+    addSlider("camSharpness", "Sharpness", "sharpness", "sharpness");
+
+    // Focus mode + distance
+    if (caps.focusMode) {
+      const modes = Array.isArray(caps.focusMode) ? caps.focusMode : [];
+      const hasAuto = modes.includes("continuous") || modes.includes("auto");
+      const modeValue = cameraSettings.focusMode || settings.focusMode || (hasAuto ? "continuous" : (modes[0] || ""));
+      html += `<div class="camera-setting-row">
+        <div class="camera-setting-label"><span>Focus</span></div>
+        <div class="camera-setting-input">
+          <select id="camFocusMode" class="camera-setting-select">
+            ${hasAuto ? '<option value="auto">Auto</option>' : ""}
+            <option value="manual"${modeValue === "manual" ? " selected" : ""}>Manual</option>
+          </select>
+        </div>
+      </div>`;
+      if (caps.focusDistance) {
+        const c = caps.focusDistance;
+        const min = c.min;
+        const max = c.max;
+        const step = c.step || (max - min) / 100 || 1;
+        let val = cameraSettings.focusDistance ?? settings.focusDistance ?? min;
+        if (val < min) val = min;
+        if (val > max) val = max;
+        html += `<div class="camera-setting-row" id="camFocusDistanceRow">
+          <div class="camera-setting-label">
+            <span>Focus distance</span>
+            <span class="camera-setting-value" id="camFocusDistanceValue">${val.toFixed(2)}</span>
+          </div>
+          <div class="camera-setting-input">
+            <input type="range" id="camFocusDistance" min="${min}" max="${max}" step="${step}" value="${val}">
+          </div>
+        </div>`;
+      }
+    }
+
+    // Exposure mode / compensation
+    if (caps.exposureMode) {
+      const modes = Array.isArray(caps.exposureMode) ? caps.exposureMode : [];
+      const hasAuto = modes.includes("continuous") || modes.includes("auto");
+      const modeValue = cameraSettings.exposureMode || settings.exposureMode || (hasAuto ? "continuous" : (modes[0] || ""));
+      html += `<div class="camera-setting-row">
+        <div class="camera-setting-label"><span>Exposure</span></div>
+        <div class="camera-setting-input">
+          <select id="camExposureMode" class="camera-setting-select">
+            ${hasAuto ? '<option value="auto">Auto</option>' : ""}
+            <option value="manual"${modeValue === "manual" ? " selected" : ""}>Manual</option>
+          </select>
+        </div>
+      </div>`;
+      if (caps.exposureTime) {
+        const c = caps.exposureTime;
+        const min = c.min;
+        const max = c.max;
+        const step = c.step || (max - min) / 100 || 1;
+        let val = cameraSettings.exposureTime ?? settings.exposureTime ?? min;
+        if (val < min) val = min;
+        if (val > max) val = max;
+        html += `<div class="camera-setting-row" id="camExposureTimeRow">
+          <div class="camera-setting-label">
+            <span>Exposure time</span>
+            <span class="camera-setting-value" id="camExposureTimeValue">${val.toFixed(0)}</span>
+          </div>
+          <div class="camera-setting-input">
+            <input type="range" id="camExposureTime" min="${min}" max="${max}" step="${step}" value="${val}">
+          </div>
+        </div>`;
+      }
+      if (caps.exposureCompensation) {
+        const c = caps.exposureCompensation;
+        const min = c.min;
+        const max = c.max;
+        const step = c.step || 0.1;
+        let val = cameraSettings.exposureCompensation ?? settings.exposureCompensation ?? 0;
+        if (val < min) val = min;
+        if (val > max) val = max;
+        html += `<div class="camera-setting-row" id="camExposureCompRow">
+          <div class="camera-setting-label">
+            <span>Exposure compensation</span>
+            <span class="camera-setting-value" id="camExposureCompValue">${val.toFixed(1)}</span>
+          </div>
+          <div class="camera-setting-input">
+            <input type="range" id="camExposureComp" min="${min}" max="${max}" step="${step}" value="${val}">
+          </div>
+        </div>`;
+      }
+    }
+
+    // White balance
+    if (caps.whiteBalanceMode) {
+      const modes = Array.isArray(caps.whiteBalanceMode) ? caps.whiteBalanceMode : [];
+      const hasAuto = modes.includes("continuous") || modes.includes("auto");
+      const modeValue = cameraSettings.whiteBalanceMode || settings.whiteBalanceMode || (hasAuto ? "continuous" : (modes[0] || ""));
+      html += `<div class="camera-setting-row">
+        <div class="camera-setting-label"><span>White balance</span></div>
+        <div class="camera-setting-input">
+          <select id="camWbMode" class="camera-setting-select">
+            ${hasAuto ? '<option value="auto">Auto</option>' : ""}
+            <option value="manual"${modeValue === "manual" ? " selected" : ""}>Manual</option>
+          </select>
+        </div>
+      </div>`;
+      if (caps.colorTemperature) {
+        const c = caps.colorTemperature;
+        const min = c.min;
+        const max = c.max;
+        const step = c.step || 50;
+        let val = cameraSettings.colorTemperature ?? settings.colorTemperature ?? min;
+        if (val < min) val = min;
+        if (val > max) val = max;
+        html += `<div class="camera-setting-row" id="camColorTempRow">
+          <div class="camera-setting-label">
+            <span>Colour temperature</span>
+            <span class="camera-setting-value" id="camColorTempValue">${val.toFixed(0)}K</span>
+          </div>
+          <div class="camera-setting-input">
+            <input type="range" id="camColorTemp" min="${min}" max="${max}" step="${step}" value="${val}">
+          </div>
+        </div>`;
+      }
+    }
+
+    // Torch
+    if (caps.torch) {
+      const val = !!(cameraSettings.torch ?? settings.torch);
+      html += `<div class="camera-setting-row">
+        <div class="camera-setting-label">
+          <span>Torch</span>
+        </div>
+        <div class="camera-setting-input">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#9c9a92;">
+            <input type="checkbox" id="camTorch" ${val ? "checked" : ""} style="accent-color:#7AAFA6;">
+            <span>Enable device light</span>
+          </label>
+        </div>
+      </div>`;
+    }
+
+    body.innerHTML = html;
+
+    // Wire resolution change
+    const resSelect = document.getElementById("camResolution");
+    if (resSelect) {
+      resSelect.addEventListener("change", (e) => {
+        const v = e.target.value || "";
+        if (!v.includes("x") || !currentCameraId) return;
+        const [w, h] = v.split("x").map(s => parseInt(s.trim(), 10));
+        if (!w || !h) return;
+        setPreferredResolution(w, h);
+        startCamera(currentCameraId);
+      });
+    }
+
+    function wireSlider(id, key, formatter) {
+      const el = document.getElementById(id);
+      const label = document.getElementById(id + "Value");
+      if (!el || !label) return;
+      let timer = null;
+      const updateLabel = (v) => {
+        label.textContent = formatter ? formatter(v) : v;
+      };
+      updateLabel(parseFloat(el.value));
+      el.addEventListener("input", (e) => {
+        const v = parseFloat(e.target.value);
+        updateLabel(v);
+        clearTimeout(timer);
+        timer = setTimeout(() => updateCameraSetting(key, v), 100);
+      });
+    }
+
+    wireSlider("camZoom", "zoom", v => v.toFixed(2));
+    wireSlider("camBrightness", "brightness");
+    wireSlider("camContrast", "contrast");
+    wireSlider("camSharpness", "sharpness");
+
+    // Focus controls
+    const focusModeEl = document.getElementById("camFocusMode");
+    const focusRow = document.getElementById("camFocusDistanceRow");
+    if (focusModeEl) {
+      focusModeEl.addEventListener("change", (e) => {
+        const mode = e.target.value === "manual" ? "manual" : "continuous";
+        if (mode === "manual") {
+          if (focusRow) focusRow.style.display = "";
+          const slider = document.getElementById("camFocusDistance");
+          const v = slider ? parseFloat(slider.value) : undefined;
+          if (typeof v === "number") {
+            updateCameraSettingsBatch({ focusMode: "manual", focusDistance: v });
+          } else {
+            updateCameraSettingsBatch({ focusMode: "manual" });
+          }
+        } else {
+          if (focusRow) focusRow.style.display = "none";
+          updateCameraSettingsBatch({ focusMode: "continuous" });
+        }
+      });
+    }
+    const focusSlider = document.getElementById("camFocusDistance");
+    const focusVal = document.getElementById("camFocusDistanceValue");
+    if (focusSlider && focusVal) {
+      let t = null;
+      focusSlider.addEventListener("input", (e) => {
+        const v = parseFloat(e.target.value);
+        focusVal.textContent = v.toFixed(2);
+        clearTimeout(t);
+        t = setTimeout(() => {
+          updateCameraSetting("focusDistance", v);
+        }, 100);
+      });
+      if (focusModeEl && focusModeEl.value === "auto") {
+        if (focusRow) focusRow.style.display = "none";
+      }
+    }
+
+    // Exposure controls
+    const expModeEl = document.getElementById("camExposureMode");
+    const expTimeRow = document.getElementById("camExposureTimeRow");
+    const expCompRow = document.getElementById("camExposureCompRow");
+    if (expModeEl) {
+      expModeEl.addEventListener("change", (e) => {
+        const mode = e.target.value === "manual" ? "manual" : "continuous";
+        if (mode === "manual") {
+          if (expTimeRow) expTimeRow.style.display = "";
+          if (expCompRow) expCompRow.style.display = "";
+          const tSlider = document.getElementById("camExposureTime");
+          const cSlider = document.getElementById("camExposureComp");
+          const tVal = tSlider ? parseFloat(tSlider.value) : undefined;
+          const cVal = cSlider ? parseFloat(cSlider.value) : undefined;
+          updateCameraSettingsBatch({
+            exposureMode: "manual",
+            exposureTime: typeof tVal === "number" ? tVal : undefined,
+            exposureCompensation: typeof cVal === "number" ? cVal : undefined
+          });
+        } else {
+          if (expTimeRow) expTimeRow.style.display = "none";
+          if (expCompRow) expCompRow.style.display = "none";
+          updateCameraSettingsBatch({ exposureMode: "continuous" });
+        }
+      });
+    }
+    wireSlider("camExposureTime", "exposureTime", v => v.toFixed(0));
+    wireSlider("camExposureComp", "exposureCompensation", v => v.toFixed(1));
+    if (expModeEl && expModeEl.value === "auto") {
+      if (expTimeRow) expTimeRow.style.display = "none";
+      if (expCompRow) expCompRow.style.display = "none";
+    }
+
+    // White balance controls
+    const wbModeEl = document.getElementById("camWbMode");
+    const wbRow = document.getElementById("camColorTempRow");
+    if (wbModeEl) {
+      wbModeEl.addEventListener("change", (e) => {
+        const mode = e.target.value === "manual" ? "manual" : "continuous";
+        if (mode === "manual") {
+          if (wbRow) wbRow.style.display = "";
+          const slider = document.getElementById("camColorTemp");
+          const v = slider ? parseFloat(slider.value) : undefined;
+          updateCameraSettingsBatch({
+            whiteBalanceMode: "manual",
+            colorTemperature: typeof v === "number" ? v : undefined
+          });
+        } else {
+          if (wbRow) wbRow.style.display = "none";
+          updateCameraSettingsBatch({ whiteBalanceMode: "continuous" });
+        }
+      });
+    }
+    wireSlider("camColorTemp", "colorTemperature", v => `${v.toFixed(0)}K`);
+    if (wbModeEl && wbModeEl.value === "auto") {
+      if (wbRow) wbRow.style.display = "none";
+    }
+
+    // Torch
+    const torchEl = document.getElementById("camTorch");
+    if (torchEl) {
+      torchEl.addEventListener("change", (e) => {
+        const v = !!e.target.checked;
+        updateCameraSetting("torch", v);
+      });
+    }
+  }
+
+  async function initCameraSettingsForCurrentStream() {
+    buildCameraSettingsUI();
+    applySavedSettings();
+  }
+
   async function loadCameras() {
     const select = document.getElementById("cameraSelect");
     select.innerHTML = "";
@@ -1045,19 +1716,29 @@
 
   async function startCamera(deviceId) {
     if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+    currentStream = null;
+    cameraCapabilities = null;
     if (!deviceId) {
       setCameraStatus(false);
       return;
     }
+    currentCameraId = deviceId;
+    const res = getPreferredResolution();
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: deviceId }, width: { ideal: 3840 }, height: { ideal: 2160 } }
-      });
+      const constraints = {
+        video: {
+          deviceId: { exact: deviceId },
+          width: { ideal: res.width },
+          height: { ideal: res.height }
+        }
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       currentStream = stream;
       const video = document.getElementById("videoFeed");
       video.srcObject = stream;
       setCameraStatus(true);
       viewMode = "camera";
+      initCameraSettingsForCurrentStream();
     } catch (e) {
       showToast("Camera error: " + e.message, "error");
       setCameraStatus(false);
@@ -1148,7 +1829,7 @@
 
   function selectClient(name) {
     selectedClient = name;
-    sessionPropertyDocTypeCount = {};
+    sessionPropertyCount = {};
     restorePropertyForClient();
     reloadClientFromRaw();
     updateExportBtn();
@@ -1208,13 +1889,6 @@
       const clientDir = await clientsDir.getDirectoryHandle(selectedClient, { create: true });
       const rawDir = await clientDir.getDirectoryHandle("raw", { create: true });
 
-      const docType = document.getElementById("docTypeSelect").value;
-      // write _doctype.txt (fallback for watcher when no .meta.json)
-      const markerHandle = await rawDir.getFileHandle("_doctype.txt", { create: true });
-      const markerWritable = await markerHandle.createWritable();
-      await markerWritable.write(docType);
-      await markerWritable.close();
-
       const ts = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 15);
       const ext = filename.split(".").pop().toLowerCase();
       const safeName = `scan_${ts}_${Math.random().toString(36).slice(2, 6)}.${ext}`;
@@ -1231,8 +1905,7 @@
         const metaWritable = await metaHandle.createWritable();
         await metaWritable.write(JSON.stringify({
           doc_name: nameToStore,
-          property_address: prop || null,
-          doc_type_template: docType
+          property_address: prop || null
         }, null, 2));
         await metaWritable.close();
       } catch (e) {
@@ -1577,44 +2250,77 @@
 
   function updateSessionSummary() {
     const emptyEl = document.getElementById("sessionSummaryEmpty");
+    const overviewEl = document.getElementById("sessionSummaryOverview");
     const listEl = document.getElementById("sessionSummaryList");
-    if (!emptyEl || !listEl) return;
-    const byType = {};
-    const byPropertyThenType = {};
+    if (!emptyEl || !listEl || !overviewEl) return;
+    const typeBuckets = {};
+    const propertyBuckets = {};
     sessionDocs.forEach(doc => {
       const rawType = doc.docType || "";
-      const displayType = DOC_TYPE_DISPLAY_NAMES[rawType] || rawType || "Other";
-      byType[displayType] = (byType[displayType] || 0) + 1;
+      const bucketLabel = getDocTypeBucketName(rawType);
+      typeBuckets[bucketLabel] = (typeBuckets[bucketLabel] || 0) + 1;
       const prop = (doc.propertyAddress || "").trim() || "—";
-      if (!byPropertyThenType[prop]) byPropertyThenType[prop] = {};
-      byPropertyThenType[prop][displayType] = (byPropertyThenType[prop][displayType] || 0) + 1;
+      if (!propertyBuckets[prop]) propertyBuckets[prop] = {};
+      propertyBuckets[prop][bucketLabel] = (propertyBuckets[prop][bucketLabel] || 0) + 1;
     });
-    const types = Object.keys(byType).sort();
-    if (types.length === 0) {
+    const totalDocs = sessionDocs.length;
+    if (totalDocs === 0) {
       emptyEl.style.display = "block";
+      overviewEl.style.display = "none";
       listEl.style.display = "none";
       listEl.innerHTML = "";
       return;
     }
     emptyEl.style.display = "none";
+    const uniqueProps = Object.keys(propertyBuckets).filter(p => p !== "—").length;
+    const uniqueTypes = DOC_TYPE_BUCKET_LABELS.filter(label => (typeBuckets[label] || 0) > 0).length
+      + ((typeBuckets["Other"] || 0) > 0 ? 1 : 0)
+      + ((typeBuckets["Unclassified"] || 0) > 0 ? 1 : 0);
+    overviewEl.style.display = "block";
+    overviewEl.innerHTML =
+      `<div class="session-summary-row"><span class="session-summary-label">Documents scanned</span><span class="session-summary-count">${totalDocs}</span></div>` +
+      `<div class="session-summary-row"><span class="session-summary-label">Properties detected</span><span class="session-summary-count">${uniqueProps}</span></div>` +
+      `<div class="session-summary-row"><span class="session-summary-label">Document types</span><span class="session-summary-count">${uniqueTypes}</span></div>`;
     listEl.style.display = "block";
     let html = "";
-    types.forEach(t => {
-      html += `<div class="session-summary-row"><span class="session-summary-label">${escapeHtml(t)}</span><span class="session-summary-count">${byType[t]}</span></div>`;
+    // Session overview sections
+    html += '<div class="session-summary-section-label">Session Overview</div>';
+    // Document type buckets (always show the main buckets, even if zero)
+    html += '<div class="session-summary-section-label" style="margin-top:6px;">Document Types</div>';
+    DOC_TYPE_BUCKET_LABELS.forEach(label => {
+      const count = typeBuckets[label] || 0;
+      html += `<div class="session-summary-row"><span class="session-summary-label">${escapeHtml(label)}</span><span class="session-summary-count">${count}</span></div>`;
     });
-    const props = Object.keys(byPropertyThenType).filter(p => p !== "—").sort();
-    if (props.length > 0) {
-      html += '<div class="session-summary-divider"></div>';
+    if ((typeBuckets["Other"] || 0) > 0) {
+      html += `<div class="session-summary-row"><span class="session-summary-label">Other</span><span class="session-summary-count">${typeBuckets["Other"]}</span></div>`;
+    }
+    if ((typeBuckets["Unclassified"] || 0) > 0) {
+      html += `<div class="session-summary-row"><span class="session-summary-label">Unclassified</span><span class="session-summary-count">${typeBuckets["Unclassified"]}</span></div>`;
+    }
+    // Properties scanned
+    const props = Object.keys(propertyBuckets).filter(p => p !== "—").sort();
+    html += '<div class="session-summary-divider"></div>';
+    html += '<div class="session-summary-section-label">Properties Scanned</div>';
+    if (props.length === 0) {
+      html += `<div class="session-summary-row"><span class="session-summary-label">No properties yet</span><span class="session-summary-count">0</span></div>`;
+    } else {
       props.forEach(prop => {
         html += `<div class="session-summary-property">${escapeHtml(prop)}</div>`;
-        const sub = byPropertyThenType[prop];
-        Object.keys(sub).sort().forEach(t => {
-          html += `<div class="session-summary-row session-summary-sub"><span class="session-summary-label">${escapeHtml(t)}</span><span class="session-summary-count">${sub[t]}</span></div>`;
+        const sub = propertyBuckets[prop] || {};
+        DOC_TYPE_BUCKET_LABELS.forEach(label => {
+          const count = sub[label] || 0;
+          if (count > 0) {
+            html += `<div class="session-summary-row session-summary-sub"><span class="session-summary-label">${escapeHtml(label)}</span><span class="session-summary-count">${count}</span></div>`;
+          }
         });
+        if ((sub["Other"] || 0) > 0) {
+          html += `<div class="session-summary-row session-summary-sub"><span class="session-summary-label">Other</span><span class="session-summary-count">${sub["Other"]}</span></div>`;
+        }
+        if ((sub["Unclassified"] || 0) > 0) {
+          html += `<div class="session-summary-row session-summary-sub"><span class="session-summary-label">Unclassified</span><span class="session-summary-count">${sub["Unclassified"]}</span></div>`;
+        }
       });
     }
-    html += '<div class="session-summary-divider"></div>';
-    html += `<div class="session-summary-row session-summary-total"><span class="session-summary-label">Total</span><span class="session-summary-count">${sessionDocs.length}</span></div>`;
     listEl.innerHTML = html;
   }
 
@@ -1823,7 +2529,7 @@
         doc.docId = deriveDocIdFromSafeName(safeName);
         doc.name = name;
         doc.rawName = safeName;
-        doc.docType = document.getElementById("docTypeSelect").value;
+        doc.docType = "Unknown";
         doc.propertyAddress = getPropertyValue();
         addDocToSession(doc);
         showDocPreview(doc, "camera");
@@ -1915,7 +2621,7 @@
     doc.docId = deriveDocIdFromSafeName(safeName);
     doc.name = name || doc.docId;
     doc.rawName = safeName;
-    doc.docType = document.getElementById("docTypeSelect").value;
+    doc.docType = "Unknown";
     doc.propertyAddress = getPropertyValue();
     addDocToSession(doc);
     pendingCapture = null;
@@ -2082,6 +2788,107 @@
   /* Event wiring + init */
   document.getElementById("cameraSelect").addEventListener("change", e => startCamera(e.target.value));
 
+  const cameraSettingsToggle = document.getElementById("cameraSettingsToggle");
+  if (cameraSettingsToggle) {
+    cameraSettingsToggle.addEventListener("click", () => {
+      const panel = document.getElementById("cameraSettingsPanel");
+      if (!panel) return;
+      if (panel.classList.contains("hidden")) {
+        panel.classList.remove("hidden");
+        if (currentStream) {
+          initCameraSettingsForCurrentStream();
+        }
+      } else {
+        panel.classList.add("hidden");
+      }
+    });
+  }
+
+  const presetDoc = document.getElementById("presetDocumentScan");
+  if (presetDoc) {
+    presetDoc.addEventListener("click", () => {
+      if (!currentStream) return;
+      // Choose preferred resolution (Full HD or highest supported)
+      const track = currentStream.getVideoTracks()[0];
+      const caps = cameraCapabilities || (track && track.getCapabilities && track.getCapabilities()) || {};
+      let target = { width: 1920, height: 1080 };
+      if (caps.width && caps.height) {
+        const maxW = caps.width.max;
+        const maxH = caps.height.max;
+        if (maxW && maxH) {
+          const candidates = [
+            { w: 1920, h: 1080 },
+            { w: 1280, h: 720 }
+          ];
+          let chosen = target;
+          candidates.forEach(c => {
+            if (c.w <= maxW && c.h <= maxH) chosen = c;
+          });
+          target = chosen;
+        }
+      }
+      setPreferredResolution(target.width, target.height);
+      if (currentCameraId) startCamera(currentCameraId);
+      // Auto exposure / white balance / focus where supported
+      updateCameraSettingsBatch({
+        exposureMode: "continuous",
+        whiteBalanceMode: "continuous",
+        focusMode: "continuous",
+        torch: false
+      });
+    });
+  }
+
+  const presetLow = document.getElementById("presetLowLight");
+  if (presetLow) {
+    presetLow.addEventListener("click", () => {
+      if (!currentStream || !cameraCapabilities) return;
+      const track = currentStream.getVideoTracks()[0];
+      const caps = cameraCapabilities;
+      const settings = track.getSettings ? track.getSettings() : {};
+      const batch = {};
+      if (caps.exposureCompensation) {
+        const c = caps.exposureCompensation;
+        const range = (c.max - c.min) || 1;
+        let base = settings.exposureCompensation ?? 0;
+        let val = base + range * 0.3;
+        if (val > c.max) val = c.max;
+        batch.exposureCompensation = val;
+      }
+      if (caps.brightness) {
+        const c = caps.brightness;
+        const range = (c.max - c.min) || 1;
+        let base = settings.brightness ?? c.min;
+        let val = base + range * 0.2;
+        if (val > c.max) val = c.max;
+        batch.brightness = val;
+      }
+      if (caps.torch) {
+        batch.torch = true;
+      }
+      updateCameraSettingsBatch(batch);
+    });
+  }
+
+  const presetReset = document.getElementById("presetReset");
+  if (presetReset) {
+    presetReset.addEventListener("click", () => {
+      if (!currentStream || !cameraDefaultSettings) return;
+      try {
+        localStorage.removeItem(CAMERA_SETTINGS_KEY);
+      } catch (e) {}
+      cameraSettings = {};
+      const toApply = {};
+      Object.entries(cameraDefaultSettings).forEach(([key, value]) => {
+        if (cameraCapabilities && key in cameraCapabilities) {
+          toApply[key] = value;
+        }
+      });
+      updateCameraSettingsBatch(toApply);
+      buildCameraSettingsUI();
+    });
+  }
+
   document.getElementById("clientSelect").addEventListener("change", e => {
     if (e.target.value === "__add__") {
       const name = prompt("Enter new client name:");
@@ -2141,7 +2948,7 @@
           align: 0,
           qualityClass: "ok",
           thumbUrl: URL.createObjectURL(f),
-          docType: document.getElementById("docTypeSelect").value,
+          docType: "Unknown",
           propertyAddress: getPropertyValue()
         };
 
@@ -2199,6 +3006,14 @@
   document.getElementById("progTarget").addEventListener("change", updateProgress);
 
   document.getElementById("btnExport").addEventListener("click", exportClient);
+  document.getElementById("btnOpenPortal").addEventListener("click", () => {
+    const baseUrl = "http://127.0.0.1:5000";
+    if (selectedClient) {
+      window.open(`${baseUrl}/?client=${encodeURIComponent(selectedClient)}`, "_blank");
+    } else {
+      window.open(baseUrl, "_blank");
+    }
+  });
   document.getElementById("btnOpenReview").addEventListener("click", () => {
     window.open("review_station.html", "_blank");
   });

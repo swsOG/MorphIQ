@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ Portal — Sign in</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+</head>
+<body class="login-body">
+<div class="login-shell">
+    <div class="login-card">
+        <div class="login-logo-wrap">
+            <div class="login-logo-circle">
+                <img src="{{ url_for('static', filename='morph_iq_login.png') }}" alt="Morph IQ" width="180">
+            </div>
+            <div class="login-logo-text">
+                <span class="login-tagline">Not just scanned — understood.</span>
+            </div>
+        </div>
+
+        {% if error %}
+            <div class="login-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('login_post') }}" class="login-form" autocomplete="off">
+            <div class="login-field">
+                <label for="email">Email</label>
+                <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    required
+                    autofocus
+                    placeholder="you@agency.co.uk"
+                >
+            </div>
+            <div class="login-field">
+                <label for="password">Password</label>
+                <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    required
+                    placeholder="••••••••"
+                >
+            </div>
+            <button type="submit" class="login-button">Sign in</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
+

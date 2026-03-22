@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ — Document</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+</head>
+<body>
+
+<div class="portal-shell">
+    {%- set _client_q = client_name or request.args.get('client') or '' -%}
+    {%- set _base_url = url_for('index') -%}
+    {%- set _compliance_url = url_for('compliance_dashboard') -%}
+    {%- set _activity_url = url_for('activity_page') -%}
+    {%- set _settings_url = url_for('settings_page') -%}
+    {%- if _client_q -%}
+        {%- set _base_url = _base_url + '?client=' + _client_q -%}
+        {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
+        {%- set _activity_url = _activity_url + '?client=' + _client_q -%}
+        {%- set _settings_url = _settings_url + '?client=' + _client_q -%}
+    {%- endif -%}
+    {%- set _archive_url = _base_url + '#archive' -%}
+    <div class="portal-app-layout">
+        <aside class="portal-sidebar">
+            <a href="{{ _base_url }}" class="portal-sidebar-brand">
+                <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="sidebar-logo-img">
+                <span class="sidebar-brand-text">Morph<strong>IQ</strong></span>
+            </a>
+            <nav class="portal-sidebar-nav">
+                <a href="{{ _base_url }}" class="portal-sidebar-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ _base_url }}#archive" class="portal-sidebar-link active">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span>Archive</span>
+                </a>
+                <a href="{{ _compliance_url }}" class="portal-sidebar-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Compliance</span>
+                </a>
+                <a href="{{ _activity_url }}" class="portal-sidebar-link" aria-label="Activity Log">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Activity</span>
+                </a>
+                <button type="button" class="portal-sidebar-link ai-assistant-trigger" id="sidebar-ai-assistant" aria-label="Open AI Assistant">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <span>AI Assistant</span>
+                </button>
+                <a href="{{ _settings_url }}" class="portal-sidebar-link" aria-label="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+        <div class="portal-app-main">
+    <header class="portal-header">
+        <div class="header-logo">
+            <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+            <span class="logo-text">Morph<span class="iq">IQ</span></span>
+            <span class="logo-divider">{{ source_doc_id }}</span>
+        </div>
+
+        <div class="search-container">
+            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" class="search-input"
+                   placeholder="Search by property, tenant, document type, ID…">
+        </div>
+
+        <div class="header-user-group">
+            <button type="button" class="document-view-close-btn" id="document-view-close" aria-label="Close and return to portfolio" title="Close">
+                <span aria-hidden="true">×</span>
+            </button>
+            <div class="notification-bell-wrapper">
+                <button type="button" class="notification-bell" id="notification-bell" title="Notifications">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="notification-badge" id="notification-badge" style="display:none">0</span>
+                </button>
+                <div id="notification-dropdown" class="notification-dropdown hidden"></div>
+            </div>
+            <div class="user-avatar">{{ current_user.full_name[0] }}</div>
+            <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+        </div>
+    </header>
+
+    <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ _base_url }}#archive">Portfolio</a>
+        <span class="portal-breadcrumb-sep">›</span>
+        <span class="portal-breadcrumb-current">Document</span>
+    </nav>
+
+    <div id="document-view-root" class="portal-main document-view-page">
+        <aside class="document-view-summary" aria-label="Document summary">
+            <div class="document-view-summary-inner">
+                <div class="document-view-summary-header">
+                    <span class="document-view-doc-id" id="document-view-doc-id-label">{{ source_doc_id }}</span>
+                    <h1 class="document-view-title" id="document-view-title">Loading…</h1>
+                    <p class="document-view-address" id="document-view-address"></p>
+                    <div id="document-view-status"></div>
+                </div>
+                <div class="document-view-summary-scroll">
+                    <div class="field-group" id="document-view-summary-fields">
+                        <div class="empty-state">Loading…</div>
+                    </div>
+                </div>
+                <div class="document-view-actions">
+                    <button type="button" class="btn-primary" id="document-view-open-pdf">Open PDF</button>
+                    <button type="button" class="btn-secondary" id="document-view-download">Download</button>
+                </div>
+            </div>
+        </aside>
+        <div class="document-view-pdf" id="document-view-pdf-wrap" aria-label="PDF preview">
+            <div id="document-view-pdf-inner" class="document-view-pdf-inner">
+                <div class="document-view-pdf-loading">Loading preview…</div>
+            </div>
+        </div>
+    </div>
+        </div><!-- /portal-app-main -->
+    </div><!-- /portal-app-layout -->
+
+    <div class="ai-chat-float-wrap" id="ai-chat-float-wrap">
+        <button type="button" class="ai-chat-float-btn" id="ai-chat-float-btn" aria-label="Open MorphIQ AI" title="MorphIQ AI">
+            <span class="ai-chat-float-unread" id="ai-chat-float-unread" aria-hidden="true"></span>
+            <span class="ai-chat-float-icon">
+                {% include 'partials/ai_chat_float_icon.html' %}
+            </span>
+        </button>
+    </div>
+    <div class="ai-chat-sidebar-backdrop" id="ai-chat-sidebar-backdrop" aria-hidden="true"></div>
+    <aside class="ai-chat-sidebar" id="ai-chat-sidebar" aria-label="MorphIQ Intelligence">
+        <div class="ai-chat-sidebar-list-view" id="ai-chat-sidebar-list-view">
+            <div class="ai-chat-sidebar-header">
+                <span class="ai-chat-sidebar-title">MorphIQ Intelligence</span>
+                <button type="button" class="ai-chat-sidebar-close" id="ai-chat-sidebar-close" aria-label="Close">✕</button>
+            </div>
+            <div class="ai-chat-conversation-list" id="ai-chat-conversation-list"></div>
+            <button type="button" class="ai-chat-new-conv-btn" id="ai-chat-new-conv-btn">New Conversation</button>
+        </div>
+        <div class="ai-chat-sidebar-chat-view hidden" id="ai-chat-sidebar-chat-view">
+            <div class="ai-chat-sidebar-header">
+                <button type="button" class="ai-chat-sidebar-back" id="ai-chat-sidebar-back" aria-label="Back to conversations">←</button>
+                <span class="ai-chat-sidebar-chat-title" id="ai-chat-sidebar-chat-title">Chat</span>
+            </div>
+            <div class="ai-chat-sidebar-messages" id="ai-chat-sidebar-messages">
+                <div class="ai-chat-message-list" id="ai-chat-message-list"></div>
+                <div class="ai-chat-suggestions" id="ai-chat-suggestions">
+                    <button type="button" class="ai-chat-suggestion-pill" data-question="What's expiring this month?">What's expiring this month?</button>
+                    <button type="button" class="ai-chat-suggestion-pill" data-question="Which properties are non-compliant?">Which properties are non-compliant?</button>
+                    <button type="button" class="ai-chat-suggestion-pill" data-question="Portfolio health summary">Portfolio health summary</button>
+                </div>
+            </div>
+            <div class="ai-chat-sidebar-chips">
+                <button type="button" class="ai-chat-chip" data-template="summary">Summary Report</button>
+                <button type="button" class="ai-chat-chip" data-template="missing">Missing Documents</button>
+            </div>
+            <div class="ai-chat-sidebar-footer">
+                <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="Ask about your portfolio compliance...">
+                <button type="button" class="ai-chat-send" id="ai-chat-send" aria-label="Send">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+</div><!-- /portal-shell -->
+
+<script>
+    window.MORPHIQ_DOCUMENT_VIEW = {
+        sourceDocId: {{ source_doc_id|tojson|safe }},
+        docId: {{ document_db_id|tojson|safe }},
+    };
+    window.MORPHIQ_PORTAL = {
+        clientName: {{ client_name|tojson|safe }},
+        archiveUrl: {{ _archive_url|tojson|safe }},
+    };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
+<script>
+    if (typeof pdfjsLib !== "undefined") {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+</script>
+<script src="{{ url_for('static', filename='portal-document-pdf.js') }}"></script>
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+
+</body>
+</html>

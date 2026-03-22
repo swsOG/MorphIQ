@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ — Activity Log</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+</head>
+<body>
+
+<div class="portal-shell">
+    {%- set _client_q = client_name or request.args.get('client') or '' -%}
+    {%- set _base_url = url_for('index') -%}
+    {%- set _compliance_url = url_for('compliance_dashboard') -%}
+    {%- set _activity_url = url_for('activity_page') -%}
+    {%- set _settings_url = url_for('settings_page') -%}
+    {%- if _client_q -%}
+        {%- set _base_url = _base_url + '?client=' + _client_q -%}
+        {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
+        {%- set _activity_url = _activity_url + '?client=' + _client_q -%}
+        {%- set _settings_url = _settings_url + '?client=' + _client_q -%}
+    {%- endif -%}
+    <div class="portal-app-layout">
+        <aside class="portal-sidebar">
+            <a href="{{ _base_url }}" class="portal-sidebar-brand">
+                <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="sidebar-logo-img">
+                <span class="sidebar-brand-text">Morph<strong>IQ</strong></span>
+            </a>
+            <nav class="portal-sidebar-nav">
+                <a href="{{ _base_url }}" class="portal-sidebar-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ _base_url }}" class="portal-sidebar-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span>Archive</span>
+                </a>
+                <a href="{{ _compliance_url }}" class="portal-sidebar-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Compliance</span>
+                </a>
+                <a href="{{ _activity_url }}" class="portal-sidebar-link active" aria-label="Activity Log">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Activity</span>
+                </a>
+                <button type="button" class="portal-sidebar-link ai-assistant-trigger" id="sidebar-ai-assistant" aria-label="Open AI Assistant">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <span>AI Assistant</span>
+                </button>
+                <a href="{{ _settings_url }}" class="portal-sidebar-link" aria-label="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+        <div class="portal-app-main">
+            <header class="portal-header">
+                <div class="header-logo">
+                    <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+                    <span class="logo-text">Morph<span class="iq">IQ</span></span>
+                    <span class="logo-divider">Activity Log</span>
+                </div>
+                <div class="header-user-group">
+                    <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+                </div>
+            </header>
+
+            <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+                <a href="{{ _base_url }}">Portfolio</a>
+                <span class="portal-breadcrumb-sep">›</span>
+                <span class="portal-breadcrumb-current">Activity Log</span>
+            </nav>
+
+            <div class="portal-main">
+                <div class="content-area activity-content">
+                    <div class="activity-filters" id="activity-filters">
+                        <button type="button" class="activity-filter-chip active" data-action="">All</button>
+                        <button type="button" class="activity-filter-chip" data-action="document_uploaded">Uploads</button>
+                        <button type="button" class="activity-filter-chip" data-action="document_reviewed,document_verified">Reviews</button>
+                        <button type="button" class="activity-filter-chip" data-action="compliance_resolved,compliance_snoozed">Compliance</button>
+                        <button type="button" class="activity-filter-chip" data-action="user_login">Logins</button>
+                    </div>
+                    <div class="activity-feed" id="activity-feed">
+                        <div class="activity-loading" id="activity-loading">Loading…</div>
+                        <div class="activity-list" id="activity-list"></div>
+                        <div class="activity-load-more-wrap" id="activity-load-more-wrap" style="display:none;">
+                            <button type="button" class="btn-secondary" id="activity-load-more">Load more</button>
+                        </div>
+                        <div class="activity-empty" id="activity-empty" style="display:none;">No activity yet.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.MORPHIQ_PORTAL = { clientName: {{ client_name|tojson|safe }} };
+</script>
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+<script>
+(function() {
+    var LIMIT = 50;
+    var clientQ = (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName) || (new URLSearchParams(window.location.search).get('client') || '');
+    var currentAction = '';
+    var currentOffset = 0;
+    var hasMore = false;
+    var loading = false;
+
+    var listEl = document.getElementById('activity-list');
+    var loadingEl = document.getElementById('activity-loading');
+    var loadMoreWrap = document.getElementById('activity-load-more-wrap');
+    var loadMoreBtn = document.getElementById('activity-load-more');
+    var emptyEl = document.getElementById('activity-empty');
+
+    function actionToClass(action) {
+        if (action === 'document_uploaded') return 'activity-icon-upload';
+        if (action === 'document_reviewed' || action === 'document_verified') return 'activity-icon-review';
+        if (action === 'compliance_resolved' || action === 'compliance_snoozed') return 'activity-icon-compliance';
+        if (action === 'user_login') return 'activity-icon-login';
+        return 'activity-icon-default';
+    }
+
+    function actionToIcon(action) {
+        if (action === 'document_uploaded') return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+        if (action === 'document_reviewed' || action === 'document_verified') return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+        if (action === 'compliance_resolved' || action === 'compliance_snoozed') return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+        if (action === 'user_login') return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>';
+        return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+    }
+
+    function formatRelativeTime(createdAt) {
+        if (!createdAt) return '';
+        var d = new Date(createdAt);
+        if (isNaN(d.getTime())) return createdAt;
+        var now = new Date();
+        var diffMs = now - d;
+        var diffM = Math.floor(diffMs / 60000);
+        var diffH = Math.floor(diffMs / 3600000);
+        var diffD = Math.floor(diffMs / 86400000);
+        if (diffM < 1) return 'Just now';
+        if (diffM < 60) return diffM + ' minute' + (diffM === 1 ? '' : 's') + ' ago';
+        if (diffH < 24) return diffH + ' hour' + (diffH === 1 ? '' : 's') + ' ago';
+        if (diffD === 1) return 'Yesterday at ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (diffD < 7) return diffD + ' days ago';
+        return d.toLocaleDateString() + ' at ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function entityLink(entry) {
+        if (entry.entity_type === 'compliance_action' && entry.entity_id) {
+            var href = '/property/' + entry.entity_id + (clientQ ? '?client=' + encodeURIComponent(clientQ) : '');
+            return '<a href="' + href + '" class="activity-card-link">View property</a>';
+        }
+        return '';
+    }
+
+    function esc(s) {
+        if (s == null || s === undefined) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function renderEntry(entry) {
+        var iconClass = actionToClass(entry.action);
+        var icon = actionToIcon(entry.action);
+        var link = entityLink(entry);
+        var user = entry.user_name ? ' by ' + esc(entry.user_name) : '';
+        return '<div class="activity-card" data-id="' + entry.id + '">' +
+            '<div class="activity-card-icon ' + iconClass + '">' + icon + '</div>' +
+            '<div class="activity-card-body">' +
+                '<div class="activity-card-desc">' + esc(entry.description) + user + '</div>' +
+                '<div class="activity-card-time">' + formatRelativeTime(entry.created_at) + '</div>' +
+            '</div>' +
+            (link ? '<div class="activity-card-right">' + link + '</div>' : '') +
+        '</div>';
+    }
+
+    function fetchActivity(append) {
+        if (loading) return;
+        loading = true;
+        if (!append) {
+            listEl.innerHTML = '';
+            loadingEl.style.display = 'block';
+            loadMoreWrap.style.display = 'none';
+            emptyEl.style.display = 'none';
+        }
+        var url = '/api/activity?limit=' + LIMIT + '&offset=' + (append ? currentOffset : 0);
+        if (clientQ) url += '&client=' + encodeURIComponent(clientQ);
+        if (currentAction) url += '&action=' + encodeURIComponent(currentAction);
+        fetch(url, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                loadingEl.style.display = 'none';
+                var entries = data.entries || [];
+                hasMore = data.has_more || false;
+                if (!append && entries.length === 0) {
+                    emptyEl.style.display = 'block';
+                } else {
+                    entries.forEach(function(e) {
+                        listEl.insertAdjacentHTML('beforeend', renderEntry(e));
+                    });
+                    currentOffset = append ? currentOffset + entries.length : entries.length;
+                    if (hasMore) loadMoreWrap.style.display = 'block';
+                    else loadMoreWrap.style.display = 'none';
+                }
+            })
+            .catch(function() {
+                loadingEl.style.display = 'none';
+                if (!append) listEl.innerHTML = '<div class="activity-error">Failed to load activity.</div>';
+            })
+            .finally(function() { loading = false; });
+    }
+
+    document.getElementById('activity-filters').addEventListener('click', function(e) {
+        var chip = e.target.closest('.activity-filter-chip');
+        if (!chip) return;
+        document.querySelectorAll('.activity-filter-chip').forEach(function(c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        currentAction = chip.getAttribute('data-action') || '';
+        currentOffset = 0;
+        fetchActivity(false);
+    });
+
+    if (loadMoreBtn) loadMoreBtn.addEventListener('click', function() { fetchActivity(true); });
+
+    fetchActivity(false);
+})();
+</script>
+
+</body>
+</html>

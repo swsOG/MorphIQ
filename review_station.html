@@ -161,6 +161,12 @@
   .dashboard-header h1 { font-size: 16px; font-weight: 700; }
   .dashboard-header .client-name { color: var(--accent); }
 
+  .dashboard-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   .btn-back {
     padding: 7px 14px;
     border: 1px solid var(--border);
@@ -175,6 +181,24 @@
   }
 
   .btn-back:hover { border-color: var(--border-light); color: var(--text); }
+
+  .btn-portal {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #7AAFA6;
+    background: #7AAFA6;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-portal:hover {
+    filter: brightness(1.05);
+  }
 
   .status-cards {
     display: flex;
@@ -680,7 +704,10 @@
     <div class="dashboard-header-left">
       <h1>Documents — <span id="dashboardClientName" class="client-name"></span></h1>
     </div>
-    <button type="button" class="btn-back" onclick="showView(1)">← Back to clients</button>
+    <div class="dashboard-header-right">
+      <button type="button" class="btn-back" onclick="showView(1)">← Back to clients</button>
+      <button type="button" class="btn-portal" id="btnOpenPortalDashboard">Open Portal</button>
+    </div>
   </div>
   <div class="status-cards" id="statusCards"></div>
   <div class="dashboard-actions">
@@ -1413,6 +1440,37 @@
     }
   }
 
+  async function saveFieldsOnly() {
+    const doc = getCurrentDoc();
+    if (!doc) return;
+    const payload = {
+      fields: {},
+      review: {
+        reviewed_by: document.getElementById("reviewedBy").value.trim() || "Filip",
+        reviewed_at: new Date().toISOString().slice(0, 19).replace("T", " "),
+        notes: document.getElementById("reviewNotes").value.trim()
+      }
+    };
+    document.querySelectorAll("#fieldsBody [data-field]").forEach(input => {
+      payload.fields[input.dataset.field] = input.value.trim();
+    });
+    try {
+      const res = await fetch(`${API_URL}/review/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.doc_id)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(5000)
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Save failed");
+      showToast("Fields saved", "success");
+      doc.fields = payload.fields;
+      doc.review = payload.review;
+    } catch (e) {
+      showToast("Save failed: " + e.message, "error");
+    }
+  }
+
   function prevDoc() {
     if (currentDocIndex <= 0) return;
     currentDocIndex--;
@@ -1435,6 +1493,17 @@
       if (e.key === "ArrowRight") { e.preventDefault(); nextDoc(); }
     }
   });
+
+  // Press Enter in any document field to save fields without changing status.
+  const fieldsBodyEl = document.getElementById("fieldsBody");
+  if (fieldsBodyEl) {
+    fieldsBodyEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveFieldsOnly();
+      }
+    });
+  }
 
   document.getElementById("btnToggleOcr").addEventListener("click", toggleOcrText);
 
@@ -1466,6 +1535,16 @@
   function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
+
+  document.getElementById("btnOpenPortalDashboard").addEventListener("click", () => {
+    const baseUrl = "http://127.0.0.1:5000";
+    const client = (typeof currentClient !== "undefined" && currentClient) ? currentClient : selectedClient;
+    if (client) {
+      window.open(`${baseUrl}/?client=${encodeURIComponent(client)}`, "_blank");
+    } else {
+      window.open(baseUrl, "_blank");
+    }
+  });
 
   showView(1);
 </script>

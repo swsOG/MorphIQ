@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ — Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+</head>
+<body>
+
+<div class="portal-shell">
+    {%- set _client_q = client_name or request.args.get('client') or '' -%}
+    {%- set _base_url = url_for('index') -%}
+    {%- set _compliance_url = url_for('compliance_dashboard') -%}
+    {%- set _activity_url = url_for('activity_page') -%}
+    {%- set _settings_url = url_for('settings_page') -%}
+    {%- if _client_q -%}
+        {%- set _base_url = _base_url + '?client=' + _client_q -%}
+        {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
+        {%- set _activity_url = _activity_url + '?client=' + _client_q -%}
+        {%- set _settings_url = _settings_url + '?client=' + _client_q -%}
+    {%- endif -%}
+    <div class="portal-app-layout">
+        <aside class="portal-sidebar">
+            <a href="{{ _base_url }}" class="portal-sidebar-brand">
+                <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="sidebar-logo-img">
+                <span class="sidebar-brand-text">Morph<strong>IQ</strong></span>
+            </a>
+            <nav class="portal-sidebar-nav">
+                <a href="{{ _base_url }}" class="portal-sidebar-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ _base_url }}" class="portal-sidebar-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span>Archive</span>
+                </a>
+                <a href="{{ _compliance_url }}" class="portal-sidebar-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Compliance</span>
+                </a>
+                <a href="{{ _activity_url }}" class="portal-sidebar-link" aria-label="Activity Log">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Activity</span>
+                </a>
+                <button type="button" class="portal-sidebar-link ai-assistant-trigger" id="sidebar-ai-assistant" aria-label="Open AI Assistant">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <span>AI Assistant</span>
+                </button>
+                <a href="{{ _settings_url }}" class="portal-sidebar-link active" aria-label="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+        <div class="portal-app-main">
+            <header class="portal-header">
+                <div class="header-logo">
+                    <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+                    <span class="logo-text">Morph<span class="iq">IQ</span></span>
+                    <span class="logo-divider">Settings</span>
+                </div>
+                <div class="header-user-group">
+                    <div class="user-avatar">{{ (user_full_name or 'U')[0] }}</div>
+                    <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+                </div>
+            </header>
+
+            <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+                <a href="{{ _base_url }}">Portfolio</a>
+                <span class="portal-breadcrumb-sep">›</span>
+                <span class="portal-breadcrumb-current">Settings</span>
+            </nav>
+
+            <div class="portal-main">
+                <div class="content-area settings-content">
+                    <!-- ACCOUNT -->
+                    <section class="settings-section settings-card">
+                        <h2 class="settings-section-title">Account</h2>
+                        <div class="settings-section-body">
+                            <p class="settings-account-email">{{ user_email }}</p>
+                            <p class="settings-account-name">{{ user_full_name }}</p>
+                            <span class="settings-role-badge settings-role-{{ user_role }}">{% if user_role == 'admin' %}Admin{% elif user_role == 'manager' %}Manager{% else %}{{ (user_role or 'user')|capitalize }}{% endif %}</span>
+                            <div class="settings-account-actions">
+                                <button type="button" class="btn-secondary settings-btn-disabled" disabled title="Coming soon">Change Password</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- NOTIFICATION PREFERENCES -->
+                    <section class="settings-section settings-card">
+                        <h2 class="settings-section-title">Notification preferences</h2>
+                        <div class="settings-section-body">
+                            <label class="settings-toggle-row">
+                                <input type="checkbox" id="settings-notify-expiring" checked autocomplete="off">
+                                <span>Email digest for expiring certificates</span>
+                            </label>
+                            <label class="settings-toggle-row">
+                                <input type="checkbox" id="settings-notify-overdue" checked autocomplete="off">
+                                <span>Email alert for overdue actions</span>
+                            </label>
+                            <p class="settings-muted-note">Email notifications coming soon.</p>
+                        </div>
+                    </section>
+
+                    <!-- USER MANAGEMENT (admin only) -->
+                    {% if is_admin %}
+                    <section class="settings-section settings-card" id="settings-team-section">
+                        <h2 class="settings-section-title">Team Members</h2>
+                        <div class="settings-section-body">
+                            <div class="settings-table-wrap">
+                                <table class="settings-users-table" id="settings-users-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="settings-users-tbody">
+                                        <tr><td colspan="4" class="settings-loading">Loading…</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="settings-section-actions">
+                                <button type="button" class="btn-secondary settings-btn-disabled" disabled title="Coming soon">Invite User</button>
+                            </div>
+                        </div>
+                    </section>
+                    {% endif %}
+
+                    <!-- PORTAL SETTINGS -->
+                    <section class="settings-section settings-card">
+                        <h2 class="settings-section-title">Portal settings</h2>
+                        <div class="settings-section-body">
+                            {% if is_admin %}
+                            <div class="settings-field">
+                                <label class="settings-label" for="settings-default-client">Default client</label>
+                                <select id="settings-default-client" class="settings-select">
+                                    <option value="">— Select client —</option>
+                                </select>
+                            </div>
+                            {% endif %}
+                            <div class="settings-field">
+                                <label class="settings-label" for="settings-docs-per-page">Documents per page</label>
+                                <select id="settings-docs-per-page" class="settings-select">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- DANGER ZONE (admin only) -->
+                    {% if is_admin %}
+                    <section class="settings-section settings-card settings-danger">
+                        <h2 class="settings-section-title">Danger zone</h2>
+                        <div class="settings-section-body">
+                            <p class="settings-danger-desc">Clear all resolved compliance actions from the system. This cannot be undone.</p>
+                            <button type="button" class="btn-secondary settings-btn-danger" id="settings-clear-resolved">Clear all resolved compliance actions</button>
+                        </div>
+                    </section>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.MORPHIQ_PORTAL = { clientName: {{ client_name|tojson|safe }} };
+    window.MORPHIQ_SETTINGS = { isAdmin: {{ is_admin|tojson|safe }} };
+</script>
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+<script>
+(function() {
+    var STORAGE_KEY_CLIENT = 'morphiq_default_client';
+    var STORAGE_KEY_DOCS_PER_PAGE = 'morphiq_docs_per_page';
+
+    // Documents per page: load from localStorage and save on change
+    var docsPerPageEl = document.getElementById('settings-docs-per-page');
+    if (docsPerPageEl) {
+        var saved = localStorage.getItem(STORAGE_KEY_DOCS_PER_PAGE);
+        if (saved) docsPerPageEl.value = saved;
+        docsPerPageEl.addEventListener('change', function() {
+            localStorage.setItem(STORAGE_KEY_DOCS_PER_PAGE, docsPerPageEl.value);
+        });
+    }
+
+    // Default client (admin): load clients, load/save preference
+    var defaultClientEl = document.getElementById('settings-default-client');
+    if (defaultClientEl && window.MORPHIQ_SETTINGS && window.MORPHIQ_SETTINGS.isAdmin) {
+        var savedClient = localStorage.getItem(STORAGE_KEY_CLIENT);
+        fetch('/api/clients', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var clients = data.clients || [];
+                clients.forEach(function(c) {
+                    var opt = document.createElement('option');
+                    opt.value = c.name || c.slug || '';
+                    opt.textContent = c.name || c.slug || ('Client ' + c.id);
+                    defaultClientEl.appendChild(opt);
+                });
+                if (savedClient) defaultClientEl.value = savedClient;
+            })
+            .catch(function() {});
+        defaultClientEl.addEventListener('change', function() {
+            localStorage.setItem(STORAGE_KEY_CLIENT, defaultClientEl.value || '');
+        });
+    }
+
+    // Team members table (admin)
+    var tbody = document.getElementById('settings-users-tbody');
+    if (tbody && window.MORPHIQ_SETTINGS && window.MORPHIQ_SETTINGS.isAdmin) {
+        fetch('/api/settings/users', { credentials: 'same-origin' })
+            .then(function(r) {
+                if (!r.ok) throw new Error('Forbidden');
+                return r.json();
+            })
+            .then(function(data) {
+                var users = data.users || [];
+                tbody.innerHTML = '';
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="settings-empty">No users found.</td></tr>';
+                } else {
+                    function esc(s) {
+                        if (s == null || s === '') return '—';
+                        var d = document.createElement('div');
+                        d.textContent = s;
+                        return d.innerHTML;
+                    }
+                    users.forEach(function(u) {
+                        var tr = document.createElement('tr');
+                        tr.innerHTML = '<td>' + esc(u.full_name) + '</td><td>' + esc(u.email) + '</td><td>' + esc(u.role) + '</td><td>' + (u.is_active ? 'Active' : 'Inactive') + '</td>';
+                        tbody.appendChild(tr);
+                    });
+                }
+            })
+            .catch(function() {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="settings-error">Failed to load users.</td></tr>';
+            });
+    }
+
+    // Clear resolved: confirm then DELETE
+    var clearResolvedBtn = document.getElementById('settings-clear-resolved');
+    if (clearResolvedBtn) {
+        clearResolvedBtn.addEventListener('click', function() {
+            if (!confirm('Are you sure you want to clear ALL resolved compliance actions? This cannot be undone.')) return;
+            clearResolvedBtn.disabled = true;
+            fetch('/api/compliance/actions/resolved', { method: 'DELETE', credentials: 'same-origin' })
+                .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+                .then(function(result) {
+                    if (result.ok) {
+                        alert('Resolved actions cleared. (' + (result.data.deleted || 0) + ' removed)');
+                    } else {
+                        alert(result.data.error || 'Failed to clear.');
+                    }
+                })
+                .catch(function() { alert('Request failed.'); })
+                .finally(function() { clearResolvedBtn.disabled = false; });
+        });
+    }
+})();
+</script>
+
+</body>
+</html>

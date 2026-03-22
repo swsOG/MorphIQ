@@ -1,9 +1,33 @@
+# Client data (large, sensitive)
 Clients/
 Exports/
 Logs/
+
+# Secrets
+.env
+
+# Database
+portal.db
+portal.db-journal
+
+# Backups
+backups/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Bulk import artifacts
+.bulk_import.json
+
+# Logs
 *.log
+pipeline.log
+
+# Generated files
 *.xlsx
 *.pdf
 *.jpeg
-portal.db
-.env
+
+# OS files
+Thumbs.db

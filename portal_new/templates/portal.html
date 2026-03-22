@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ — Document Archive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+    <style>
+        .portal-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 24px;
+        }
+        .portal-nav-link {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            color: #9ca3af;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .portal-nav-link.active {
+            border-color: rgba(129, 140, 248, 0.6);
+            background: rgba(79, 70, 229, 0.12);
+            color: #e5e7eb;
+        }
+        .portal-nav-link:hover {
+            border-color: rgba(148, 163, 184, 0.6);
+        }
+
+        .client-badge {
+            margin-left: 10px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(122, 175, 166, 0.5);
+            background: rgba(6, 22, 23, 0.85);
+            color: #e5e7eb;
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .client-badge span {
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .client-badge:hover {
+            border-color: #7AAFA6;
+            background: rgba(13, 37, 38, 0.95);
+        }
+
+        .client-picker-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 16px;
+            background: #020617;
+        }
+
+        .client-picker-card {
+            width: 100%;
+            max-width: 720px;
+            background: #061617;
+            border-radius: 18px;
+            border: 1px solid #1a3a3b;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+            padding: 28px 28px 24px;
+        }
+
+        .client-picker-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .client-picker-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            background: #0d2526;
+            border: 1px solid #1a3a3b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .client-picker-logo img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .client-picker-title-wrap h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #e5e7eb;
+            margin: 0;
+        }
+
+        .client-picker-title-wrap p {
+            margin: 2px 0 0;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .client-grid {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .client-card {
+            border-radius: 12px;
+            border: 1px solid #1a3a3b;
+            background: #0d2526;
+            padding: 14px 14px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: border-color 0.16s ease, background 0.16s ease, transform 0.12s ease;
+        }
+
+        .client-card-initial {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            background: #061617;
+            border: 1px solid #1a3a3b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #7AAFA6;
+            flex-shrink: 0;
+        }
+
+        .client-card-content {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .client-card-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e5e7eb;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .client-card-meta {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .client-card:hover {
+            border-color: #7AAFA6;
+            background: #10292a;
+            transform: translateY(-1px);
+        }
+
+        .client-picker-footer {
+            margin-top: 18px;
+            font-size: 11px;
+            color: #6b7280;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .client-picker-status {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .client-picker-status.error {
+            color: #fca5a5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="portal-shell">
+
+    {% if show_client_picker %}
+    <!-- Client picker: no sidebar -->
+    {% else %}
+    <!-- ── App layout: sidebar + main ───────────────────────────────────── -->
+    {%- set _client_q = client_name or '' -%}
+    {%- set _base_url = url_for('index') -%}
+    {%- set _compliance_url = url_for('compliance_dashboard') -%}
+    {%- set _activity_url = url_for('activity_page') -%}
+    {%- set _settings_url = url_for('settings_page') -%}
+    {%- if _client_q -%}
+        {%- set _base_url = _base_url + '?client=' + _client_q -%}
+        {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
+        {%- set _activity_url = _activity_url + '?client=' + _client_q -%}
+        {%- set _settings_url = _settings_url + '?client=' + _client_q -%}
+    {%- endif -%}
+    <div class="portal-app-layout">
+        <aside class="portal-sidebar">
+            <a href="{{ _base_url }}" class="portal-sidebar-brand">
+                <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="sidebar-logo-img">
+                <span class="sidebar-brand-text">Morph<strong>IQ</strong></span>
+            </a>
+            <nav class="portal-sidebar-nav">
+                <a href="{{ _base_url }}" class="portal-sidebar-link {% if active_view == 'overview' %}active{% endif %}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ _base_url }}#archive" class="portal-sidebar-link {% if active_view == 'archive' %}active{% endif %}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span>Archive</span>
+                </a>
+                <a href="{{ _compliance_url }}" class="portal-sidebar-link {% if active_view == 'compliance' %}active{% endif %}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Compliance</span>
+                </a>
+                <a href="{{ _activity_url }}" class="portal-sidebar-link {% if active_view == 'activity' %}active{% endif %}" aria-label="Activity Log">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Activity</span>
+                </a>
+                <button type="button" class="portal-sidebar-link ai-assistant-trigger" id="sidebar-ai-assistant" aria-label="Open AI Assistant">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <span>AI Assistant</span>
+                </button>
+                <a href="{{ _settings_url }}" class="portal-sidebar-link {% if active_view == 'settings' %}active{% endif %}" aria-label="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+        <div class="portal-app-main">
+    <!-- ── Header (inside app layout when sidebar present) ───────────────── -->
+    <header class="portal-header">
+        <div class="header-logo">
+            <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+            <span class="logo-text">Morph<span class="iq">IQ</span></span>
+            {% if current_user.role == 'admin' %}
+                {% if client_name %}
+                    <a href="{{ url_for('index') }}" class="client-badge" title="Switch client">
+                        <span>{{ client_name }}</span>
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="search-container">
+            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" class="search-input"
+                   placeholder="Search by property, tenant, document type, ID…">
+            <span class="search-count" id="search-count" style="display:none"></span>
+        </div>
+        <div class="header-user-group">
+            <div class="notification-bell-wrapper">
+                <button type="button" class="notification-bell" id="notification-bell" title="Notifications">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="notification-badge" id="notification-badge" style="display:none">0</span>
+                </button>
+                <div id="notification-dropdown" class="notification-dropdown hidden"></div>
+            </div>
+            <div class="user-avatar">{{ current_user.full_name[0] }}</div>
+            <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+        </div>
+    </header>
+    {% endif %}
+
+    <!-- ── Main ──────────────────────────────────────────────────────── -->
+    {% if show_client_picker %}
+    <header class="portal-header">
+        <div class="header-logo">
+            <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+            <span class="logo-text">Morph<span class="iq">IQ</span></span>
+            <span class="logo-divider">Select client</span>
+        </div>
+        <div class="header-user-group">
+            <div class="notification-bell-wrapper">
+                <button type="button" class="notification-bell" id="notification-bell" title="Notifications">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="notification-badge" id="notification-badge" style="display:none">0</span>
+                </button>
+                <div id="notification-dropdown" class="notification-dropdown hidden"></div>
+            </div>
+            <div class="user-avatar">{{ current_user.full_name[0] }}</div>
+            <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+        </div>
+    </header>
+        <div id="client-picker-root" class="client-picker-shell">
+            <div class="client-picker-card">
+                <div class="client-picker-header">
+                    <div class="client-picker-logo">
+                        <img src="{{ url_for('static', filename='morph_iq_full.png') }}" alt="Morph IQ" height="40">
+                    </div>
+                    <div class="client-picker-title-wrap">
+                        <h1>Select a client</h1>
+                        <p>Choose which client to view in the MorphIQ archive.</p>
+                    </div>
+                </div>
+                <div id="client-grid" class="client-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="client-picker-footer">
+                    <span id="client-picker-status" class="client-picker-status">Loading clients…</span>
+                    <span style="text-align: right;">Only active clients from the portal database are shown.</span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="portal-main">
+
+            <div id="dashboard-overview" class="dashboard-view dashboard-overview">
+                <section class="dashboard-stats-row" id="dashboard-stats">
+                    <div class="dashboard-stat-card" id="dash-stat-properties">
+                        <div class="dashboard-stat-label">Total Properties</div>
+                        <div class="dashboard-stat-value">—</div>
+                    </div>
+                    <div class="dashboard-stat-card" id="dash-stat-documents">
+                        <div class="dashboard-stat-label">Total Documents</div>
+                        <div class="dashboard-stat-value">—</div>
+                    </div>
+                    <div class="dashboard-stat-card dashboard-stat-compliance" id="dash-stat-compliance">
+                        <div class="dashboard-stat-label">Compliance Score</div>
+                        <div class="dashboard-stat-value">—</div>
+                        <div class="dashboard-stat-sub">Fully compliant properties</div>
+                    </div>
+                    <div class="dashboard-stat-card dashboard-stat-overdue" id="dash-stat-overdue">
+                        <div class="dashboard-stat-label">Overdue Actions</div>
+                        <div class="dashboard-stat-value">—</div>
+                        <div class="dashboard-stat-sub">Expired certificates</div>
+                    </div>
+                </section>
+
+                <section class="dashboard-two-column">
+                    <div class="dashboard-attention-section">
+                        <div class="dashboard-section-header">
+                            <h2 class="dashboard-section-title">Needs Attention</h2>
+                            <a href="#" id="dash-attention-view-all" class="dashboard-link">View all on Compliance →</a>
+                        </div>
+                        <div id="dash-needs-attention" class="dashboard-attention-list">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                    <aside class="dashboard-activity-section">
+                        <div class="dashboard-section-header">
+                            <h2 class="dashboard-section-title">Recent Activity</h2>
+                        </div>
+                        <div id="dash-recent-activity" class="dashboard-activity-list">
+                            <!-- Filled by JS -->
+                        </div>
+                    </aside>
+                </section>
+
+                <section class="dashboard-quick-nav">
+                    <button type="button" class="dashboard-quick-card" id="dash-nav-compliance">
+                        <div class="dashboard-quick-title">Compliance Dashboard</div>
+                        <div class="dashboard-quick-body">View portfolio risk, overdue actions, and coverage by type.</div>
+                    </button>
+                    <button type="button" class="dashboard-quick-card" id="dash-nav-archive">
+                        <div class="dashboard-quick-title">Full Archive</div>
+                        <div class="dashboard-quick-body">Search and browse all properties and documents.</div>
+                    </button>
+                    <button type="button" class="dashboard-quick-card" id="dash-nav-upload">
+                        <div class="dashboard-quick-title">Upload Document</div>
+                        <div class="dashboard-quick-body">Add a new certificate or document to the archive.</div>
+                    </button>
+                </section>
+            </div>
+
+            <div id="dashboard-archive" class="dashboard-view dashboard-archive archive-luminous">
+                <!-- Content Area -->
+                <div class="content-area">
+
+                    <div class="archive-full-width-area">
+                        <!-- Stat Cards (portfolio compliance); Export lives in filter row below -->
+                        <div class="stats-row">
+                            <div class="stat-card stat-card-total" id="stat-total-props" title="Click to scroll to table">
+                                <div class="stat-card-inner">
+                                    <div>
+                                        <div class="stat-label">Total Properties</div>
+                                        <div class="stat-value">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card stat-card-compliant" id="stat-compliant" title="Click to filter">
+                                <div class="stat-card-inner">
+                                    <span class="stat-icon stat-icon-check" aria-hidden="true">✓</span>
+                                    <div>
+                                        <div class="stat-label">Fully Compliant</div>
+                                        <div class="stat-value">—</div>
+                                        <div class="stat-sub">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card stat-card-expiring" id="stat-expiring" title="Click to filter">
+                                <div class="stat-card-inner">
+                                    <div>
+                                        <div class="stat-label">Expiring Soon</div>
+                                        <div class="stat-value">—</div>
+                                        <div class="stat-sub">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card stat-card-noncompliant" id="stat-noncompliant" title="Click to filter">
+                                <div class="stat-card-inner">
+                                    <div>
+                                        <div class="stat-label">Non-Compliant</div>
+                                        <div class="stat-value">—</div>
+                                        <div class="stat-sub">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filters row: Overview/Archive + chips + dropdowns -->
+                        <div class="filter-bar">
+                            <div class="filter-left">
+                                <div class="dashboard-tab-bar">
+                                    <button type="button" class="dashboard-tab active" data-view="overview">Overview</button>
+                                    <button type="button" class="dashboard-tab" data-view="archive">Archive</button>
+                                </div>
+                                <div class="filter-chips">
+                                    <button class="filter-chip active" data-filter="all">All</button>
+                                    <button class="filter-chip" data-filter="gas_safety">Gas Safety</button>
+                                    <button class="filter-chip" data-filter="eicr">EICR</button>
+                                    <button class="filter-chip" data-filter="epc">EPC</button>
+                                    <button class="filter-chip" data-filter="deposit">Deposit</button>
+                                </div>
+                            </div>
+                            <div class="filter-bar-right">
+                                <div class="sort-control">
+                                    <div class="sort-group">
+                                        <span class="sort-label">Compliance</span>
+                                        <select id="property-status-filter" class="sort-select">
+                                            <option value="all">Any status</option>
+                                            <option value="valid">Valid</option>
+                                            <option value="expiring_soon">Expiring soon</option>
+                                            <option value="expired">Expired</option>
+                                            <option value="missing">Missing</option>
+                                        </select>
+                                    </div>
+                                    <div class="sort-group">
+                                        <span class="sort-label">Sort</span>
+                                        <select class="sort-select" id="archive-sort-select">
+                                            <option value="newest">Latest activity</option>
+                                            <option value="name">Property A–Z</option>
+                                            <option value="health">Health % (low to high)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-export-report" id="dashboard-export-report" title="Download compliance report PDF">Export</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Two-panel layout: left property list, right detail -->
+                    <div class="archive-two-panel">
+                        <!-- Left: property tree only -->
+                        <div class="archive-panel-left">
+                            <div id="archive-properties-section" class="archive-properties-section">
+                                <div class="archive-left-heading" id="archive-properties-heading">Properties</div>
+                                <div id="archive-property-list" class="archive-property-list">
+                                    <!-- Filled by JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: workspace toggle + documents or critical list -->
+                        <aside class="archive-panel-right">
+                            <div class="archive-workspace-toolbar">
+                                <div class="archive-workspace-mode-toggle" role="tablist" aria-label="Workspace">
+                                    <button type="button" role="tab" class="archive-workspace-mode-btn active" id="archive-mode-documents" data-workspace-mode="documents" aria-selected="true">Property documents</button>
+                                    <button type="button" role="tab" class="archive-workspace-mode-btn" id="archive-mode-critical" data-workspace-mode="critical" aria-selected="false">Critical expiries<span id="archive-critical-tab-count" class="archive-workspace-count" hidden></span></button>
+                                </div>
+                            </div>
+                            <div id="archive-workspace-documents" class="archive-workspace-documents">
+                                <div id="archive-property-detail" class="archive-property-detail">
+                                    <div class="archive-detail-empty">
+                                        <div class="archive-detail-empty-icon">📂</div>
+                                        <div class="archive-detail-empty-title">Select a property</div>
+                                        <div class="archive-detail-empty-upload">
+                                            <span class="archive-detail-empty-text">Expand an address and choose a folder to browse documents.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <footer class="archive-status-bar" id="archive-status-bar" aria-live="polite" hidden>
+                                    <span class="archive-status-left">
+                                        <span id="archive-status-items">0 items</span>
+                                        <span class="archive-status-sep">·</span>
+                                        <span id="archive-status-selected">0 selected</span>
+                                    </span>
+                                </footer>
+                            </div>
+                            <div id="archive-workspace-critical" class="archive-workspace-critical" hidden>
+                                <p class="archive-critical-intro">Expired or expiring soon. Use <strong>View</strong> to open the property page.</p>
+                                <div id="archive-critical-list" class="archive-critical-list">
+                                    <div class="critical-expiries-loading">Loading…</div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </div><!-- /dashboard-archive -->
+
+        </div><!-- /portal-main -->
+
+        <!-- AI chat: floating button + right sidebar (conversation list / chat view) -->
+        <div class="ai-chat-float-wrap" id="ai-chat-float-wrap">
+            <button type="button" class="ai-chat-float-btn" id="ai-chat-float-btn" aria-label="Open MorphIQ AI" title="MorphIQ AI">
+                <span class="ai-chat-float-unread" id="ai-chat-float-unread" aria-hidden="true"></span>
+                <span class="ai-chat-float-icon">
+                    {% include 'partials/ai_chat_float_icon.html' %}
+                </span>
+            </button>
+        </div>
+        <div class="ai-chat-sidebar-backdrop" id="ai-chat-sidebar-backdrop" aria-hidden="true"></div>
+        <aside class="ai-chat-sidebar" id="ai-chat-sidebar" aria-label="MorphIQ Intelligence">
+            <div class="ai-chat-sidebar-list-view" id="ai-chat-sidebar-list-view">
+                <div class="ai-chat-sidebar-header">
+                    <span class="ai-chat-sidebar-title">MorphIQ Intelligence</span>
+                    <button type="button" class="ai-chat-sidebar-close" id="ai-chat-sidebar-close" aria-label="Close">✕</button>
+                </div>
+                <div class="ai-chat-conversation-list" id="ai-chat-conversation-list"></div>
+                <button type="button" class="ai-chat-new-conv-btn" id="ai-chat-new-conv-btn">New Conversation</button>
+            </div>
+            <div class="ai-chat-sidebar-chat-view hidden" id="ai-chat-sidebar-chat-view">
+                <div class="ai-chat-sidebar-header">
+                    <button type="button" class="ai-chat-sidebar-back" id="ai-chat-sidebar-back" aria-label="Back to conversations">←</button>
+                    <span class="ai-chat-sidebar-chat-title" id="ai-chat-sidebar-chat-title">Chat</span>
+                </div>
+                <div class="ai-chat-sidebar-messages" id="ai-chat-sidebar-messages">
+                    <div class="ai-chat-message-list" id="ai-chat-message-list"></div>
+                    <div class="ai-chat-suggestions" id="ai-chat-suggestions">
+                        <button type="button" class="ai-chat-suggestion-pill" data-question="What's expiring this month?">What's expiring this month?</button>
+                        <button type="button" class="ai-chat-suggestion-pill" data-question="Which properties are non-compliant?">Which properties are non-compliant?</button>
+                        <button type="button" class="ai-chat-suggestion-pill" data-question="Portfolio health summary">Portfolio health summary</button>
+                        <button type="button" class="ai-chat-suggestion-pill" data-question="List all tenants and rents">List all tenants and rents</button>
+                    </div>
+                </div>
+                <div class="ai-chat-sidebar-chips">
+                    <button type="button" class="ai-chat-chip" data-template="summary">Summary Report</button>
+                    <button type="button" class="ai-chat-chip" data-template="missing">Missing Documents</button>
+                    <button type="button" class="ai-chat-chip" data-question="Portfolio health summary">Portfolio health summary</button>
+                </div>
+                <div class="ai-chat-sidebar-footer">
+                    <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="Ask about your portfolio compliance...">
+                    <button type="button" class="ai-chat-send" id="ai-chat-send" aria-label="Send">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        </div><!-- /portal-app-main -->
+    </div><!-- /portal-app-layout -->
+    {% endif %}
+
+</div><!-- /portal-shell -->
+
+<script>
+    // Expose the current client name to the JS layer for filtering.
+    window.MORPHIQ_PORTAL = {
+        clientName: {{ client_name|tojson|safe }},
+        showClientPicker: {{ (show_client_picker|default(false))|tojson|safe }}
+    };
+</script>
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+
+</body>
+</html>

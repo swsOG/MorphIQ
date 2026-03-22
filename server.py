@@ -40,12 +40,16 @@ from pdfminer.high_level import extract_text
 
 # Import the export function from the existing export script
 from export_client import run_export
+from sync_to_portal import sync_portal_for_clients
 
 # ──────────────────────────────────────────────
 # CONFIGURATION
 # ──────────────────────────────────────────────
 
-BASE = Path(r"C:\ScanSystem_v2")
+# Filesystem root: same folder as this script (contains Clients/, Templates/) so dev copies
+# work without mirroring C:\ScanSystem_v2. Override with MORPHIQ_BASE or SCANSTATION_BASE.
+_base_env = (os.environ.get("MORPHIQ_BASE") or os.environ.get("SCANSTATION_BASE") or "").strip()
+BASE = Path(_base_env).resolve() if _base_env else Path(__file__).resolve().parent
 HOST = "127.0.0.1"  # Localhost only — never exposed to network
 PORT = 8765
 
@@ -113,9 +117,19 @@ def export():
 
     try:
         result = run_export(client_name)
-        if result.get("success") and result.get("delivery_folder"):
-            export_folder_name = Path(result["delivery_folder"]).name
-            result["viewer_url"] = f"http://{HOST}:{PORT}/delivery/{quote(client_name)}/{quote(export_folder_name)}/viewer.html"
+        if result.get("success"):
+            # Keep the portal database in sync automatically for this client
+            try:
+                sync_summary = sync_portal_for_clients([client_name])
+                result["portal_sync"] = sync_summary
+            except Exception as sync_err:
+                # Don't fail the export if sync has an issue; just report it.
+                result["portal_sync_error"] = str(sync_err)
+
+            # After export, open the new MorphIQ portal (portal_new) instead of the legacy viewer.html
+            # The client name is passed as a query param for potential filtering, but the portal
+            # will still work even if it ignores this parameter.
+            result["viewer_url"] = f"http://127.0.0.1:5000/?client={quote(client_name)}"
         return jsonify(result)
     except Exception as e:
         return jsonify({"success": False, "error": f"Server error: {e}"}), 500
@@ -303,6 +317,14 @@ def save_review(client_name: str, doc_id: str):
             json.dump(current, f, indent=2, ensure_ascii=False)
     except Exception as e:
         return jsonify({"success": False, "error": f"Cannot write review.json: {e}"}), 500
+
+    # Auto-sync this document to portal (non-critical; failures are logged only)
+    try:
+        from sync_to_portal import sync_single_doc
+
+        sync_single_doc(client_name, doc_id)
+    except Exception as e:
+        app.logger.warning(f"Portal sync failed for {doc_id}: {e}")
 
     return jsonify({"success": True})
 
@@ -642,6 +664,7 @@ if __name__ == "__main__":
     print("=" * 50)
     print("ScanStation API Server")
     print(f"Running on http://{HOST}:{PORT}")
+    print(f"Data root (BASE): {BASE}")
     print("=" * 50)
     print()
     print("Endpoints:")

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ — Document Archive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+</head>
+<body>
+
+<div class="portal-shell">
+
+    <!-- ── Header ────────────────────────────────────────────────────── -->
+    <header class="portal-header">
+        <div class="header-logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Morph IQ" class="logo-img">
+            <span class="logo-divider">Document Archive</span>
+        </div>
+
+        <div class="search-container">
+            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" class="search-input"
+                   placeholder="Search by property, tenant, document type, ID…">
+            <span class="search-count" id="search-count" style="display:none"></span>
+        </div>
+
+        <div class="user-avatar">F</div>
+    </header>
+
+    <!-- ── Main ──────────────────────────────────────────────────────── -->
+    <div class="portal-main">
+
+        <!-- Content Area -->
+        <div class="content-area">
+
+            <!-- Stat Cards -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-card-inner">
+                        <div>
+                            <div class="stat-label">Total Documents</div>
+                            <div class="stat-value" id="stat-total">—</div>
+                        </div>
+                        <span class="stat-icon">📁</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-inner">
+                        <div>
+                            <div class="stat-label">Verified</div>
+                            <div class="stat-value" id="stat-verified" style="color: #34d399;">—</div>
+                        </div>
+                        <span class="stat-icon">✓</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-inner">
+                        <div>
+                            <div class="stat-label">Needs Review</div>
+                            <div class="stat-value" id="stat-review" style="color: #fbbf24;">—</div>
+                        </div>
+                        <span class="stat-icon">⏳</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-chips">
+                    <button class="filter-chip active" data-filter="all">All</button>
+                    <button class="filter-chip" data-filter="tenancy-agreement">Tenancy Agreement</button>
+                    <button class="filter-chip" data-filter="gas-safety-certificate">Gas Safety</button>
+                    <button class="filter-chip" data-filter="eicr">EICR</button>
+                    <button class="filter-chip" data-filter="epc">EPC</button>
+                </div>
+                <div class="sort-control">
+                    <span class="sort-label">Sort:</span>
+                    <select class="sort-select">
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="name">Name A–Z</option>
+                        <option value="status">Status</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="results-container">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Document</th>
+                            <th>Property</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <tr>
+                            <td colspan="5" class="empty-state">Loading documents…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Detail Drawer ─────────────────────────────────────────── -->
+        <div id="detail-drawer" class="detail-drawer hidden">
+
+            <!-- Drawer Header -->
+            <div class="drawer-header">
+                <div class="drawer-header-top">
+                    <div>
+                        <div class="drawer-meta">
+                            <span class="drawer-meta-icon">📄</span>
+                            <span class="drawer-docid">DOC-00000</span>
+                        </div>
+                        <h3 class="drawer-title">Document</h3>
+                        <p class="drawer-address">—</p>
+                    </div>
+                    <button class="drawer-close" title="Close (Esc)">✕</button>
+                </div>
+                <div class="drawer-status"></div>
+            </div>
+
+            <!-- Drawer Tabs -->
+            <div class="drawer-tabs">
+                <button class="drawer-tab active" data-tab="summary">Summary</button>
+                <button class="drawer-tab" data-tab="preview">Preview</button>
+            </div>
+
+            <!-- Drawer Content -->
+            <div class="drawer-content">
+                <!-- Summary Tab -->
+                <div class="tab-panel active" data-tab="summary">
+                    <div class="field-group">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="review-section" style="display:none;"></div>
+                    <div class="drawer-actions">
+                        <button class="btn-primary btn-open-pdf">Open PDF</button>
+                        <button class="btn-secondary btn-download">Download</button>
+                    </div>
+                </div>
+
+                <!-- Preview Tab -->
+                <div class="tab-panel" data-tab="preview">
+                    <div class="pdf-preview-container">
+                        <div class="pdf-placeholder">
+                            <svg class="pdf-placeholder-icon" width="48" height="48" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                            <span class="pdf-placeholder-text">Select a document to preview</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /portal-main -->
+
+</div><!-- /portal-shell -->
+
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo  ScanStation — System Check
+echo  ScanStation - System Check
 echo ============================================
 echo.
 set ERRORS=0
@@ -21,9 +21,7 @@ tesseract --version >nul 2>&1
 if %ERRORLEVEL% == 0 (
     for /f "tokens=1,2" %%a in ('tesseract --version 2^>^&1') do (
         if "%%a"=="tesseract" echo   OK: Tesseract %%b
-        goto :donetest
     )
-    :donetest
 ) else (
     echo   FAIL: Tesseract not found. Install from:
     echo         https://github.com/UB-Mannheim/tesseract/wiki
@@ -35,15 +33,11 @@ echo.
 echo Checking ImageMagick...
 magick --version >nul 2>&1
 if %ERRORLEVEL% == 0 (
-    for /f "tokens=1,2,3" %%a in ('magick --version 2^>^&1') do (
-        if "%%b"=="ImageMagick" echo   OK: ImageMagick %%c
-        goto :donemagick
-    )
-    :donemagick
+    echo   OK: ImageMagick available on PATH
 ) else (
     echo   FAIL: ImageMagick not found. Install from:
-    echo         https://imagemagick.org/script/download.php#windows
-    echo         Tick "Add to system path" during install.
+    echo         https://imagemagick.org/script/download.php^#windows
+    echo         Tick Add to system path during install.
     set /a ERRORS+=1
 )
 
@@ -66,21 +60,21 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo Checking ScanSystem folder...
-if exist "C:\ScanSystem_v2\auto_ocr_watch.py" (
-    echo   OK: C:\ScanSystem_v2\ exists with system files
+echo Checking deploy folder - same directory as this script...
+if exist "%~dp0auto_ocr_watch.py" (
+    echo   OK: auto_ocr_watch.py found next to setup_check.bat
 ) else (
-    echo   FAIL: C:\ScanSystem_v2\auto_ocr_watch.py not found.
-    echo         Make sure the ScanSystem folder is at C:\ScanSystem_v2\
+    echo   FAIL: auto_ocr_watch.py not found: "%~dp0auto_ocr_watch.py"
+    echo         Run this script from your deploy root - folder containing the pipeline files.
     set /a ERRORS+=1
 )
 
 echo.
 echo Checking Templates...
-if exist "C:\ScanSystem_v2\Templates\tenancy_agreement.json" (
+if exist "%~dp0Templates\tenancy_agreement.json" (
     echo   OK: Templates folder has document type templates
 ) else (
-    echo   WARN: No templates found in C:\ScanSystem_v2\Templates\
+    echo   WARN: No templates found at "%~dp0Templates\tenancy_agreement.json"
     echo         The system will use a fallback template.
 )
 
@@ -111,10 +105,10 @@ if %ERRORLEVEL% NEQ 0 (
 echo.
 echo ============================================
 if %ERRORS% == 0 (
-    echo  ALL CHECKS PASSED — System is ready!
+    echo  ALL CHECKS PASSED - System is ready!
     echo  Double-click Start_System_v2.bat to begin.
 ) else (
-    echo  %ERRORS% ISSUE(S) FOUND — Fix the items above
+    echo  %ERRORS% issues found - Fix the items above
     echo  then run this check again.
 )
 echo ============================================

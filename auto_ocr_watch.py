@@ -136,19 +136,19 @@ def get_next_doc_id(batch_folder: Path) -> str:
 
 def write_review_json(doc_folder: Path, doc_id: str, pdf_name: str, image_name: str, template: dict,
                      doc_name: str | None = None, initial_fields: dict | None = None):
-    fields = {}
-    for field_def in template.get("fields", []):
-        key = field_def["key"]
-        fields[key] = (initial_fields or {}).get(key, "")
     scanned_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     review = {
         "doc_id": doc_id,
-        "doc_type": template.get("doc_type", "Unknown"),
-        "doc_type_template": template.get("display_name", ""),
+        # Initial doc_type is neutral/unknown; AI prefill will classify it.
+        "doc_type": "Unknown",
+        # No template is bound at capture time; ReviewStation layout will be
+        # driven by whatever fields AI extraction writes later.
+        "doc_type_template": "",
         "status": "New",
         "quality_score": "",
         "files": {"pdf": pdf_name, "raw_image": image_name},
-        "fields": fields,
+        # Fields start empty; AI prefill populates them based on detected type.
+        "fields": {},
         "review": {
             "reviewed_by": "",
             "reviewed_at": "",
@@ -308,22 +308,19 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
     log(f"START: {image_path.name}", client_name)
 
     meta = read_meta_if_present(image_path, raw_folder)
+    doc_name = None
+    initial_fields = {}
     if meta:
-        doc_type_name = (meta.get("doc_type_template") or "").strip() or get_doc_type_for_file(image_path, raw_folder)
         doc_name = (meta.get("doc_name") or "").strip() or None
-        initial_fields = {}
         if doc_name:
             log(f"  Doc name: {doc_name}", client_name)
         prop = (meta.get("property_address") or "").strip()
         if prop:
             initial_fields["property_address"] = prop
-    else:
-        doc_type_name = get_doc_type_for_file(image_path, raw_folder)
-        doc_name = None
-        initial_fields = {}
 
-    template = load_template(doc_type_name)
-    log(f"  Doc type: {template.get('doc_type', 'Unknown')} (template: {doc_type_name})", client_name)
+    # At capture time we no longer select a template or document type. All
+    # documents start as "Unknown" and AI classification assigns the real type.
+    log("  Doc type: Unknown (AI classification pending)", client_name)
 
     today = datetime.now().strftime("%Y-%m-%d")
     batch_folder = batches_folder / today
@@ -344,7 +341,7 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
         shutil.move(str(image_path), str(archived_image))
 
         review_path = write_review_json(
-            doc_folder, doc_id, output_pdf.name, archived_image.name, template,
+            doc_folder, doc_id, output_pdf.name, archived_image.name, {},
             doc_name=doc_name, initial_fields=initial_fields or None
         )
 
@@ -396,8 +393,9 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
                 )
                 property_id = cur.lastrowid
 
-            # Look up or create document type
-            doc_type_label = template.get("doc_type", doc_type_name)
+            # Look up or create a neutral/unknown document type for this initial insert.
+            # sync_to_portal.py will later update this when AI prefill has classified it.
+            doc_type_label = "Unknown"
             cur.execute(
                 "SELECT id FROM document_types WHERE label = ?",
                 (doc_type_label,),
@@ -406,7 +404,7 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
             if row:
                 document_type_id = row[0]
             else:
-                doc_type_key = re.sub(r"[^a-z0-9]+", "-", doc_type_name.lower()).strip("-") or "document"
+                doc_type_key = "unknown"
                 cur.execute(
                     "INSERT INTO document_types (key, label) VALUES (?, ?)",
                     (doc_type_key, doc_type_label),

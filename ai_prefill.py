@@ -114,6 +114,146 @@ def build_tenancy_agreement_prompt(review_data: Dict[str, Any]) -> str:
     )
 
 
+def build_gas_safety_prompt(review_data: Dict[str, Any]) -> str:
+    fields = [
+        "property_address",
+        "engineer_name",
+        "gas_safe_reg",
+        "inspection_date",
+        "expiry_date",
+        "appliances_tested",
+        "result",
+    ]
+    existing = review_data.get("fields") or {}
+    existing_snippet = {k: existing.get(k, "") for k in fields}
+    return (
+        "You are an assistant that reads a Gas Safety Certificate and extracts key fields.\n\n"
+        "Return ONLY a JSON object with these exact keys:\n"
+        "  - property_address (string)\n"
+        "  - engineer_name (string)\n"
+        "  - gas_safe_reg (string, registration number)\n"
+        "  - inspection_date (ISO date like 2026-01-31)\n"
+        "  - expiry_date (ISO date)\n"
+        "  - appliances_tested (string, list or description of appliances)\n"
+        "  - result (string: Pass or Fail)\n\n"
+        "Use the PDF content I provide, not your own knowledge. "
+        "If you are unsure about a field, use an empty string.\n\n"
+        "Existing values from the system (you may correct these if they are wrong):\n"
+        f"{json.dumps(existing_snippet, ensure_ascii=False, indent=2)}\n\n"
+        "Again, respond with JSON only, no commentary."
+    )
+
+
+def build_eicr_prompt(review_data: Dict[str, Any]) -> str:
+    fields = [
+        "property_address",
+        "electrician_name",
+        "company_name",
+        "registration_number",
+        "inspection_date",
+        "next_inspection_date",
+        "overall_result",
+        "observations",
+    ]
+    existing = review_data.get("fields") or {}
+    existing_snippet = {k: existing.get(k, "") for k in fields}
+    return (
+        "You are an assistant that reads an EICR (Electrical Installation Condition Report) and extracts key fields.\n\n"
+        "Return ONLY a JSON object with these exact keys:\n"
+        "  - property_address (string)\n"
+        "  - electrician_name (string)\n"
+        "  - company_name (string)\n"
+        "  - registration_number (string)\n"
+        "  - inspection_date (ISO date like 2026-01-31)\n"
+        "  - next_inspection_date (ISO date)\n"
+        "  - overall_result (string: Satisfactory or Unsatisfactory)\n"
+        "  - observations (string, summary of findings)\n\n"
+        "Use the PDF content I provide, not your own knowledge. "
+        "If you are unsure about a field, use an empty string.\n\n"
+        "Existing values from the system (you may correct these if they are wrong):\n"
+        f"{json.dumps(existing_snippet, ensure_ascii=False, indent=2)}\n\n"
+        "Again, respond with JSON only, no commentary."
+    )
+
+
+def build_epc_prompt(review_data: Dict[str, Any]) -> str:
+    fields = [
+        "property_address",
+        "epc_rating",
+        "assessor_name",
+        "assessment_date",
+        "expiry_date",
+    ]
+    existing = review_data.get("fields") or {}
+    existing_snippet = {k: existing.get(k, "") for k in fields}
+    return (
+        "You are an assistant that reads an EPC (Energy Performance Certificate) and extracts key fields.\n\n"
+        "Return ONLY a JSON object with these exact keys:\n"
+        "  - property_address (string)\n"
+        "  - epc_rating (string, e.g. A, B, C, D, E, F, G)\n"
+        "  - assessor_name (string)\n"
+        "  - assessment_date (ISO date like 2026-01-31)\n"
+        "  - expiry_date (ISO date)\n\n"
+        "Use the PDF content I provide, not your own knowledge. "
+        "If you are unsure about a field, use an empty string.\n\n"
+        "Existing values from the system (you may correct these if they are wrong):\n"
+        f"{json.dumps(existing_snippet, ensure_ascii=False, indent=2)}\n\n"
+        "Again, respond with JSON only, no commentary."
+    )
+
+
+def build_deposit_protection_prompt(review_data: Dict[str, Any]) -> str:
+    fields = [
+        "property_address",
+        "tenant_full_name",
+        "deposit_amount",
+        "scheme_name",
+        "certificate_number",
+        "protection_date",
+    ]
+    existing = review_data.get("fields") or {}
+    existing_snippet = {k: existing.get(k, "") for k in fields}
+    return (
+        "You are an assistant that reads a Deposit Protection Certificate and extracts key fields.\n\n"
+        "Return ONLY a JSON object with these exact keys:\n"
+        "  - property_address (string)\n"
+        "  - tenant_full_name (string)\n"
+        "  - deposit_amount (numeric or string)\n"
+        "  - scheme_name (string, name of the protection scheme)\n"
+        "  - certificate_number (string)\n"
+        "  - protection_date (ISO date if present)\n\n"
+        "Use the PDF content I provide, not your own knowledge. "
+        "If you are unsure about a field, use an empty string.\n\n"
+        "Existing values from the system (you may correct these if they are wrong):\n"
+        f"{json.dumps(existing_snippet, ensure_ascii=False, indent=2)}\n\n"
+        "Again, respond with JSON only, no commentary."
+    )
+
+
+def build_inventory_prompt(review_data: Dict[str, Any]) -> str:
+    fields = [
+        "property_address",
+        "clerk_name",
+        "inspection_date",
+        "property_condition_summary",
+    ]
+    existing = review_data.get("fields") or {}
+    existing_snippet = {k: existing.get(k, "") for k in fields}
+    return (
+        "You are an assistant that reads a property Inventory and extracts key fields.\n\n"
+        "Return ONLY a JSON object with these exact keys:\n"
+        "  - property_address (string)\n"
+        "  - clerk_name (string, person who did the inventory)\n"
+        "  - inspection_date (ISO date like 2026-01-31)\n"
+        "  - property_condition_summary (string, overall condition or key notes)\n\n"
+        "Use the PDF content I provide, not your own knowledge. "
+        "If you are unsure about a field, use an empty string.\n\n"
+        "Existing values from the system (you may correct these if they are wrong):\n"
+        f"{json.dumps(existing_snippet, ensure_ascii=False, indent=2)}\n\n"
+        "Again, respond with JSON only, no commentary."
+    )
+
+
 def call_claude_with_pdf(
     pdf_b64: str,
     system_prompt: str,
@@ -201,6 +341,87 @@ def parse_json_from_claude(text: str) -> Dict[str, Any]:
     return json.loads(cleaned)
 
 
+# Recognized document types for extraction. Used for auto-detect and prompt selection.
+RECOGNIZED_DOC_TYPES = [
+    "Tenancy Agreement",
+    "Gas Safety Certificate",
+    "EICR",
+    "EPC",
+    "Deposit Protection Certificate",
+    "Inventory",
+]
+
+DETECTION_SYSTEM = "You classify scanned property documents."
+DETECTION_USER = (
+    "Look at this document and identify what type it is. "
+    "Reply with ONLY one of these exact labels, nothing else: "
+    "Tenancy Agreement, Gas Safety Certificate, EICR, EPC, Deposit Protection Certificate, Inventory"
+)
+
+EXTRACTION_SYSTEM = "You are a careful assistant that extracts structured data from scanned property documents."
+
+# Map normalized doc_type to (prompt_builder_fn, list of field keys).
+DOC_TYPE_CONFIG: Dict[str, Any] = {
+    "Tenancy Agreement": (build_tenancy_agreement_prompt, [
+        "property_address", "tenant_full_name", "landlord_name", "start_date",
+        "end_date", "monthly_rent_amount", "deposit_amount", "agreement_date",
+    ]),
+    "Gas Safety Certificate": (build_gas_safety_prompt, [
+        "property_address", "engineer_name", "gas_safe_reg", "inspection_date",
+        "expiry_date", "appliances_tested", "result",
+    ]),
+    "EICR": (build_eicr_prompt, [
+        "property_address", "electrician_name", "company_name", "registration_number",
+        "inspection_date", "next_inspection_date", "overall_result", "observations",
+    ]),
+    "EPC": (build_epc_prompt, [
+        "property_address", "epc_rating", "assessor_name", "assessment_date", "expiry_date",
+    ]),
+    "Deposit Protection Certificate": (build_deposit_protection_prompt, [
+        "property_address", "tenant_full_name", "deposit_amount", "scheme_name",
+        "certificate_number", "protection_date",
+    ]),
+    "Inventory": (build_inventory_prompt, [
+        "property_address", "clerk_name", "inspection_date", "property_condition_summary",
+    ]),
+}
+
+
+def _needs_doc_type_detection(doc_type: str) -> bool:
+    """Return True if doc_type is empty, unknown, or generic and we should run detection."""
+    if not doc_type or not doc_type.strip():
+        return True
+    lower = doc_type.strip().lower()
+    if lower in ("unknown", "document", "generic"):
+        return True
+    return False
+
+
+def _is_recognized_doc_type(doc_type: str) -> bool:
+    """Return True if doc_type matches one of RECOGNIZED_DOC_TYPES (case-insensitive)."""
+    if not doc_type or not doc_type.strip():
+        return False
+    normalized = doc_type.strip()
+    return any(t.lower() in normalized.lower() for t in RECOGNIZED_DOC_TYPES)
+
+
+def _normalize_doc_type(raw: str) -> str:
+    """Map API response to exact label from RECOGNIZED_DOC_TYPES."""
+    if not raw or not raw.strip():
+        return ""
+    raw = raw.strip()
+    for label in RECOGNIZED_DOC_TYPES:
+        if label.lower() in raw.lower():
+            return label
+    return raw
+
+
+def detect_doc_type_from_pdf(pdf_b64: str) -> str:
+    """Call Claude to classify the document; returns one of RECOGNIZED_DOC_TYPES (or raw response)."""
+    raw = call_claude_with_pdf(pdf_b64, DETECTION_SYSTEM, DETECTION_USER)
+    return _normalize_doc_type(raw.strip())
+
+
 def prefill_doc(doc_folder: Path) -> None:
     review = load_review(doc_folder)
     doc_type = (
@@ -208,39 +429,62 @@ def prefill_doc(doc_folder: Path) -> None:
         or review.get("doc_type")
         or ""
     ).strip()
-    doc_type_lower = doc_type.lower()
+    pdf_b64 = None
 
-    # Treat any doc_type containing the word "tenancy" as a tenancy agreement.
-    if "tenancy" not in doc_type_lower:
+    # Auto-detect document type if empty, unknown, or generic.
+    if _needs_doc_type_detection(doc_type):
+        log("Doc type empty or generic; running auto-detection", doc_folder)
+        pdf_b64 = read_pdf_base64(doc_folder, review)
+        detected = detect_doc_type_from_pdf(pdf_b64)
+        if not detected:
+            log("Auto-detection returned no type; skipping AI prefill", doc_folder)
+            return
+        doc_type = detected
+        review["doc_type"] = doc_type
+
+    # Resolve to exact label from RECOGNIZED_DOC_TYPES for config lookup.
+    normalized = None
+    for label in RECOGNIZED_DOC_TYPES:
+        if label.lower() in doc_type.lower():
+            normalized = label
+            break
+    if not normalized or normalized not in DOC_TYPE_CONFIG:
         log(f"Skipping AI prefill for doc_type '{doc_type}' (no template configured)", doc_folder)
         return
 
-    log("Starting AI prefill for tenancy agreement", doc_folder)
+    log(f"Starting AI prefill for {normalized}", doc_folder)
 
-    pdf_b64 = read_pdf_base64(doc_folder, review)
-
-    system_prompt = "You are a careful assistant that extracts structured data from property tenancy agreements."
-    user_prompt = build_tenancy_agreement_prompt(review)
+    if pdf_b64 is None:
+        pdf_b64 = read_pdf_base64(doc_folder, review)
+    builder_fn, target_keys = DOC_TYPE_CONFIG[normalized]
+    system_prompt = EXTRACTION_SYSTEM
+    user_prompt = builder_fn(review)
 
     claude_raw = call_claude_with_pdf(pdf_b64, system_prompt, user_prompt)
     ai_fields = parse_json_from_claude(claude_raw)
-
-    target_keys = [
-        "property_address",
-        "tenant_full_name",
-        "landlord_name",
-        "start_date",
-        "end_date",
-        "monthly_rent_amount",
-        "deposit_amount",
-        "agreement_date",
-    ]
 
     fields = review.get("fields") or {}
     for key in target_keys:
         if key in ai_fields and ai_fields[key] is not None:
             fields[key] = str(ai_fields[key])
     review["fields"] = fields
+    review["doc_type"] = normalized
+    review["status"] = "ai_prefilled"
+
+    save_review(doc_folder, review)
+    log("AI prefill completed successfully (status=ai_prefilled)", doc_folder)
+    system_prompt = EXTRACTION_SYSTEM
+    user_prompt = builder_fn(review)
+
+    claude_raw = call_claude_with_pdf(pdf_b64, system_prompt, user_prompt)
+    ai_fields = parse_json_from_claude(claude_raw)
+
+    fields = review.get("fields") or {}
+    for key in target_keys:
+        if key in ai_fields and ai_fields[key] is not None:
+            fields[key] = str(ai_fields[key])
+    review["fields"] = fields
+    review["doc_type"] = normalized
     review["status"] = "ai_prefilled"
 
     save_review(doc_folder, review)
