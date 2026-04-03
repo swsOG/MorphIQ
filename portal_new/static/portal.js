@@ -491,7 +491,7 @@
             const encoded = el.getAttribute("data-client-name") || "";
             if (encoded) {
                 el.addEventListener("click", () => {
-                    window.location.href = `/?client=${encoded}`;
+                    window.location.href = `/overview?client=${encoded}`;
                 });
             }
 
@@ -1588,7 +1588,7 @@
             const goArchive = () => {
                 const url =
                     (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.archiveUrl) ||
-                    `${withClientQuery("/")}#archive`;
+                    `${withClientQuery("/properties")}#properties`;
                 window.location.href = url;
             };
             closeBtn.addEventListener("click", goArchive);
@@ -1828,23 +1828,6 @@
     }
 
     // ── Init ────────────────────────────────────────────────────────────────
-    function formatDashboardRelativeTime(createdAt) {
-        if (!createdAt) return "";
-        const d = new Date(createdAt);
-        if (Number.isNaN(d.getTime())) return createdAt;
-        const now = new Date();
-        const diffMs = now.getTime() - d.getTime();
-        const diffM = Math.floor(diffMs / 60000);
-        const diffH = Math.floor(diffMs / 3600000);
-        const diffD = Math.floor(diffMs / 86400000);
-        if (diffM < 1) return "Just now";
-        if (diffM < 60) return `${diffM} minute${diffM === 1 ? "" : "s"} ago`;
-        if (diffH < 24) return `${diffH} hour${diffH === 1 ? "" : "s"} ago`;
-        if (diffD === 1) return `Yesterday at ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-        if (diffD < 7) return `${diffD} days ago`;
-        return `${d.toLocaleDateString()} at ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-    }
-
     async function initDashboardOverview(uploadModalApi) {
         const overviewRoot = $("#dashboard-overview");
         if (!overviewRoot) return;
@@ -1852,54 +1835,59 @@
         const cfg = window.MORPHIQ_PORTAL || {};
         const clientName = cfg.clientName || (new URLSearchParams(window.location.search).get("client") || "");
 
-        function complianceUrlBase() {
-            let u = "/api/compliance";
-            if (clientName) u += `?client=${encodeURIComponent(clientName)}`;
-            return u;
+        function dashRelativeTime(ts) {
+            if (!ts) return "";
+            const d = new Date(ts);
+            if (Number.isNaN(d.getTime())) return ts;
+            const diffMs = Date.now() - d.getTime();
+            const diffM = Math.floor(diffMs / 60000);
+            const diffH = Math.floor(diffMs / 3600000);
+            const diffD = Math.floor(diffMs / 86400000);
+            if (diffM < 1) return "Just now";
+            if (diffM < 60) return `${diffM} min ago`;
+            if (diffH < 24) return `${diffH} h ago`;
+            if (diffD === 1) return "Yesterday";
+            if (diffD < 7) return `${diffD} days ago`;
+            return d.toLocaleDateString();
         }
 
-        function propertiesUrlBase() {
-            let u = "/api/properties";
-            if (clientName) u += `?client=${encodeURIComponent(clientName)}`;
-            return u;
+        function ringTierClass(pct) {
+            if (pct < 30) return "dashboard-ring-fg--low";
+            if (pct <= 70) return "dashboard-ring-fg--mid";
+            return "dashboard-ring-fg--high";
         }
 
-        function activityUrlBase() {
-            let u = "/api/activity?limit=8";
-            if (clientName) u += `&client=${encodeURIComponent(clientName)}`;
-            return u;
+        function barTierClass(pct) {
+            if (pct < 20) return "dashboard-coverage-fill--red";
+            if (pct <= 60) return "dashboard-coverage-fill--amber";
+            return "dashboard-coverage-fill--green";
+        }
+
+        const pillEl = $("#dash-client-pill");
+        if (pillEl) {
+            const nm = (clientName || "").trim();
+            pillEl.textContent = nm || "—";
         }
 
         try {
-            const [propsRes, compRes, actRes] = await Promise.all([
-                fetch(propertiesUrlBase()),
-                fetch(complianceUrlBase()),
-                fetch(activityUrlBase()),
-            ]);
-            const [propsData, compData, actData] = await Promise.all([
-                propsRes.json().catch(() => ({})),
-                compRes.json().catch(() => ({})),
-                actRes.json().catch(() => ({})),
-            ]);
+            const dashRes = await fetch("/api/dashboard-stats", { credentials: "same-origin" });
+            const dash = await dashRes.json().catch(() => ({}));
+            if (dash.error) {
+                console.error("Dashboard stats error:", dash.error, dash.details);
+            }
 
-            const properties = propsData.properties || [];
-            const stats = compData.stats || {};
-            const actions = compData.actions || [];
-            const activityEntries = (actData && actData.entries) || [];
-
-            // Stat cards
-            const totalProps = stats.total_properties != null ? stats.total_properties : properties.length;
-            let totalDocs = 0;
-            properties.forEach((p) => {
-                totalDocs += p.total_documents || 0;
-            });
-            const fullyCompliant = stats.fully_compliant || 0;
-            const overdue = stats.overdue_actions || 0;
-            const compliancePct = totalProps > 0 ? Math.round((fullyCompliant / totalProps) * 100) : 0;
+            const totalProps = dash.total_properties ?? 0;
+            const totalDocs = dash.total_documents ?? 0;
+            const overdue = dash.overdue_actions ?? 0;
+            const scorePct = Math.round(dash.compliance_score_pct ?? 0);
+            const reqPresent = dash.required_present ?? 0;
+            const reqTotal = dash.required_total ?? 0;
+            const categoryCoverage = dash.category_coverage || [];
+            const needsAttention = dash.needs_attention || [];
+            const recentActivity = dash.recent_activity || [];
 
             const statPropsEl = $("#dash-stat-properties");
             const statDocsEl = $("#dash-stat-documents");
-            const statCompEl = $("#dash-stat-compliance");
             const statOverdueEl = $("#dash-stat-overdue");
 
             if (statPropsEl) {
@@ -1910,61 +1898,79 @@
                 const val = statDocsEl.querySelector(".dashboard-stat-value");
                 if (val) val.textContent = totalDocs;
             }
-            if (statCompEl) {
-                const val = statCompEl.querySelector(".dashboard-stat-value");
-                const sub = statCompEl.querySelector(".dashboard-stat-sub");
-                if (val) val.textContent = `${compliancePct}%`;
-                if (sub) sub.textContent = totalProps > 0 ? `${fullyCompliant} of ${totalProps} properties` : "No properties yet";
-            }
             if (statOverdueEl) {
                 const val = statOverdueEl.querySelector(".dashboard-stat-value");
                 const sub = statOverdueEl.querySelector(".dashboard-stat-sub");
                 if (val) val.textContent = overdue;
                 if (sub) sub.textContent = overdue > 0 ? "Expired certificates" : "All clear";
-                if (overdue === 0) {
-                    statOverdueEl.classList.add("is-clear");
+                statOverdueEl.classList.toggle("is-clear", overdue === 0);
+            }
+
+            const ringArc = $("#dash-compliance-ring-arc");
+            const ringPct = $("#dash-compliance-pct");
+            const ringCap = $("#dash-compliance-ring-caption");
+            const R = 88;
+            const C = 2 * Math.PI * R;
+            if (ringArc) {
+                ringArc.style.strokeDasharray = `${(scorePct / 100) * C} ${C}`;
+                ringArc.classList.remove("dashboard-ring-fg--low", "dashboard-ring-fg--mid", "dashboard-ring-fg--high");
+                ringArc.classList.add(ringTierClass(scorePct));
+            }
+            if (ringPct) ringPct.textContent = String(scorePct);
+            if (ringCap) {
+                ringCap.textContent =
+                    reqTotal > 0
+                        ? `${reqPresent} of ${reqTotal} required documents present`
+                        : "No properties yet";
+            }
+
+            const coverageRoot = $("#dash-coverage-bars");
+            if (coverageRoot) {
+                if (!categoryCoverage.length) {
+                    coverageRoot.innerHTML = `<div class="dashboard-empty">No coverage data yet.</div>`;
+                } else {
+                    coverageRoot.innerHTML = categoryCoverage
+                        .map((h) => {
+                            const total = h.total || 0;
+                            const present = h.present || 0;
+                            const pct = total > 0 ? Math.round((present / total) * 100) : 0;
+                            const tier = barTierClass(pct);
+                            const safeLabel = String(h.label || "").replace(/</g, "&lt;");
+                            return `
+                                <div class="dashboard-coverage-row">
+                                    <div class="dashboard-coverage-label">${safeLabel} — ${present} / ${total} properties</div>
+                                    <div class="dashboard-coverage-track" role="img" aria-label="${present} of ${total} properties">
+                                        <div class="dashboard-coverage-fill ${tier}" style="width:${pct}%;"></div>
+                                    </div>
+                                    <div class="dashboard-coverage-count">${pct}%</div>
+                                </div>
+                            `;
+                        })
+                        .join("");
                 }
             }
 
-            // Needs Attention: top 5 actions
             const attentionRoot = $("#dash-needs-attention");
             if (attentionRoot) {
-                if (!actions.length) {
+                if (!needsAttention.length) {
                     attentionRoot.innerHTML = `<div class="dashboard-empty">All clear — no overdue or expiring certificates.</div>`;
                 } else {
-                    const sorted = [...actions].sort((a, b) => {
-                        const ao = a.sort_order ?? 2;
-                        const bo = b.sort_order ?? 2;
-                        if (ao !== bo) return ao - bo;
-                        const ad = a.sort_days ?? 0;
-                        const bd = b.sort_days ?? 0;
-                        return ad - bd;
-                    });
-                    const top = sorted.slice(0, 5);
-                    const clientParam = clientName ? `?client=${encodeURIComponent(clientName)}` : "";
-                    attentionRoot.innerHTML = top.map((a) => {
-                        let href = "#";
-                        if (a.property_id) {
-                            const params = [];
-                            if (a.type) {
-                                const slug = (a.type || "").trim().replace(/_/g, "-");
-                                params.push("focus=" + encodeURIComponent(slug));
-                            }
-                            if (clientName) params.push("client=" + encodeURIComponent(clientName));
-                            href = "/property/" + a.property_id + (params.length ? "?" + params.join("&") : "");
-                        }
-                        const title = (a.property || "Unnamed property").replace(/</g, "&lt;");
-                        const typeLabel = (a.type_label || a.type || "Certificate").replace(/</g, "&lt;");
-                        const badge = (a.badge_text || a.display_text || "").replace(/</g, "&lt;");
-                        const severity = (a.severity || "").replace(/</g, "&lt;");
-                        return `
-                            <div class="dashboard-attention-item">
-                                <div class="dashboard-attention-title"><a href="${href}">${title}</a></div>
-                                <div class="dashboard-attention-meta">${typeLabel}${badge ? " · " + badge : ""}</div>
-                                ${severity ? `<div class="dashboard-attention-severity">${severity}</div>` : ""}
-                            </div>
-                        `;
-                    }).join("");
+                    attentionRoot.innerHTML = needsAttention
+                        .map((g) => {
+                            const dot =
+                                g.dot === "amber" ? "dash-attn-dot--amber" : "dash-attn-dot--red";
+                            const title = String(g.title || "").replace(/</g, "&lt;");
+                            const href = escapeAttr(g.href || "#");
+                            return `
+                            <div class="dashboard-attention-item dashboard-attention-item--grouped">
+                                <span class="dash-attn-dot ${dot}" aria-hidden="true"></span>
+                                <div class="dashboard-attention-item-body">
+                                    <div class="dashboard-attention-title"><a href="${href}">${title}</a></div>
+                                    <div class="dashboard-attention-meta">${String(g.label_str || "").replace(/</g, "&lt;")} — ${String(g.meta || "").replace(/</g, "&lt;")}</div>
+                                </div>
+                            </div>`;
+                        })
+                        .join("");
                 }
                 const viewAllLink = $("#dash-attention-view-all");
                 if (viewAllLink) {
@@ -1974,57 +1980,38 @@
                 }
             }
 
-            // Recent activity
             const activityRoot = $("#dash-recent-activity");
+            const activityViewAll = $("#dash-activity-view-all");
+            if (activityViewAll) {
+                let ahref = "/reports";
+                if (clientName) ahref += `?client=${encodeURIComponent(clientName)}`;
+                activityViewAll.href = ahref;
+            }
             if (activityRoot) {
-                if (!activityEntries.length) {
-                    activityRoot.innerHTML = `<div class="dashboard-empty">No activity recorded yet.</div>`;
+                if (!recentActivity.length) {
+                    activityRoot.innerHTML = `<div class="dashboard-empty">No recent activity.</div>`;
                 } else {
-                    activityRoot.innerHTML = activityEntries.slice(0, 8).map((entry) => {
-                        const action = entry.action || "";
-                        let iconClass = "login";
-                        let iconGlyph = "∘";
-                        if (action === "document_uploaded") {
-                            iconClass = "upload";
-                            iconGlyph = "↑";
-                        } else if (action === "document_reviewed" || action === "document_verified") {
-                            iconClass = "review";
-                            iconGlyph = "✓";
-                        } else if (action === "compliance_resolved" || action === "compliance_snoozed") {
-                            iconClass = "compliance";
-                            iconGlyph = "!";
-                        }
-                        const desc = (entry.description || "").replace(/</g, "&lt;");
-                        const when = formatDashboardRelativeTime(entry.created_at);
-                        return `
+                    activityRoot.innerHTML = recentActivity
+                        .map((e) => {
+                            const dotClass =
+                                e.kind === "resolved" ? "dash-act-dot--amber" : "dash-act-dot--green";
+                            const addr = String(e.property_address || "").replace(/</g, "&lt;");
+                            const line = String(e.description || "").replace(/</g, "&lt;");
+                            const who = e.user_name ? ` · ${String(e.user_name).replace(/</g, "&lt;")}` : "";
+                            return `
                             <div class="dashboard-activity-item">
-                                <div class="dashboard-activity-icon ${iconClass}">${iconGlyph}</div>
+                                <span class="dash-act-dot ${dotClass}" aria-hidden="true"></span>
                                 <div class="dashboard-activity-body">
-                                    <div class="dashboard-activity-text">${desc}</div>
-                                    <div class="dashboard-activity-time">${when}</div>
+                                    <div class="dashboard-activity-text"><strong>${addr}</strong></div>
+                                    <div class="dashboard-activity-text dashboard-activity-desc">${line}${who}</div>
+                                    <div class="dashboard-activity-time">${dashRelativeTime(e.created_at)}</div>
                                 </div>
-                            </div>
-                        `;
-                    }).join("");
+                            </div>`;
+                        })
+                        .join("");
                 }
             }
 
-            // Quick nav cards
-            const navCompliance = $("#dash-nav-compliance");
-            if (navCompliance) {
-                navCompliance.addEventListener("click", () => {
-                    let url = "/compliance";
-                    if (clientName) url += `?client=${encodeURIComponent(clientName)}`;
-                    window.location.href = url;
-                });
-            }
-            const navArchive = $("#dash-nav-archive");
-            if (navArchive) {
-                navArchive.addEventListener("click", () => {
-                    const archiveTab = document.querySelector('.dashboard-tab[data-view="archive"]');
-                    if (archiveTab) archiveTab.click();
-                });
-            }
             const navUpload = $("#dash-nav-upload");
             if (navUpload && uploadModalApi) {
                 navUpload.addEventListener("click", async () => {
@@ -2043,6 +2030,14 @@
         } catch (err) {
             console.error("Failed to load dashboard overview data:", err);
         }
+    }
+
+    function escapeAttr(s) {
+        if (s == null || s === undefined) return "";
+        return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/"/g, "&quot;")
+            .replace(/</g, "&lt;");
     }
 
     function initArchivePage() {
@@ -3366,14 +3361,6 @@
             if (currentConversationId) showChatView();
             else showListView();
         });
-        const sidebarAiBtn = document.getElementById("sidebar-ai-assistant");
-        if (sidebarAiBtn) {
-            sidebarAiBtn.addEventListener("click", () => {
-                const client = getClientForNotifications();
-                const qs = client ? "?client=" + encodeURIComponent(client) : "";
-                window.location.href = "/ai-chat" + qs;
-            });
-        }
         if (backdrop) backdrop.addEventListener("click", closeSidebar);
         if (sidebarClose) sidebarClose.addEventListener("click", closeSidebar);
         if (sidebarBack) sidebarBack.addEventListener("click", () => { showListView(); });
@@ -3707,43 +3694,92 @@
         });
     }
 
-    // ── Full-page AI chat (/ai-chat) ────────────────────────────────────────
+    // ── Full-page AI chat (/ask-ai) ────────────────────────────────────────
     function initAiChatPage() {
         const messagesEl = document.getElementById("ai-chat-page-messages");
         const form = document.getElementById("ai-chat-page-form");
         const input = document.getElementById("ai-chat-page-input");
         const sendBtn = document.getElementById("ai-chat-page-send");
+        const welcomeEl = document.getElementById("ai-chat-welcome");
+        const clearBtn = document.getElementById("ai-chat-clear-chat");
+        const scrollRoot =
+            document.querySelector(".ask-ai-scroll") || messagesEl.parentElement || messagesEl;
         if (!messagesEl || !form || !input || !sendBtn) return;
 
         const clientName =
             (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName) || "";
 
         function scrollToBottom() {
-            messagesEl.scrollTop = messagesEl.scrollHeight;
+            if (scrollRoot && scrollRoot.scrollHeight != null) {
+                scrollRoot.scrollTop = scrollRoot.scrollHeight;
+            } else {
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
         }
 
         function createMessageElement(role, text, metaText, extraClass) {
-            const wrapper = document.createElement("div");
-            wrapper.className =
-                "ai-chat-message " +
-                (role === "user"
-                    ? "ai-chat-message-user"
-                    : "ai-chat-message-assistant") +
-                (extraClass ? " " + extraClass : "");
-
-            if (metaText) {
-                const meta = document.createElement("div");
-                meta.className = "ai-chat-message-meta";
-                meta.textContent = metaText;
-                wrapper.appendChild(meta);
+            if (role === "user") {
+                const row = document.createElement("div");
+                row.className = "ai-chat-msg-row ai-chat-msg-row-user";
+                const bubble = document.createElement("div");
+                bubble.className = "ai-chat-bubble ai-chat-bubble-user";
+                const body = document.createElement("div");
+                body.className = "ai-chat-message-text";
+                body.textContent = text;
+                bubble.appendChild(body);
+                if (metaText) {
+                    const meta = document.createElement("div");
+                    meta.className = "ai-chat-message-meta ai-chat-message-meta-user";
+                    meta.textContent = metaText;
+                    bubble.appendChild(meta);
+                }
+                row.appendChild(bubble);
+                return row;
             }
+
+            const row = document.createElement("div");
+            row.className =
+                "ai-chat-msg-row ai-chat-msg-row-assistant" +
+                (extraClass === "ai-chat-message-loading" ? " ai-chat-row-loading" : "");
+
+            const avatar = document.createElement("div");
+            avatar.className = "ai-chat-assistant-avatar";
+            avatar.setAttribute("aria-hidden", "true");
+            avatar.innerHTML =
+                '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>';
+
+            const col = document.createElement("div");
+            col.className = "ai-chat-assistant-col";
+
+            const bubble = document.createElement("div");
+            bubble.className =
+                "ai-chat-bubble ai-chat-bubble-assistant" +
+                (extraClass === "ai-chat-message-loading" ? " ai-chat-bubble-loading" : "") +
+                (extraClass && extraClass !== "ai-chat-message-loading" ? " " + extraClass : "");
 
             const body = document.createElement("div");
             body.className = "ai-chat-message-text";
             body.textContent = text;
-            wrapper.appendChild(body);
+            bubble.appendChild(body);
 
-            return wrapper;
+            if (extraClass !== "ai-chat-message-loading") {
+                const cards = document.createElement("div");
+                cards.className = "ai-chat-result-cards";
+                cards.setAttribute("aria-hidden", "true");
+                bubble.appendChild(cards);
+            }
+
+            if (metaText) {
+                const meta = document.createElement("div");
+                meta.className = "ai-chat-message-meta ai-chat-message-meta-assistant";
+                meta.textContent = metaText;
+                bubble.appendChild(meta);
+            }
+
+            col.appendChild(bubble);
+            row.appendChild(avatar);
+            row.appendChild(col);
+            return row;
         }
 
         function appendMessageEl(el) {
@@ -3751,19 +3787,57 @@
             scrollToBottom();
         }
 
+        function loadAskAiStats() {
+            fetch(withClientQuery("/api/dashboard-stats"), { credentials: "same-origin" })
+                .then((r) => r.json())
+                .then((d) => {
+                    if (!d || d.error) return;
+                    const p = document.getElementById("ai-chat-count-props");
+                    const doc = document.getElementById("ai-chat-count-docs");
+                    const hint = document.getElementById("ai-chat-doc-indexed-hint");
+                    const tp = d.total_properties != null ? String(d.total_properties) : "—";
+                    const td = d.total_documents != null ? String(d.total_documents) : "—";
+                    if (p) p.textContent = tp;
+                    if (doc) doc.textContent = td;
+                    if (hint) hint.textContent = `${td === "—" ? "0" : td} documents indexed`;
+                })
+                .catch(() => {});
+        }
+        loadAskAiStats();
+
+        if (clearBtn) {
+            clearBtn.addEventListener("click", () => {
+                messagesEl.innerHTML = "";
+                if (welcomeEl) welcomeEl.hidden = false;
+                scrollToBottom();
+                input.focus();
+            });
+        }
+
+        document.querySelectorAll(".ai-chat-suggestion-card").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const q = (btn.getAttribute("data-query") || "").trim();
+                if (!q || !input) return;
+                input.value = q;
+                form.requestSubmit();
+            });
+        });
+
         async function sendMessage(message) {
+            if (welcomeEl) welcomeEl.hidden = true;
+
             const userTime = new Date().toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
             });
-            appendMessageEl(
-                createMessageElement("user", message, "You · " + userTime)
-            );
+            appendMessageEl(createMessageElement("user", message, "You · " + userTime));
 
-            const loadingEl = document.createElement("div");
-            loadingEl.className =
-                "ai-chat-message ai-chat-message-assistant ai-chat-message-loading";
-            loadingEl.textContent = "MorphIQ AI is thinking…";
+            const loadingEl = createMessageElement(
+                "assistant",
+                "MorphIQ AI is thinking…",
+                "",
+                "ai-chat-message-loading"
+            );
             appendMessageEl(loadingEl);
 
             input.disabled = true;
@@ -3780,7 +3854,9 @@
                     }),
                 });
                 const data = await res.json().catch(() => ({}));
-                messagesEl.removeChild(loadingEl);
+                if (loadingEl.parentNode === messagesEl) {
+                    messagesEl.removeChild(loadingEl);
+                }
 
                 if (!res.ok || !data || typeof data.response !== "string") {
                     const errText =
@@ -3791,7 +3867,7 @@
                             "assistant",
                             errText,
                             "",
-                            "ai-chat-message-loading"
+                            "ai-chat-message-error"
                         )
                     );
                     return;
@@ -3809,13 +3885,15 @@
                     )
                 );
             } catch (err) {
-                messagesEl.removeChild(loadingEl);
+                if (loadingEl.parentNode === messagesEl) {
+                    messagesEl.removeChild(loadingEl);
+                }
                 appendMessageEl(
                     createMessageElement(
                         "assistant",
                         "Error contacting MorphIQ AI. Please try again.",
                         "",
-                        "ai-chat-message-loading"
+                        "ai-chat-message-error"
                     )
                 );
             } finally {
@@ -4348,6 +4426,15 @@
 
         initSignOutConfirmation();
 
+        const sidebarAiBtn = document.getElementById("sidebar-ai-assistant");
+        if (sidebarAiBtn) {
+            sidebarAiBtn.addEventListener("click", () => {
+                const client = getClientForNotifications();
+                const qs = client ? "?client=" + encodeURIComponent(client) : "";
+                window.location.href = "/ask-ai" + qs;
+            });
+        }
+
         let uploadModalApi = null;
         if (document.querySelector("#upload-document-modal")) {
             uploadModalApi = initUploadModal();
@@ -4374,6 +4461,18 @@
             initCompliancePage(uploadModalApi);
         } else if (isClientPicker) {
             fetchClientsForPicker();
+        } else if (document.querySelector("[data-page='overview']")) {
+            // Standalone /overview layout: data + UI driven by overview.html (no archive workspace).
+        } else if (document.querySelector("[data-page='properties']")) {
+            // Standalone /properties split-panel: properties.js + no archive workspace.
+        } else if (document.querySelector("[data-page='documents']")) {
+            // Standalone /documents library: documents.js + no archive workspace.
+        } else if (document.querySelector("[data-page='packs']")) {
+            // Standalone /packs layout (placeholder packs UI).
+        } else if (document.querySelector("[data-page='reports']")) {
+            // Standalone /reports + audit trail fetch.
+        } else if (document.querySelector("[data-page='settings']")) {
+            // Standalone /settings (inline scripts).
         } else {
             initArchivePage();
             initDashboardOverview(uploadModalApi);
@@ -4386,19 +4485,19 @@
                 if (!tabs.length || !overviewView || !archiveView) return;
 
                 const sidebarLinks = $$(".portal-sidebar-nav .portal-sidebar-link");
-                const dashboardLink = Array.from(sidebarLinks).find((link) =>
-                    ((link.textContent || "").trim().toLowerCase().includes("dashboard"))
+                const overviewLink = Array.from(sidebarLinks).find((link) =>
+                    ((link.textContent || "").trim().toLowerCase().includes("overview"))
                 );
-                const archiveLink = Array.from(sidebarLinks).find((link) =>
-                    ((link.textContent || "").trim().toLowerCase().includes("archive"))
+                const propertiesLink = Array.from(sidebarLinks).find((link) =>
+                    ((link.textContent || "").trim().toLowerCase().includes("properties"))
                 );
 
                 function setSidebarActive(view) {
-                    if (dashboardLink) {
-                        dashboardLink.classList.toggle("active", view === "overview");
+                    if (overviewLink) {
+                        overviewLink.classList.toggle("active", view === "overview");
                     }
-                    if (archiveLink) {
-                        archiveLink.classList.toggle("active", view === "archive");
+                    if (propertiesLink) {
+                        propertiesLink.classList.toggle("active", view === "archive");
                     }
                 }
 
@@ -4412,7 +4511,7 @@
                         archiveView.style.display = "none";
                     }
                     if (view === "archive") {
-                        window.location.hash = "#archive";
+                        window.location.hash = "#properties";
                     } else {
                         window.location.hash = "#overview";
                     }
@@ -4427,23 +4526,19 @@
                 });
 
                 const hash = window.location.hash || "";
-                const initial = hash === "#archive" ? "archive" : "overview";
+                const path = (window.location.pathname || "").replace(/\/+$/, "") || "/";
+                const isArchivePath =
+                    path.endsWith("/archive") || path.endsWith("/properties");
+                const isOverviewPath =
+                    path.endsWith("/overview") ||
+                    path.endsWith("/dashboard") ||
+                    path === "/" ||
+                    path === "";
+                let initial = "overview";
+                if (isArchivePath) initial = "archive";
+                else if (isOverviewPath) initial = hash === "#properties" || hash === "#archive" ? "archive" : "overview";
+                else if (hash === "#archive" || hash === "#properties") initial = "archive";
                 setView(initial);
-
-                sidebarLinks.forEach((link) => {
-                    const label = (link.textContent || "").trim().toLowerCase();
-                    if (label.includes("dashboard")) {
-                        link.addEventListener("click", (e) => {
-                            e.preventDefault();
-                            setView("overview");
-                        });
-                    } else if (label.includes("archive")) {
-                        link.addEventListener("click", (e) => {
-                            e.preventDefault();
-                            setView("archive");
-                        });
-                    }
-                });
             })();
         }
     }
@@ -4454,4 +4549,184 @@
     } else {
         init();
     }
+})();
+
+// ── Add-to-Pack modal (global — available on every page that loads portal.js) ─
+(function () {
+    "use strict";
+
+    var _currentDocId = null;
+    var _toastTimer   = null;
+
+    function _withClient(url) {
+        var cp = new URLSearchParams(window.location.search).get("client")
+            || (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName) || "";
+        if (!String(cp).trim()) return url;
+        return url + (url.includes("?") ? "&" : "?") + "client=" + encodeURIComponent(String(cp).trim());
+    }
+
+    function _esc(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function _backdrop() { return document.getElementById("atp-backdrop"); }
+    function _toastEl()  { return document.getElementById("atp-toast"); }
+
+    function _open(documentId) {
+        _currentDocId = parseInt(documentId, 10);
+        if (!Number.isFinite(_currentDocId)) return;
+        var bd = _backdrop();
+        if (!bd) return;
+        bd.hidden = false;
+        bd.focus();
+        _loadPacks();
+    }
+
+    function _close() {
+        var bd = _backdrop();
+        if (bd) bd.hidden = true;
+        _currentDocId = null;
+    }
+
+    function _showToast(msg, isError) {
+        var t = _toastEl();
+        if (!t) return;
+        t.textContent = msg;
+        t.className = "atp-toast " + (isError ? "atp-toast--error" : "atp-toast--ok");
+        t.hidden = false;
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(function () { if (t) t.hidden = true; }, 3000);
+    }
+
+    async function _loadPacks() {
+        var body = document.getElementById("atp-body");
+        if (!body) return;
+        body.innerHTML = '<div class="atp-loading">Loading packs\u2026</div>';
+        try {
+            var res  = await fetch(_withClient("/api/packs"), { credentials: "same-origin" });
+            var data = await res.json().catch(function () { return {}; });
+            _renderPacks(data.packs || []);
+        } catch (e) {
+            body.innerHTML = '<div class="atp-error">Failed to load packs.</div>';
+            console.error("[atp] loadPacks:", e);
+        }
+    }
+
+    function _renderPacks(packs) {
+        var body = document.getElementById("atp-body");
+        if (!body) return;
+        if (!packs.length) {
+            body.innerHTML = '<p class="atp-empty">No packs yet \u2014 use \u201cNew pack \u0026 add\u201d below.</p>';
+            return;
+        }
+        body.innerHTML = packs.map(function (pk) {
+            return '<button type="button" class="atp-pack-btn"'
+                + ' data-pack-id="' + pk.id + '"'
+                + ' data-pack-name="' + _esc(pk.name) + '">'
+                + '<span class="atp-pack-name">' + _esc(pk.name) + '</span>'
+                + '<span class="atp-pack-count">' + (pk.doc_count || 0) + ' docs</span>'
+                + '</button>';
+        }).join("");
+        body.querySelectorAll(".atp-pack-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                _addToExistingPack(
+                    parseInt(btn.getAttribute("data-pack-id"), 10),
+                    btn.getAttribute("data-pack-name") || "pack"
+                );
+            });
+        });
+    }
+
+    async function _addToExistingPack(packId, packName) {
+        if (!_currentDocId) return;
+        var docId = _currentDocId;
+        _close();
+        try {
+            var res = await fetch(_withClient("/api/packs/" + packId + "/documents"), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ document_ids: [docId] }),
+            });
+            if (!res.ok) {
+                var d = await res.json().catch(function () { return {}; });
+                throw new Error(d.error || ("HTTP " + res.status));
+            }
+            _showToast("Added to \u201c" + packName + "\u201d");
+        } catch (e) {
+            _showToast("Could not add to pack", true);
+            console.error("[atp] addToExistingPack:", e);
+        }
+    }
+
+    async function _createAndAdd() {
+        var name = window.prompt("New pack name:");
+        if (!name || !name.trim()) return;
+        var docId = _currentDocId;
+        _close();
+        try {
+            var r1 = await fetch(_withClient("/api/packs"), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: name.trim() }),
+            });
+            var d1 = await r1.json().catch(function () { return {}; });
+            if (!r1.ok) throw new Error(d1.error || ("HTTP " + r1.status));
+            var packId = d1.pack && d1.pack.id;
+            if (packId && docId) {
+                var r2 = await fetch(_withClient("/api/packs/" + packId + "/documents"), {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ document_ids: [docId] }),
+                });
+                if (!r2.ok) throw new Error("HTTP " + r2.status);
+            }
+            _showToast("Added to new pack \u201c" + name.trim() + "\u201d");
+        } catch (e) {
+            _showToast("Could not create pack", true);
+            console.error("[atp] createAndAdd:", e);
+        }
+    }
+
+    function _bind() {
+        var bd = _backdrop();
+        if (bd) {
+            bd.addEventListener("click", function (e) {
+                if (e.target === bd) _close();
+            });
+        }
+        var closeBtn = document.getElementById("atp-close");
+        if (closeBtn) closeBtn.addEventListener("click", _close);
+        var newBtn = document.getElementById("atp-new-pack-btn");
+        if (newBtn) newBtn.addEventListener("click", _createAndAdd);
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                var b = _backdrop();
+                if (b && !b.hidden) _close();
+            }
+        });
+        // Global delegation: any .atp-trigger[data-document-id] opens the modal
+        document.addEventListener("click", function (e) {
+            var btn = e.target.closest(".atp-trigger[data-document-id]");
+            if (!btn) return;
+            e.preventDefault();
+            _open(btn.getAttribute("data-document-id"));
+        });
+    }
+
+    function _init() {
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", _bind);
+        } else {
+            _bind();
+        }
+    }
+
+    // Expose for programmatic use from page-level scripts
+    window.AtpModal = { open: _open, close: _close };
+    _init();
 })();

@@ -27,6 +27,7 @@ DEPENDENCIES:
 
 import json
 import os
+import sqlite3
 import threading
 import shutil
 import subprocess
@@ -37,10 +38,10 @@ from urllib.parse import quote
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from pdfminer.high_level import extract_text
+from pypdf import PdfReader, PdfWriter
 
-# Import the export function from the existing export script
 from export_client import run_export
-from sync_to_portal import sync_portal_for_clients
+from sync_to_portal import sync_portal_for_clients, sync_single_doc
 
 # ──────────────────────────────────────────────
 # CONFIGURATION
@@ -70,6 +71,82 @@ DOC_TYPE_TO_TEMPLATE = {
     "epc": "epc",
     "general document": "general_document",
 }
+
+
+# ──────────────────────────────────────────────
+# HELPERS — merge / split
+# ──────────────────────────────────────────────
+
+def _get_next_doc_id(batch_folder: Path) -> str:
+    """Return the next sequential DOC-XXXXX identifier inside a batch folder."""
+    existing = []
+    if batch_folder.exists():
+        for item in batch_folder.iterdir():
+            if item.is_dir() and item.name.startswith("DOC-"):
+                try:
+                    num = int(item.name.split("-")[1])
+                    existing.append(num)
+                except (IndexError, ValueError):
+                    pass
+    return f"DOC-{max(existing, default=0) + 1:05d}"
+
+
+def _run_ai_prefill(doc_folder: Path) -> None:
+    """Best-effort subprocess call to ai_prefill.py for a DOC folder."""
+    script = BASE / "ai_prefill.py"
+    if not script.is_file():
+        return
+    try:
+        subprocess.run(
+            [sys.executable, str(script), str(doc_folder)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=180,
+        )
+    except Exception as e:
+        app.logger.warning(f"AI prefill error for {doc_folder.name}: {e}")
+
+
+def _remove_doc_from_portal(client_name: str, doc_id: str) -> None:
+    """Delete a document and its fields from portal.db by source_doc_id."""
+    db_path = str(BASE / "portal.db")
+    if not os.path.isfile(db_path):
+        return
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        row = conn.execute(
+            "SELECT id FROM clients WHERE name = ?", (client_name,)
+        ).fetchone()
+        if not row:
+            return
+        client_id = row["id"]
+        doc_row = conn.execute(
+            "SELECT id FROM documents WHERE source_doc_id = ? AND client_id = ?",
+            (doc_id, client_id),
+        ).fetchone()
+        if not doc_row:
+            return
+        document_id = doc_row["id"]
+        conn.execute("DELETE FROM document_fields WHERE document_id = ?", (document_id,))
+        conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+        conn.execute(
+            """DELETE FROM properties WHERE id NOT IN (
+                   SELECT DISTINCT property_id FROM documents WHERE property_id IS NOT NULL
+               )"""
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _find_pdf(doc_folder: Path) -> Path | None:
+    """Return the first PDF file inside a DOC folder, or None."""
+    for f in doc_folder.iterdir():
+        if f.is_file() and f.suffix.lower() == ".pdf":
+            return f
+    return None
 
 
 # ──────────────────────────────────────────────
@@ -275,13 +352,13 @@ def list_docs(client_name: str):
                 "doc_type": data.get("doc_type", "Unknown"),
                 "status": status,
                 "batch_date": batch_date,
-                 # Detailed timeline fields (may be empty for older docs)
                 "scanned_at": review_meta.get("scanned_at", ""),
                 "reviewed_at": review_meta.get("reviewed_at", ""),
                 "exported_at": review_meta.get("exported_at", ""),
                 "folder_path": str(doc_folder),
                 "fields": data.get("fields", {}),
-                "review": data.get("review", {})
+                "review": data.get("review", {}),
+                "page_count": data.get("page_count", 1),
             })
 
     return jsonify({"docs": docs, "counts": counts})
@@ -320,8 +397,6 @@ def save_review(client_name: str, doc_id: str):
 
     # Auto-sync this document to portal (non-critical; failures are logged only)
     try:
-        from sync_to_portal import sync_single_doc
-
         sync_single_doc(client_name, doc_id)
     except Exception as e:
         app.logger.warning(f"Portal sync failed for {doc_id}: {e}")
@@ -657,6 +732,224 @@ def get_rescan_queue(client_name: str):
 
 
 # ──────────────────────────────────────────────
+# MERGE / SPLIT
+# ──────────────────────────────────────────────
+
+@app.route("/merge/<client_name>", methods=["POST"])
+def merge_docs(client_name: str):
+    """Merge 2+ DOC records into a single multi-page document."""
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data.get("doc_ids"), list) or len(data["doc_ids"]) < 2:
+        return jsonify({"success": False, "error": "Provide at least 2 doc_ids"}), 400
+
+    doc_ids: list[str] = data["doc_ids"]
+
+    # Validate all DOC folders exist and collect (folder, pdf_path, review_data)
+    doc_infos: list[tuple[Path, Path, dict]] = []
+    for did in doc_ids:
+        folder = _find_doc_folder(client_name, did)
+        if not folder:
+            return jsonify({"success": False, "error": f"Document not found: {did}"}), 404
+        pdf = _find_pdf(folder)
+        if not pdf:
+            return jsonify({"success": False, "error": f"No PDF in {did}"}), 400
+        review_path = folder / "review.json"
+        try:
+            with review_path.open("r", encoding="utf-8") as f:
+                review = json.load(f)
+        except Exception as e:
+            return jsonify({"success": False, "error": f"Cannot read review.json for {did}: {e}"}), 500
+        doc_infos.append((folder, pdf, review))
+
+    base_folder, base_pdf, base_review = doc_infos[0]
+    base_doc_id = doc_ids[0]
+    consumed = doc_infos[1:]
+    consumed_ids = doc_ids[1:]
+
+    try:
+        # 1. Merge PDFs
+        writer = PdfWriter()
+        for _, pdf_path, _ in doc_infos:
+            reader = PdfReader(str(pdf_path))
+            for page in reader.pages:
+                writer.add_page(page)
+        merged_pdf_name = f"merged_{base_doc_id}.pdf"
+        merged_pdf_path = base_folder / merged_pdf_name
+        with open(str(merged_pdf_path), "wb") as out:
+            writer.write(out)
+        total_pages = len(writer.pages)
+
+        # Remove the old base PDF if it's a different file
+        if base_pdf.name != merged_pdf_name and base_pdf.exists():
+            base_pdf.unlink()
+
+        # 2. Move raw images from consumed folders into base folder
+        IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp"}
+        all_raw_images = []
+        for f in base_folder.iterdir():
+            if f.is_file() and f.suffix.lower() in IMAGE_EXTS:
+                all_raw_images.append(f.name)
+        for c_folder, c_pdf, _ in consumed:
+            for f in list(c_folder.iterdir()):
+                if f.is_file() and f.suffix.lower() in IMAGE_EXTS:
+                    dest = base_folder / f.name
+                    if dest.exists():
+                        dest = base_folder / f"{c_folder.name}_{f.name}"
+                    shutil.move(str(f), str(dest))
+                    all_raw_images.append(dest.name)
+
+        # 3. Update base review.json
+        base_review["doc_type"] = "Unknown"
+        base_review["doc_type_template"] = ""
+        base_review["status"] = "New"
+        base_review["files"]["pdf"] = merged_pdf_name
+        base_review["files"]["raw_images"] = all_raw_images
+        if all_raw_images:
+            base_review["files"]["raw_image"] = all_raw_images[0]
+        base_review["page_count"] = total_pages
+        base_review["fields"] = base_review.get("fields", {})
+        base_review.pop("quality_score", None)
+        base_review.pop("completeness_score", None)
+        base_review.pop("missing_fields", None)
+        base_review.pop("needs_attention", None)
+
+        review_path = base_folder / "review.json"
+        with review_path.open("w", encoding="utf-8") as f:
+            json.dump(base_review, f, indent=2, ensure_ascii=False)
+
+        # 4. Delete consumed DOC folders
+        for c_folder, _, _ in consumed:
+            shutil.rmtree(str(c_folder), ignore_errors=True)
+
+        # 5. AI prefill on merged doc (best-effort)
+        _run_ai_prefill(base_folder)
+
+        # 6. Sync merged doc to portal
+        try:
+            sync_single_doc(client_name, base_doc_id)
+        except Exception as e:
+            app.logger.warning(f"Portal sync failed for merged {base_doc_id}: {e}")
+
+        # 7. Remove consumed doc rows from portal
+        for cid in consumed_ids:
+            try:
+                _remove_doc_from_portal(client_name, cid)
+            except Exception as e:
+                app.logger.warning(f"Portal cleanup failed for {cid}: {e}")
+
+        return jsonify({
+            "success": True,
+            "merged_doc_id": base_doc_id,
+            "page_count": total_pages,
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Merge failed: {e}"}), 500
+
+
+@app.route("/split/<client_name>/<doc_id>", methods=["POST"])
+def split_doc(client_name: str, doc_id: str):
+    """Split a multi-page DOC into individual single-page documents."""
+    doc_folder = _find_doc_folder(client_name, doc_id)
+    if not doc_folder:
+        return jsonify({"success": False, "error": f"Document not found: {doc_id}"}), 404
+
+    pdf_path = _find_pdf(doc_folder)
+    if not pdf_path:
+        return jsonify({"success": False, "error": f"No PDF in {doc_id}"}), 400
+
+    try:
+        reader = PdfReader(str(pdf_path))
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Cannot read PDF: {e}"}), 500
+
+    if len(reader.pages) < 2:
+        return jsonify({"success": False, "error": "Document has only 1 page — nothing to split"}), 400
+
+    review_path = doc_folder / "review.json"
+    try:
+        with review_path.open("r", encoding="utf-8") as f:
+            parent_review = json.load(f)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Cannot read review.json: {e}"}), 500
+
+    batch_folder = doc_folder.parent  # e.g. Batches/2026-03-26
+
+    try:
+        new_doc_ids: list[str] = []
+        new_folders: list[Path] = []
+
+        for i, page in enumerate(reader.pages):
+            new_id = _get_next_doc_id(batch_folder)
+            new_folder = batch_folder / new_id
+            new_folder.mkdir(parents=True, exist_ok=True)
+
+            # Write single-page PDF
+            writer = PdfWriter()
+            writer.add_page(page)
+            new_pdf_name = f"page_{i + 1}.pdf"
+            new_pdf_path = new_folder / new_pdf_name
+            with open(str(new_pdf_path), "wb") as out:
+                writer.write(out)
+
+            # Write review.json for this page
+            scanned_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            child_review = {
+                "doc_id": new_id,
+                "doc_type": "Unknown",
+                "doc_type_template": "",
+                "status": "New",
+                "quality_score": "",
+                "files": {"pdf": new_pdf_name, "raw_image": ""},
+                "fields": dict(parent_review.get("fields", {})),
+                "review": {
+                    "reviewed_by": "",
+                    "reviewed_at": "",
+                    "exported_at": "",
+                    "scanned_at": scanned_at,
+                    "notes": f"Split from {doc_id} (page {i + 1})",
+                },
+                "page_count": 1,
+            }
+            doc_name = parent_review.get("doc_name")
+            if doc_name:
+                child_review["doc_name"] = f"{doc_name} (p{i + 1})"
+
+            child_path = new_folder / "review.json"
+            with child_path.open("w", encoding="utf-8") as f:
+                json.dump(child_review, f, indent=2, ensure_ascii=False)
+
+            new_doc_ids.append(new_id)
+            new_folders.append(new_folder)
+
+        # Delete original DOC folder
+        shutil.rmtree(str(doc_folder), ignore_errors=True)
+
+        # AI prefill + portal sync for each new doc
+        for new_id, new_folder in zip(new_doc_ids, new_folders):
+            _run_ai_prefill(new_folder)
+            try:
+                sync_single_doc(client_name, new_id)
+            except Exception as e:
+                app.logger.warning(f"Portal sync failed for split {new_id}: {e}")
+
+        # Remove parent doc from portal
+        try:
+            _remove_doc_from_portal(client_name, doc_id)
+        except Exception as e:
+            app.logger.warning(f"Portal cleanup failed for parent {doc_id}: {e}")
+
+        return jsonify({
+            "success": True,
+            "new_doc_ids": new_doc_ids,
+            "page_count": len(new_doc_ids),
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Split failed: {e}"}), 500
+
+
+# ──────────────────────────────────────────────
 # STARTUP
 # ──────────────────────────────────────────────
 
@@ -681,6 +974,8 @@ if __name__ == "__main__":
     print(f"  POST http://{HOST}:{PORT}/rescan-replace/<client>/<doc_id>")
     print(f"  GET  http://{HOST}:{PORT}/rescan-queue/<client>")
     print(f"  GET  http://{HOST}:{PORT}/exports/<client>")
+    print(f"  POST http://{HOST}:{PORT}/merge/<client>")
+    print(f"  POST http://{HOST}:{PORT}/split/<client>/<doc_id>")
     print()
     print("Press Ctrl+C to stop.")
     print()

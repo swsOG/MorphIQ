@@ -5,7 +5,7 @@ CLIENT DELIVERY PACKAGE — Generates a complete client-ready export
 CAN BE USED TWO WAYS:
 
 1. FROM COMMAND LINE:
-   python C:\\ScanSystem_v2\\export_client.py TestClient
+   python export_client.py TestClient
 
 2. FROM PYTHON (API server or other scripts):
    from export_client import run_export
@@ -43,7 +43,7 @@ except ImportError:
 # CONFIGURATION
 # ──────────────────────────────────────────────
 
-BASE = Path(r"C:\ScanSystem_v2")
+BASE = Path(__file__).resolve().parent
 
 DOC_TYPE_FOLDERS = {
     "Tenancy Agreement": "Tenancy Agreements",

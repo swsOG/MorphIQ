@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ — Overview</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+</head>
+<body class="overview-body">
+
+<div class="portal-shell morphiq-overview-shell" data-page="overview">
+
+    {% if show_client_picker %}
+    <header class="portal-header">
+        <div class="header-logo">
+            <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+            <span class="logo-text">Morph<span class="iq">IQ</span></span>
+            <span class="logo-divider">Select client</span>
+        </div>
+        <div class="header-user-group">
+            <div class="notification-bell-wrapper">
+                <button type="button" class="notification-bell" id="notification-bell" title="Notifications">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="notification-badge" id="notification-badge" style="display:none">0</span>
+                </button>
+                <div id="notification-dropdown" class="notification-dropdown hidden"></div>
+            </div>
+            <div class="user-avatar">{{ current_user.full_name[0] }}</div>
+            <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+        </div>
+    </header>
+    <div id="client-picker-root" class="client-picker-shell">
+        <div class="client-picker-card">
+            <div class="client-picker-header">
+                <div class="client-picker-logo">
+                    <img src="{{ url_for('static', filename='morph_iq_full.png') }}" alt="Morph IQ" height="40">
+                </div>
+                <div class="client-picker-title-wrap">
+                    <h1>Select a client</h1>
+                    <p>Choose which client to view in the MorphIQ portal.</p>
+                </div>
+            </div>
+            <div id="client-grid" class="client-grid"></div>
+            <div class="client-picker-footer">
+                <span id="client-picker-status" class="client-picker-status">Loading clients…</span>
+                <span style="text-align: right;">Only active clients from the portal database are shown.</span>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    {%- set _client_q = (client_name or '')|urlencode -%}
+    {%- set _overview_url = url_for('overview_page') -%}
+    {%- set _properties_url = url_for('properties_page') -%}
+    {%- set _compliance_url = url_for('compliance_dashboard') -%}
+    {%- if _client_q -%}
+        {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
+        {%- set _properties_url = _properties_url + '?client=' + _client_q -%}
+        {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
+    {%- endif -%}
+    <div class="portal-app-layout">
+        {% include 'partials/portal_sidebar_nav.html' %}
+        <div class="portal-app-main">
+            <header class="portal-header">
+                <div class="header-logo">
+                    <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+                    <span class="logo-text">Morph<span class="iq">IQ</span></span>
+                    {% if current_user.role == 'admin' %}
+                        {% if client_name %}
+                            <a href="{{ url_for('overview_page') }}?client=" class="client-badge" title="Switch client">
+                                <span>{{ client_name }}</span>
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="search-container">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" class="search-input"
+                           placeholder="Search by property, tenant, document type, ID…">
+                    <span class="search-count" id="search-count" style="display:none"></span>
+                </div>
+                <div class="header-user-group">
+                    <div class="notification-bell-wrapper">
+                        <button type="button" class="notification-bell" id="notification-bell" title="Notifications">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                            </svg>
+                            <span class="notification-badge" id="notification-badge" style="display:none">0</span>
+                        </button>
+                        <div id="notification-dropdown" class="notification-dropdown hidden"></div>
+                    </div>
+                    <div class="user-avatar">{{ current_user.full_name[0] }}</div>
+                    <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+                </div>
+            </header>
+
+            <div class="ov-main">
+                <div class="ov-inner">
+                <nav class="ov-breadcrumb" aria-label="Breadcrumb">
+                    <a href="{{ _overview_url }}">Portfolio</a>
+                    <span class="ov-breadcrumb-sep">›</span>
+                    <span>Overview</span>
+                </nav>
+
+                <div class="ov-title-block" style="margin-bottom: 20px;">
+                    <h1>Portfolio overview</h1>
+                    <p>Compliance health, certificate coverage, and what needs attention.</p>
+                    <span class="ov-client-pill" id="ov-client-pill">—</span>
+                </div>
+
+                <!-- Hero: score ring (left 280px) + 2×2 status grid (right) -->
+                <div class="ov-hero">
+                    <div class="ov-hero-score-card" aria-label="Compliance score">
+                        <div class="ov-ring-chart" aria-hidden="true">
+                            <svg class="ov-ring-svg" id="ov-compliance-ring" viewBox="0 0 200 200" role="img">
+                                <circle class="ov-ring-bg" cx="100" cy="100" r="88" />
+                                <circle class="ov-ring-fg" id="ov-ring-arc" cx="100" cy="100" r="88" fill="none"
+                                        stroke-width="14" stroke-linecap="round" transform="rotate(-90 100 100)" />
+                            </svg>
+                            <div class="ov-ring-center">
+                                <span class="ov-ring-pct" id="ov-ring-pct">—</span><span class="ov-ring-pct-unit">%</span>
+                            </div>
+                        </div>
+                        <p class="ov-ring-caption" id="ov-ring-caption">Loading…</p>
+                    </div>
+
+                    <div class="ov-hero-stats" aria-label="Compliance status counts">
+                        <div class="ov-stat-card ov-stat-card--expired">
+                            <span class="ov-stat-label">Expired</span>
+                            <span class="ov-stat-value" id="ov-stat-expired">—</span>
+                            <span class="ov-stat-hint">Certificates past due</span>
+                        </div>
+                        <div class="ov-stat-card ov-stat-card--expiring">
+                            <span class="ov-stat-label">Expiring</span>
+                            <span class="ov-stat-value" id="ov-stat-expiring">—</span>
+                            <span class="ov-stat-hint">Due within 30 days</span>
+                        </div>
+                        <div class="ov-stat-card ov-stat-card--missing">
+                            <span class="ov-stat-label">Missing</span>
+                            <span class="ov-stat-value" id="ov-stat-missing">—</span>
+                            <span class="ov-stat-hint">No certificate on file</span>
+                        </div>
+                        <div class="ov-stat-card ov-stat-card--valid">
+                            <span class="ov-stat-label">Valid</span>
+                            <span class="ov-stat-value" id="ov-stat-valid">—</span>
+                            <span class="ov-stat-hint">Checks currently valid</span>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="ov-section" aria-labelledby="ov-coverage-heading">
+                    <h2 class="ov-section-title" id="ov-coverage-heading">Certificate coverage</h2>
+                    <div class="ov-coverage-list" id="ov-coverage-bars"></div>
+                </section>
+
+                <section class="ov-section" aria-labelledby="ov-timeline-heading">
+                    <h2 class="ov-section-title" id="ov-timeline-heading">Expiry timeline</h2>
+                    <div class="ov-timeline">
+                        <div class="ov-timeline-col ov-timeline-col--urgent">
+                            <h3>Next 30 days</h3>
+                            <div class="ov-timeline-items" id="ov-timeline-30">
+                                <p class="ov-timeline-placeholder">Loading…</p>
+                            </div>
+                        </div>
+                        <div class="ov-timeline-col ov-timeline-col--warn">
+                            <h3>30–60 days</h3>
+                            <div class="ov-timeline-items" id="ov-timeline-60">
+                                <p class="ov-timeline-placeholder">Loading…</p>
+                            </div>
+                        </div>
+                        <div class="ov-timeline-col ov-timeline-col--ok">
+                            <h3>60–90 days</h3>
+                            <div class="ov-timeline-items" id="ov-timeline-90">
+                                <p class="ov-timeline-placeholder">Loading…</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="ov-bottom">
+                    <div class="ov-panel">
+                        <div class="ov-panel-head">
+                            <h2 class="ov-panel-title">Recent activity</h2>
+                            <a class="ov-panel-link" id="ov-activity-all" href="/reports">View all →</a>
+                        </div>
+                        <div class="ov-activity-list" id="ov-recent-activity"></div>
+                    </div>
+                    <div class="ov-panel">
+                        <div class="ov-panel-head">
+                            <h2 class="ov-panel-title">My Packs</h2>
+                            <a class="ov-panel-link" href="{{ url_for('packs_page') }}{% if _client_q %}?client={{ _client_q|urlencode }}{% endif %}">Open packs →</a>
+                        </div>
+                        <!-- TODO: wire to API -->
+                        <div class="ov-packs-grid">
+                            <div class="ov-pack-card">
+                                <strong>Q4 compliance pack</strong>
+                                Sample placeholder
+                            </div>
+                            <div class="ov-pack-card">
+                                <strong>Onboarding bundle</strong>
+                                Sample placeholder
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div><!-- /ov-inner -->
+            </div><!-- /ov-main -->
+
+            <div class="ai-chat-float-wrap" id="ai-chat-float-wrap">
+                <button type="button" class="ai-chat-float-btn" id="ai-chat-float-btn" aria-label="Open MorphIQ AI" title="MorphIQ AI">
+                    <span class="ai-chat-float-unread" id="ai-chat-float-unread" aria-hidden="true"></span>
+                    <span class="ai-chat-float-icon">
+                        {% include 'partials/ai_chat_float_icon.html' %}
+                    </span>
+                </button>
+            </div>
+            <div class="ai-chat-sidebar-backdrop" id="ai-chat-sidebar-backdrop" aria-hidden="true"></div>
+            <aside class="ai-chat-sidebar" id="ai-chat-sidebar" aria-label="MorphIQ Intelligence">
+                <div class="ai-chat-sidebar-list-view" id="ai-chat-sidebar-list-view">
+                    <div class="ai-chat-sidebar-header">
+                        <span class="ai-chat-sidebar-title">MorphIQ Intelligence</span>
+                        <button type="button" class="ai-chat-sidebar-close" id="ai-chat-sidebar-close" aria-label="Close">✕</button>
+                    </div>
+                    <div class="ai-chat-conversation-list" id="ai-chat-conversation-list"></div>
+                    <button type="button" class="ai-chat-new-conv-btn" id="ai-chat-new-conv-btn">New Conversation</button>
+                </div>
+                <div class="ai-chat-sidebar-chat-view hidden" id="ai-chat-sidebar-chat-view">
+                    <div class="ai-chat-sidebar-header">
+                        <button type="button" class="ai-chat-sidebar-back" id="ai-chat-sidebar-back" aria-label="Back to conversations">←</button>
+                        <span class="ai-chat-sidebar-chat-title" id="ai-chat-sidebar-chat-title">Chat</span>
+                    </div>
+                    <div class="ai-chat-sidebar-messages" id="ai-chat-sidebar-messages">
+                        <div class="ai-chat-message-list" id="ai-chat-message-list"></div>
+                        <div class="ai-chat-suggestions" id="ai-chat-suggestions">
+                            <button type="button" class="ai-chat-suggestion-pill" data-question="What's expiring this month?">What's expiring this month?</button>
+                            <button type="button" class="ai-chat-suggestion-pill" data-question="Which properties are non-compliant?">Which properties are non-compliant?</button>
+                            <button type="button" class="ai-chat-suggestion-pill" data-question="Portfolio health summary">Portfolio health summary</button>
+                            <button type="button" class="ai-chat-suggestion-pill" data-question="List all tenants and rents">List all tenants and rents</button>
+                        </div>
+                    </div>
+                    <div class="ai-chat-sidebar-chips">
+                        <button type="button" class="ai-chat-chip" data-template="summary">Summary Report</button>
+                        <button type="button" class="ai-chat-chip" data-template="missing">Missing Documents</button>
+                        <button type="button" class="ai-chat-chip" data-question="Portfolio health summary">Portfolio health summary</button>
+                    </div>
+                    <div class="ai-chat-sidebar-footer">
+                        <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="Ask about your portfolio compliance...">
+                        <button type="button" class="ai-chat-send" id="ai-chat-send" aria-label="Send">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    window.MORPHIQ_PORTAL = {
+        clientName: {{ client_name|tojson|safe }},
+        showClientPicker: {{ (show_client_picker|default(false))|tojson|safe }}
+    };
+</script>
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+{% if not show_client_picker %}
+<script>
+(function () {
+    const R = 88;
+    const C = 2 * Math.PI * R;
+
+    function ringTierClass(pct) {
+        if (pct < 30) return "ov-ring-fg--low";
+        if (pct <= 70) return "ov-ring-fg--mid";
+        return "ov-ring-fg--high";
+    }
+
+    function barTierClass(pct) {
+        if (pct < 20) return "ov-coverage-fill--red";
+        if (pct <= 60) return "ov-coverage-fill--amber";
+        return "ov-coverage-fill--green";
+    }
+
+    function esc(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    function dashRelativeTime(ts) {
+        if (!ts) return "";
+        const d = new Date(ts);
+        if (Number.isNaN(d.getTime())) return String(ts);
+        const diffMs = Date.now() - d.getTime();
+        const diffM = Math.floor(diffMs / 60000);
+        const diffH = Math.floor(diffMs / 3600000);
+        const diffD = Math.floor(diffMs / 86400000);
+        if (diffM < 1) return "Just now";
+        if (diffM < 60) return diffM + " min ago";
+        if (diffH < 24) return diffH + " h ago";
+        if (diffD === 1) return "Yesterday";
+        if (diffD < 7) return diffD + " days ago";
+        return d.toLocaleDateString();
+    }
+
+    const cfg = window.MORPHIQ_PORTAL || {};
+    const clientName = (cfg.clientName || new URLSearchParams(window.location.search).get("client") || "").trim();
+
+    const pill = document.getElementById("ov-client-pill");
+    if (pill) pill.textContent = clientName || "—";
+
+    const activityLink = document.getElementById("ov-activity-all");
+    if (activityLink) {
+        let h = "/reports";
+        if (clientName) h += "?client=" + encodeURIComponent(clientName);
+        activityLink.href = h;
+    }
+
+    async function load() {
+        // Primary: GET /api/dashboard-stats (score, coverage bars, recent activity).
+        // Status card split (expired / expiring / missing / valid): /api/compliance exposes per-status totals (no app.py change).
+        const [dashRes, compRes] = await Promise.all([
+            fetch("/api/dashboard-stats", { credentials: "same-origin" }),
+            fetch("/api/compliance", { credentials: "same-origin" }),
+        ]);
+        const dash = await dashRes.json().catch(() => ({}));
+        const comp = await compRes.json().catch(() => ({}));
+
+        if (dash.error) {
+            console.error("Dashboard stats:", dash.error, dash.details);
+        }
+        if (comp.error) {
+            console.error("Compliance snapshot:", comp.error, comp.details);
+        }
+
+        const scorePct = Math.round(dash.compliance_score_pct ?? 0);
+        const reqPresent = dash.required_present ?? 0;
+        const reqTotal = dash.required_total ?? 0;
+
+        const arc = document.getElementById("ov-ring-arc");
+        const pctEl = document.getElementById("ov-ring-pct");
+        const cap = document.getElementById("ov-ring-caption");
+        if (arc) {
+            arc.style.strokeDasharray = (scorePct / 100) * C + " " + C;
+            arc.classList.remove("ov-ring-fg--low", "ov-ring-fg--mid", "ov-ring-fg--high");
+            arc.classList.add(ringTierClass(scorePct));
+        }
+        if (pctEl) pctEl.textContent = String(scorePct);
+        if (cap) {
+            cap.textContent =
+                reqTotal > 0
+                    ? reqPresent + " of " + reqTotal + " required checks in place"
+                    : "No properties yet";
+        }
+
+        const st = comp.stats || {};
+        const compOk = !comp.error && comp.stats != null;
+        const expired = compOk ? (st.overdue_actions ?? 0) : (dash.overdue_actions ?? 0);
+        let validSum = 0;
+        const health = comp.health_by_type || [];
+        health.forEach(function (h) {
+            validSum += h.valid || 0;
+        });
+
+        const elE = document.getElementById("ov-stat-expired");
+        const elEx = document.getElementById("ov-stat-expiring");
+        const elM = document.getElementById("ov-stat-missing");
+        const elV = document.getElementById("ov-stat-valid");
+        if (elE) elE.textContent = String(expired);
+        if (elEx) {
+            elEx.textContent = compOk && typeof st.expiring_soon === "number" ? String(st.expiring_soon) : "—";
+        }
+        if (elM) {
+            elM.textContent = compOk && typeof st.missing_certificates === "number" ? String(st.missing_certificates) : "—";
+        }
+        if (elV) {
+            elV.textContent = compOk ? String(validSum) : "—";
+        }
+
+        // Certificate coverage — segmented bar per type using health_by_type
+        const covRoot = document.getElementById("ov-coverage-bars");
+        const SKIP_KEYS = ["other", "tenancy", "inventory"];
+        const filteredHealth = (comp.health_by_type || []).filter(function (h) {
+            return !SKIP_KEYS.includes((h.type || h.key || "").toLowerCase());
+        });
+        if (covRoot) {
+            if (!filteredHealth.length) {
+                covRoot.innerHTML = '<p class="ov-empty">No coverage data yet.</p>';
+            } else {
+                covRoot.innerHTML = filteredHealth
+                    .map(function (h) {
+                        const valid    = h.valid         || 0;
+                        const expiring = h.expiring_soon || 0;
+                        const expired  = h.expired       || 0;
+                        const missing  = h.missing       || 0;
+                        const total    = h.total || (valid + expiring + expired + missing) || 0;
+                        const validPct    = total > 0 ? (valid    / total * 100).toFixed(1) : 0;
+                        const expiringPct = total > 0 ? (expiring / total * 100).toFixed(1) : 0;
+                        const expiredPct  = total > 0 ? (expired  / total * 100).toFixed(1) : 0;
+                        const missingPct  = total > 0 ? (missing  / total * 100).toFixed(1) : 0;
+                        const pct = total > 0 ? Math.round(valid / total * 100) : 0;
+                        const label = esc(h.label || h.key || "");
+                        return (
+                            '<div class="ov-coverage-row">' +
+                            '<div class="ov-coverage-label">' + label + '</div>' +
+                            '<div class="ov-coverage-track" role="img" aria-label="' + label + ' coverage: ' + pct + '% valid">' +
+                            '<div class="ov-coverage-seg ov-coverage-seg--valid"    style="width:' + validPct    + '%"></div>' +
+                            '<div class="ov-coverage-seg ov-coverage-seg--expiring" style="width:' + expiringPct + '%"></div>' +
+                            '<div class="ov-coverage-seg ov-coverage-seg--expired"  style="width:' + expiredPct  + '%"></div>' +
+                            '<div class="ov-coverage-seg ov-coverage-seg--missing"  style="width:' + missingPct  + '%"></div>' +
+                            '</div>' +
+                            '<div class="ov-coverage-pct">' + pct + '%</div>' +
+                            '</div>'
+                        );
+                    })
+                    .join("");
+            }
+        }
+
+        // Expiry timeline — populate from actions with expiry dates
+        const actions = comp.actions || [];
+        const now = Date.now();
+        const d30 = now + 30 * 86400000;
+        const d60 = now + 60 * 86400000;
+        const d90 = now + 90 * 86400000;
+        const bucket30 = [], bucket60 = [], bucket90 = [];
+        actions.forEach(function (a) {
+            if (!a.expiry_date) return;
+            const exp = new Date(a.expiry_date).getTime();
+            if (isNaN(exp) || exp <= now) return;
+            if (exp <= d30) bucket30.push(a);
+            else if (exp <= d60) bucket60.push(a);
+            else if (exp <= d90) bucket90.push(a);
+        });
+
+        function renderBucket(id, items) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            if (!items.length) {
+                el.innerHTML = '<p class="ov-timeline-placeholder">Nothing due in this window.</p>';
+                return;
+            }
+            el.innerHTML = items.slice(0, 6).map(function (a) {
+                var daysLeft = a.expiry_date
+                    ? Math.ceil((new Date(a.expiry_date).getTime() - now) / 86400000)
+                    : null;
+                var daysLabel = daysLeft !== null ? daysLeft + "d" : "";
+                return (
+                    '<div class="ov-timeline-item">' +
+                    '<div class="ov-timeline-item-main">' +
+                    '<span class="ov-timeline-item-addr">' + esc(a.property_address || "—") + '</span>' +
+                    '<span class="ov-timeline-item-type">' + esc(a.type || "") + '</span>' +
+                    '</div>' +
+                    (daysLabel ? '<span class="ov-timeline-item-days">' + esc(daysLabel) + '</span>' : '') +
+                    '</div>'
+                );
+            }).join("");
+        }
+        renderBucket("ov-timeline-30", bucket30);
+        renderBucket("ov-timeline-60", bucket60);
+        renderBucket("ov-timeline-90", bucket90);
+
+        // Recent activity (dashboard-stats)
+        const actRoot = document.getElementById("ov-recent-activity");
+        const recent = dash.recent_activity || [];
+        if (actRoot) {
+            if (!recent.length) {
+                actRoot.innerHTML = '<p class="ov-empty">No recent activity.</p>';
+            } else {
+                actRoot.innerHTML = recent
+                    .map(function (e) {
+                        const dotClass = e.kind === "resolved" ? "ov-activity-dot--amber" : "ov-activity-dot--green";
+                        const addr = esc(e.property_address || "");
+                        const line = esc(e.description || "");
+                        const who = e.user_name ? " · " + esc(e.user_name) : "";
+                        return (
+                            '<div class="ov-activity-item">' +
+                            '<span class="ov-activity-dot ' +
+                            dotClass +
+                            '"></span>' +
+                            "<div><strong>" +
+                            addr +
+                            "</strong><div>" +
+                            line +
+                            who +
+                            '</div><div class="ov-activity-meta">' +
+                            esc(dashRelativeTime(e.created_at)) +
+                            "</div></div></div>"
+                        );
+                    })
+                    .join("");
+            }
+        }
+    }
+
+    load().catch(function (err) {
+        console.error("Overview load failed:", err);
+    });
+})();
+</script>
+{% endif %}
+</body>
+</html>

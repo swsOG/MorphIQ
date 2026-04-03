@@ -202,50 +202,17 @@
     <!-- Client picker: no sidebar -->
     {% else %}
     <!-- ── App layout: sidebar + main ───────────────────────────────────── -->
-    {%- set _client_q = client_name or '' -%}
-    {%- set _base_url = url_for('index') -%}
+    {%- set _client_q = (client_name or '')|urlencode -%}
+    {%- set _overview_url = url_for('overview_page') -%}
+    {%- set _properties_url = url_for('properties_page') -%}
     {%- set _compliance_url = url_for('compliance_dashboard') -%}
-    {%- set _activity_url = url_for('activity_page') -%}
-    {%- set _settings_url = url_for('settings_page') -%}
     {%- if _client_q -%}
-        {%- set _base_url = _base_url + '?client=' + _client_q -%}
+        {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
+        {%- set _properties_url = _properties_url + '?client=' + _client_q -%}
         {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
-        {%- set _activity_url = _activity_url + '?client=' + _client_q -%}
-        {%- set _settings_url = _settings_url + '?client=' + _client_q -%}
     {%- endif -%}
     <div class="portal-app-layout">
-        <aside class="portal-sidebar">
-            <a href="{{ _base_url }}" class="portal-sidebar-brand">
-                <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="sidebar-logo-img">
-                <span class="sidebar-brand-text">Morph<strong>IQ</strong></span>
-            </a>
-            <nav class="portal-sidebar-nav">
-                <a href="{{ _base_url }}" class="portal-sidebar-link {% if active_view == 'overview' %}active{% endif %}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                    <span>Dashboard</span>
-                </a>
-                <a href="{{ _base_url }}#archive" class="portal-sidebar-link {% if active_view == 'archive' %}active{% endif %}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                    <span>Archive</span>
-                </a>
-                <a href="{{ _compliance_url }}" class="portal-sidebar-link {% if active_view == 'compliance' %}active{% endif %}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>Compliance</span>
-                </a>
-                <a href="{{ _activity_url }}" class="portal-sidebar-link {% if active_view == 'activity' %}active{% endif %}" aria-label="Activity Log">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span>Activity</span>
-                </a>
-                <button type="button" class="portal-sidebar-link ai-assistant-trigger" id="sidebar-ai-assistant" aria-label="Open AI Assistant">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    <span>AI Assistant</span>
-                </button>
-                <a href="{{ _settings_url }}" class="portal-sidebar-link {% if active_view == 'settings' %}active{% endif %}" aria-label="Settings">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    <span>Settings</span>
-                </a>
-            </nav>
-        </aside>
+        {% include 'partials/portal_sidebar_nav.html' %}
         <div class="portal-app-main">
     <!-- ── Header (inside app layout when sidebar present) ───────────────── -->
     <header class="portal-header">
@@ -254,7 +221,7 @@
             <span class="logo-text">Morph<span class="iq">IQ</span></span>
             {% if current_user.role == 'admin' %}
                 {% if client_name %}
-                    <a href="{{ url_for('index') }}" class="client-badge" title="Switch client">
+                    <a href="{{ url_for('overview_page') }}" class="client-badge" title="Switch client">
                         <span>{{ client_name }}</span>
                     </a>
                 {% endif %}
@@ -331,10 +298,15 @@
             </div>
         </div>
     {% else %}
-        <div class="portal-main">
+        <div class="portal-main portal-main--stack">
 
-            <div id="dashboard-overview" class="dashboard-view dashboard-overview">
-                <section class="dashboard-stats-row" id="dashboard-stats">
+            <div id="dashboard-overview" class="dashboard-view dashboard-overview dashboard-overview--layout">
+                <div class="dashboard-overview-topbar">
+                    <span class="dashboard-overview-kicker">Portfolio overview</span>
+                    <span class="dashboard-client-pill" id="dash-client-pill">—</span>
+                </div>
+
+                <section class="dashboard-stats-row dashboard-stats-row--three" id="dashboard-stats">
                     <div class="dashboard-stat-card" id="dash-stat-properties">
                         <div class="dashboard-stat-label">Total Properties</div>
                         <div class="dashboard-stat-value">—</div>
@@ -343,11 +315,6 @@
                         <div class="dashboard-stat-label">Total Documents</div>
                         <div class="dashboard-stat-value">—</div>
                     </div>
-                    <div class="dashboard-stat-card dashboard-stat-compliance" id="dash-stat-compliance">
-                        <div class="dashboard-stat-label">Compliance Score</div>
-                        <div class="dashboard-stat-value">—</div>
-                        <div class="dashboard-stat-sub">Fully compliant properties</div>
-                    </div>
                     <div class="dashboard-stat-card dashboard-stat-overdue" id="dash-stat-overdue">
                         <div class="dashboard-stat-label">Overdue Actions</div>
                         <div class="dashboard-stat-value">—</div>
@@ -355,37 +322,60 @@
                     </div>
                 </section>
 
-                <section class="dashboard-two-column">
+                <section class="dashboard-hero" id="dashboard-hero">
+                    <div class="dashboard-hero-ring-wrap">
+                        <div class="dashboard-hero-ring-chart" aria-hidden="true">
+                            <svg class="dashboard-hero-donut" id="dash-compliance-ring" viewBox="0 0 200 200" role="img">
+                                <circle class="dashboard-ring-bg" cx="100" cy="100" r="88" fill="none" stroke-width="14" />
+                                <circle class="dashboard-ring-fg" id="dash-compliance-ring-arc" cx="100" cy="100" r="88" fill="none" stroke-width="14" stroke-linecap="round" transform="rotate(-90 100 100)" />
+                            </svg>
+                            <div class="dashboard-hero-ring-center">
+                                <span class="dashboard-hero-pct" id="dash-compliance-pct">—</span>
+                                <span class="dashboard-hero-pct-unit">%</span>
+                            </div>
+                        </div>
+                        <p class="dashboard-hero-ring-caption" id="dash-compliance-ring-caption">—</p>
+                    </div>
+                    <div class="dashboard-hero-bars-wrap">
+                        <h3 class="dashboard-hero-bars-heading">Coverage by category</h3>
+                        <div id="dash-coverage-bars" class="dashboard-coverage-bars dashboard-coverage-bars--hero">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dashboard-two-column dashboard-two-column--split dashboard-middle-row">
                     <div class="dashboard-attention-section">
                         <div class="dashboard-section-header">
-                            <h2 class="dashboard-section-title">Needs Attention</h2>
-                            <a href="#" id="dash-attention-view-all" class="dashboard-link">View all on Compliance →</a>
+                            <h2 class="dashboard-section-title">Needs attention</h2>
+                            <a href="#" id="dash-attention-view-all" class="dashboard-link">View all →</a>
                         </div>
                         <div id="dash-needs-attention" class="dashboard-attention-list">
                             <!-- Filled by JS -->
                         </div>
                     </div>
-                    <aside class="dashboard-activity-section">
+                    <div class="dashboard-activity-section">
                         <div class="dashboard-section-header">
-                            <h2 class="dashboard-section-title">Recent Activity</h2>
+                            <h2 class="dashboard-section-title">Recent activity</h2>
+                            <a href="#" id="dash-activity-view-all" class="dashboard-link">View all →</a>
                         </div>
                         <div id="dash-recent-activity" class="dashboard-activity-list">
                             <!-- Filled by JS -->
                         </div>
-                    </aside>
+                    </div>
                 </section>
 
-                <section class="dashboard-quick-nav">
-                    <button type="button" class="dashboard-quick-card" id="dash-nav-compliance">
-                        <div class="dashboard-quick-title">Compliance Dashboard</div>
-                        <div class="dashboard-quick-body">View portfolio risk, overdue actions, and coverage by type.</div>
-                    </button>
-                    <button type="button" class="dashboard-quick-card" id="dash-nav-archive">
-                        <div class="dashboard-quick-title">Full Archive</div>
+                <section class="dashboard-quick-nav dashboard-quick-nav--bottom">
+                    <a href="{{ _properties_url }}" class="dashboard-quick-card dashboard-quick-card--link" id="dash-nav-archive">
+                        <div class="dashboard-quick-title">Document archive</div>
                         <div class="dashboard-quick-body">Search and browse all properties and documents.</div>
-                    </button>
+                    </a>
+                    <a href="{{ _compliance_url }}" class="dashboard-quick-card dashboard-quick-card--link" id="dash-nav-compliance">
+                        <div class="dashboard-quick-title">Compliance centre</div>
+                        <div class="dashboard-quick-body">Portfolio risk, overdue actions, and coverage by type.</div>
+                    </a>
                     <button type="button" class="dashboard-quick-card" id="dash-nav-upload">
-                        <div class="dashboard-quick-title">Upload Document</div>
+                        <div class="dashboard-quick-title">Upload document</div>
                         <div class="dashboard-quick-body">Add a new certificate or document to the archive.</div>
                     </button>
                 </section>
@@ -441,7 +431,7 @@
                             <div class="filter-left">
                                 <div class="dashboard-tab-bar">
                                     <button type="button" class="dashboard-tab active" data-view="overview">Overview</button>
-                                    <button type="button" class="dashboard-tab" data-view="archive">Archive</button>
+                                    <button type="button" class="dashboard-tab" data-view="archive">Properties</button>
                                 </div>
                                 <div class="filter-chips">
                                     <button class="filter-chip active" data-filter="all">All</button>
@@ -591,6 +581,7 @@
     };
 </script>
 <script src="{{ url_for('static', filename='portal.js') }}"></script>
+{% block portal_extra %}{% endblock %}
 
 </body>
 </html>

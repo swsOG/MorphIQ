@@ -829,6 +829,73 @@
   .toast-success { background: var(--success); color: #021012; }
   .toast-error { background: var(--danger); color: #ffffff; }
   .toast-info { background: var(--accent); color: #021012; }
+
+  /* MULTI-PAGE GROUP */
+  .multi-page-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(0, 229, 204, 0.10);
+    border: 1px solid rgba(0, 229, 204, 0.28);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .mpi-label { color: var(--text-secondary); font-weight: 400; }
+  .mpi-page { font-family: var(--font-mono); font-weight: 700; font-size: 13px; }
+  .mpi-docname { color: var(--text-primary); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mpi-close {
+    margin-left: auto;
+    background: none;
+    border: 1px solid rgba(0, 229, 204, 0.3);
+    border-radius: 4px;
+    color: var(--accent);
+    padding: 3px 10px;
+    font-size: 10px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .mpi-close:hover { background: rgba(0, 229, 204, 0.15); }
+
+  .q-item.q-group-child {
+    padding-left: 28px;
+    border-left: 2px solid rgba(0, 229, 204, 0.2);
+    margin-left: 10px;
+    margin-bottom: 0;
+  }
+  .q-item.q-group-parent {
+    border-left: 2px solid var(--accent);
+    margin-bottom: 0;
+  }
+
+  .btn-add-page {
+    background: var(--bg-card);
+    border: 1px solid rgba(0, 229, 204, 0.4);
+    color: var(--accent);
+  }
+  .btn-add-page:hover:not(:disabled) {
+    background: rgba(0, 229, 204, 0.1);
+    border-color: var(--accent);
+  }
+  .btn-add-page:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .btn-finish-doc {
+    background: var(--bg-card);
+    border: 1px solid rgba(0, 214, 143, 0.4);
+    color: var(--success);
+  }
+  .btn-finish-doc:hover {
+    background: rgba(0, 214, 143, 0.1);
+    border-color: var(--success);
+  }
 </style>
 </head>
 <body>
@@ -939,6 +1006,13 @@
 
   <!-- CENTER COLUMN -->
   <div class="col-center">
+    <div id="multiPageIndicator" class="multi-page-indicator" style="display:none;">
+      <span class="mpi-label">Adding page</span>
+      <span class="mpi-page" id="mpiPageNum">2</span>
+      <span class="mpi-label">of document:</span>
+      <span class="mpi-docname" id="mpiDocName"></span>
+      <button class="mpi-close" id="btnFinishDocTop" type="button">&#10003; Finish Document</button>
+    </div>
     <div class="center-view" id="centerView">
       <div class="rescan-banner" id="rescanBanner"></div>
       <div class="center-empty" id="centerEmpty">
@@ -964,6 +1038,8 @@
         <button class="btn" type="button" id="btnSelectFolder">Select Folder</button>
         <button class="btn" type="button" id="btnBrowse">Browse Files</button>
         <button class="btn btn-primary" type="button" id="btnCapture">📸 Capture Document</button>
+        <button class="btn btn-add-page" type="button" id="btnAddPage" disabled>📄 Add Page</button>
+        <button class="btn btn-finish-doc" type="button" id="btnFinishDoc" style="display:none;">✓ Finish Document</button>
       </div>
       <div id="previewActions" style="display:none;gap:8px;width:100%;align-items:center;">
         <input class="naming-input" type="text" id="nameInput" placeholder="Document name (optional) — Enter to confirm">
@@ -980,6 +1056,8 @@
       <span><kbd>↵</kbd> Confirm</span>
       <span><kbd>Esc</kbd> Skip</span>
       <span><kbd>C</kbd> Back to camera</span>
+      <span><kbd>P</kbd> Add Page</span>
+      <span><kbd>F</kbd> Finish Doc</span>
     </div>
   </div>
 
@@ -1083,6 +1161,15 @@
   let lastProcessingDocLabel = "";
   let rescanMode = false;
   let rescanItem = null;
+
+  let multiPageState = {
+    isMultiPage: false,
+    groupId: null,
+    pageNumber: 0,
+    groupDocName: null,
+    groupPropertyAddress: null,
+    firstPageRawName: null,
+  };
 
   // Legacy doc type display names for existing documents loaded from the API.
   // New captures start as "Unknown" and are classified later by AI.
@@ -1769,12 +1856,15 @@
     sessionDocs = [];
     sessionCount = 0;
     activeDocId = null;
+    multiPageState = { isMultiPage: false, groupId: null, pageNumber: 0, groupDocName: null, groupPropertyAddress: null, firstPageRawName: null };
     updateLeftQueue();
     updateDashboardCounts();
     updateProgress();
     updateFilteredList();
     updateRetakeQueue();
     updateSessionStats();
+    updateAddPageButton();
+    updateMultiPageUI();
 
     if (!selectedClient) return;
 
@@ -1875,7 +1965,7 @@
     document.getElementById("fileInput").click();
   }
 
-  async function saveFileToClient(filename, blob, docName = "", propertyAddress = "") {
+  async function saveFileToClient(filename, blob, docName = "", propertyAddress = "", groupMeta = null) {
     if (!baseFolderHandle) {
       showToast('Click "Select Folder" first (one-time setup)', "info");
       return null;
@@ -1901,12 +1991,18 @@
       const prop = (propertyAddress || "").trim();
       const nameToStore = (docName || "").trim() || null;
       try {
-        const metaHandle = await rawDir.getFileHandle(`${safeName}.meta.json`, { create: true });
-        const metaWritable = await metaHandle.createWritable();
-        await metaWritable.write(JSON.stringify({
+        const metaObj = {
           doc_name: nameToStore,
           property_address: prop || null
-        }, null, 2));
+        };
+        if (groupMeta) {
+          metaObj.group_id = groupMeta.group_id;
+          metaObj.page_number = groupMeta.page_number;
+          metaObj.total_pages_so_far = groupMeta.total_pages_so_far;
+        }
+        const metaHandle = await rawDir.getFileHandle(`${safeName}.meta.json`, { create: true });
+        const metaWritable = await metaHandle.createWritable();
+        await metaWritable.write(JSON.stringify(metaObj, null, 2));
         await metaWritable.close();
       } catch (e) {
         // non-fatal
@@ -1918,6 +2014,173 @@
       showToast("Save error: " + e.message, "error");
       return null;
     }
+  }
+
+  /* Multi-page group helpers */
+  async function retroUpdatePageMeta(rawFileName, metaObj) {
+    if (!baseFolderHandle || !selectedClient || !rawFileName) return;
+    try {
+      const clientsDir = await baseFolderHandle.getDirectoryHandle("Clients", { create: false });
+      const clientDir = await clientsDir.getDirectoryHandle(selectedClient, { create: false });
+      const rawDir = await clientDir.getDirectoryHandle("raw", { create: false });
+      const metaHandle = await rawDir.getFileHandle(`${rawFileName}.meta.json`, { create: true });
+      const w = await metaHandle.createWritable();
+      await w.write(JSON.stringify(metaObj, null, 2));
+      await w.close();
+    } catch (e) {
+      console.warn("Failed to update meta file:", e);
+    }
+  }
+
+  async function writeGroupCompleteMarker(groupId) {
+    if (!baseFolderHandle || !selectedClient || !groupId) return;
+    try {
+      const clientsDir = await baseFolderHandle.getDirectoryHandle("Clients", { create: false });
+      const clientDir = await clientsDir.getDirectoryHandle(selectedClient, { create: false });
+      const rawDir = await clientDir.getDirectoryHandle("raw", { create: false });
+      const fh = await rawDir.getFileHandle(`${groupId}.group_complete`, { create: true });
+      const w = await fh.createWritable();
+      await w.write("");
+      await w.close();
+    } catch (e) {
+      console.warn("Failed to write group_complete marker:", e);
+    }
+  }
+
+  function updateMultiPageUI() {
+    const indicator = document.getElementById("multiPageIndicator");
+    const finishBtn = document.getElementById("btnFinishDoc");
+    if (indicator) {
+      if (multiPageState.isMultiPage) {
+        indicator.style.display = "flex";
+        document.getElementById("mpiPageNum").textContent = multiPageState.pageNumber;
+        document.getElementById("mpiDocName").textContent = multiPageState.groupDocName || "";
+      } else {
+        indicator.style.display = "none";
+      }
+    }
+    if (finishBtn) {
+      finishBtn.style.display = multiPageState.isMultiPage ? "" : "none";
+    }
+    if (multiPageState.isMultiPage) {
+      document.getElementById("footerMode").textContent =
+        "\uD83D\uDCC4 multi-page \u00B7 Page " + multiPageState.pageNumber + " \u00B7 " + (multiPageState.groupDocName || "");
+    }
+  }
+
+  function updateAddPageButton() {
+    const btn = document.getElementById("btnAddPage");
+    if (!btn) return;
+    btn.disabled = sessionDocs.length === 0 || !selectedClient || !!pendingCapture || !currentStream;
+  }
+
+  async function addPageCapture() {
+    if (!selectedClient) { showToast("Select a client first", "error"); return; }
+    if (sessionDocs.length === 0) { showToast("Capture a document first", "error"); return; }
+    if (pendingCapture) { showToast("Confirm or discard current capture first", "error"); return; }
+    if (!currentStream) { showToast("Camera not available", "error"); return; }
+
+    if (viewMode !== "camera") {
+      exitPreviewToCamera();
+    }
+
+    if (!multiPageState.isMultiPage) {
+      const lastDoc = sessionDocs[0];
+      multiPageState.groupId = "grp_" + Date.now();
+      multiPageState.isMultiPage = true;
+      multiPageState.pageNumber = 1;
+      multiPageState.groupDocName = lastDoc.name || lastDoc.docId;
+      multiPageState.groupPropertyAddress = lastDoc.propertyAddress || getPropertyValue();
+      multiPageState.firstPageRawName = lastDoc.rawName;
+
+      lastDoc.groupId = multiPageState.groupId;
+      lastDoc.pageNumber = 1;
+      await retroUpdatePageMeta(lastDoc.rawName, {
+        doc_name: lastDoc.name || null,
+        property_address: multiPageState.groupPropertyAddress || null,
+        group_id: multiPageState.groupId,
+        page_number: 1,
+        total_pages_so_far: 1
+      });
+      updateLeftQueue();
+    }
+
+    multiPageState.pageNumber++;
+    updateMultiPageUI();
+
+    const video = document.getElementById("videoFeed");
+    const canvas = document.getElementById("captureCanvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.95));
+    if (!blob) { showToast("Capture failed", "error"); return; }
+
+    const metrics = await analyzeImage(blob);
+    applyQualityToUI(metrics);
+
+    const groupMeta = {
+      group_id: multiPageState.groupId,
+      page_number: multiPageState.pageNumber,
+      total_pages_so_far: multiPageState.pageNumber
+    };
+
+    const safeName = await saveFileToClient(
+      "capture.jpg", blob,
+      multiPageState.groupDocName,
+      multiPageState.groupPropertyAddress,
+      groupMeta
+    );
+    if (!safeName) return;
+
+    const now = new Date();
+    const stamp = now.toTimeString().slice(0, 8);
+    const id = "local-" + now.getTime() + "-" + Math.random().toString(36).slice(2, 8);
+    const tmpUrl = URL.createObjectURL(blob);
+
+    const doc = {
+      id,
+      blob,
+      name: multiPageState.groupDocName,
+      docId: deriveDocIdFromSafeName(safeName),
+      createdAt: stamp,
+      score: metrics.overall,
+      sharp: metrics.sharpness,
+      bright: metrics.brightness,
+      contrast: metrics.contrast,
+      align: metrics.alignment,
+      qualityClass: classifyScore(metrics.overall),
+      thumbUrl: tmpUrl,
+      rawName: safeName,
+      docType: "Unknown",
+      propertyAddress: multiPageState.groupPropertyAddress,
+      groupId: multiPageState.groupId,
+      pageNumber: multiPageState.pageNumber
+    };
+
+    addDocToSession(doc);
+    showDocPreview(doc, "camera");
+    showToast("Page " + multiPageState.pageNumber + " added to group", "success");
+  }
+
+  async function finishMultiPageGroup() {
+    if (!multiPageState.isMultiPage) return;
+    await writeGroupCompleteMarker(multiPageState.groupId);
+    multiPageState = {
+      isMultiPage: false,
+      groupId: null,
+      pageNumber: 0,
+      groupDocName: null,
+      groupPropertyAddress: null,
+      firstPageRawName: null,
+    };
+    updateMultiPageUI();
+    updateAddPageButton();
+    document.getElementById("footerMode").textContent =
+      (captureMode === "quick" ? "\u26A1 quick \u00B7 ready" : "\uD83D\uDD0D careful \u00B7 ready");
+    showToast("Document group completed", "success");
   }
 
   /* Quality analysis (Layer 1) */
@@ -2157,6 +2420,7 @@
     updateSessionSummary();
     updateFilteredList();
     updateRetakeQueue();
+    updateAddPageButton();
 
     if (selectedClient) {
       clientSessions[selectedClient] = {
@@ -2178,9 +2442,39 @@
     }
     empty.style.display = "none";
     document.getElementById("queueCount").textContent = String(sessionDocs.length);
+
+    const groupMap = {};
     sessionDocs.forEach(doc => {
+      if (doc.groupId) {
+        if (!groupMap[doc.groupId]) groupMap[doc.groupId] = [];
+        groupMap[doc.groupId].push(doc);
+      }
+    });
+    Object.values(groupMap).forEach(g => g.sort((a, b) => a.pageNumber - b.pageNumber));
+
+    const rendered = new Set();
+    const displayOrder = [];
+    sessionDocs.forEach(doc => {
+      if (rendered.has(doc.id)) return;
+      if (doc.groupId && groupMap[doc.groupId] && groupMap[doc.groupId].length > 0) {
+        groupMap[doc.groupId].forEach(d => { displayOrder.push(d); rendered.add(d.id); });
+      } else {
+        displayOrder.push(doc);
+        rendered.add(doc.id);
+      }
+    });
+
+    displayOrder.forEach(doc => {
+      const inGroup = doc.groupId && groupMap[doc.groupId] && groupMap[doc.groupId].length > 1;
+      const isGroupChild = inGroup && doc.pageNumber > 1;
+      const isGroupParent = inGroup && doc.pageNumber === 1;
+
       const div = document.createElement("div");
-      div.className = "q-item" + (doc.id === activeDocId ? " active" : "");
+      let cls = "q-item" + (doc.id === activeDocId ? " active" : "");
+      if (isGroupChild) cls += " q-group-child";
+      if (isGroupParent) cls += " q-group-parent";
+      div.className = cls;
+
       const thumbWrap = document.createElement("div");
       thumbWrap.className = "q-thumb-wrap";
       const thumb = document.createElement("div");
@@ -2194,19 +2488,22 @@
       dot.className = "q-dot " + doc.qualityClass;
       thumbWrap.appendChild(thumb);
       thumbWrap.appendChild(dot);
+
       const info = document.createElement("div");
       info.className = "q-info";
       const nameEl = document.createElement("div");
       nameEl.className = "q-name";
-      nameEl.textContent = doc.name || doc.docId;
+      nameEl.textContent = isGroupChild ? ("\u21B3 Page " + doc.pageNumber) : (doc.name || doc.docId);
       const metaEl = document.createElement("div");
       metaEl.className = "q-meta";
-      metaEl.textContent = `${doc.docId} · ${doc.createdAt}`;
+      metaEl.textContent = doc.docId + " \u00B7 " + doc.createdAt;
       info.appendChild(nameEl);
       info.appendChild(metaEl);
+
       const scoreEl = document.createElement("div");
       scoreEl.className = "q-score " + doc.qualityClass;
       scoreEl.textContent = doc.score.toString();
+
       div.appendChild(thumbWrap);
       div.appendChild(info);
       div.appendChild(scoreEl);
@@ -2484,6 +2781,9 @@
       }
       return;
     }
+    if (multiPageState.isMultiPage) {
+      await finishMultiPageGroup();
+    }
     if (!currentStream || viewMode !== "camera") return;
     const video = document.getElementById("videoFeed");
     const canvas = document.getElementById("captureCanvas");
@@ -2608,6 +2908,7 @@
     input.value = getNextDocName();
     setTimeout(() => input.focus(), 30);
     document.getElementById("footerMode").textContent = "🔍 careful · naming";
+    updateAddPageButton();
   }
 
   async function confirmCurrentName(skipName) {
@@ -2645,8 +2946,13 @@
     }
     document.getElementById("previewContent").classList.remove("active");
     document.getElementById("centerEmpty").classList.remove("hidden");
-    document.getElementById("footerMode").textContent =
-      (captureMode === "quick" ? "⚡ quick · ready" : "🔍 careful · ready");
+    if (multiPageState.isMultiPage) {
+      updateMultiPageUI();
+    } else {
+      document.getElementById("footerMode").textContent =
+        (captureMode === "quick" ? "⚡ quick · ready" : "🔍 careful · ready");
+    }
+    updateAddPageButton();
   }
 
   /* Export + server status */
@@ -2764,11 +3070,22 @@
     }
     if (inInput) return;
 
-    if (e.code === "Space" || e.code === "Enter") {
+    if (e.key === "Escape" && multiPageState.isMultiPage) {
+      e.preventDefault();
+      finishMultiPageGroup();
+    } else if (e.code === "Space" || e.code === "Enter") {
       e.preventDefault();
       captureImage();
     } else if (e.code === "KeyB") {
       browseFile();
+    } else if (e.code === "KeyP") {
+      e.preventDefault();
+      addPageCapture();
+    } else if (e.code === "KeyF") {
+      if (multiPageState.isMultiPage) {
+        e.preventDefault();
+        finishMultiPageGroup();
+      }
     } else if (e.code === "KeyR") {
       if (pendingCapture) {
         e.preventDefault();
@@ -2918,6 +3235,9 @@
   document.getElementById("btnSelectFolder").addEventListener("click", pickScanSystemFolder);
   document.getElementById("btnBrowse").addEventListener("click", browseFile);
   document.getElementById("btnCapture").addEventListener("click", captureImage);
+  document.getElementById("btnAddPage").addEventListener("click", addPageCapture);
+  document.getElementById("btnFinishDoc").addEventListener("click", finishMultiPageGroup);
+  document.getElementById("btnFinishDocTop").addEventListener("click", finishMultiPageGroup);
   document.getElementById("btnRetake").addEventListener("click", discardPendingCapture);
   document.getElementById("btnConfirm").addEventListener("click", () => confirmCurrentName(false));
 

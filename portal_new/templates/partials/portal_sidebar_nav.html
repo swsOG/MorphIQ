@@ -1,0 +1,61 @@
+{# Requires: active_view (optional). Uses client_name and request.args for ?client= #}
+{%- set _client_q = (client_name or request.args.get('client') or '')|trim|urlencode -%}
+{%- set _overview_url = url_for('overview_page') -%}
+{%- set _properties_url = url_for('properties_page') -%}
+{%- set _compliance_url = url_for('compliance_dashboard') -%}
+{%- set _documents_url = url_for('documents_page') -%}
+{%- set _packs_url = url_for('packs_page') -%}
+{%- set _ask_ai_url = url_for('ask_ai_page') -%}
+{%- set _reports_url = url_for('reports_page') -%}
+{%- set _settings_url = url_for('settings_page') -%}
+{%- if _client_q -%}
+    {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
+    {%- set _properties_url = _properties_url + '?client=' + _client_q -%}
+    {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
+    {%- set _documents_url = _documents_url + '?client=' + _client_q -%}
+    {%- set _packs_url = _packs_url + '?client=' + _client_q -%}
+    {%- set _ask_ai_url = _ask_ai_url + '?client=' + _client_q -%}
+    {%- set _reports_url = _reports_url + '?client=' + _client_q -%}
+    {%- set _settings_url = _settings_url + '?client=' + _client_q -%}
+{%- endif -%}
+<aside class="portal-sidebar">
+    <a href="{{ _overview_url }}" class="portal-sidebar-brand">
+        <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="sidebar-logo-img">
+        <span class="sidebar-brand-text">Morph<strong>IQ</strong></span>
+    </a>
+    <nav class="portal-sidebar-nav">
+        <a href="{{ _overview_url }}" class="portal-sidebar-link {% if active_view == 'overview' %}active{% endif %}" aria-label="Overview">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <span>Overview</span>
+        </a>
+        <a href="{{ _properties_url }}" class="portal-sidebar-link {% if active_view == 'properties' %}active{% endif %}" aria-label="Properties">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <span>Properties</span>
+        </a>
+        <a href="{{ _compliance_url }}" class="portal-sidebar-link {% if active_view == 'compliance' %}active{% endif %}" aria-label="Compliance">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5"/><rect x="9.5" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="9.5" width="5" height="5"/><rect x="9.5" y="9.5" width="5" height="5"/><rect x="16" y="9.5" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><rect x="9.5" y="16" width="5" height="5"/><rect x="16" y="16" width="5" height="5"/></svg>
+            <span>Compliance</span>
+        </a>
+        <a href="{{ _documents_url }}" class="portal-sidebar-link {% if active_view == 'documents' %}active{% endif %}" aria-label="Documents">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Documents</span>
+        </a>
+        <a href="{{ _packs_url }}" class="portal-sidebar-link {% if active_view == 'packs' %}active{% endif %}" aria-label="Packs">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            <span>Packs</span>
+        </a>
+        <a href="{{ _ask_ai_url }}" class="portal-sidebar-link {% if active_view == 'ask_ai' %}active{% endif %}" aria-label="Ask AI">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Ask AI</span>
+        </a>
+        <div class="portal-sidebar-divider" role="separator" aria-hidden="true"></div>
+        <a href="{{ _reports_url }}" class="portal-sidebar-link {% if active_view == 'reports' %}active{% endif %}" aria-label="Reports">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Reports</span>
+        </a>
+        <a href="{{ _settings_url }}" class="portal-sidebar-link {% if active_view == 'settings' %}active{% endif %}" aria-label="Settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Settings</span>
+        </a>
+    </nav>
+</aside>

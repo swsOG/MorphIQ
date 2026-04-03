@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ — Reports</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+</head>
+<body class="reports-body">
+
+<div class="portal-shell morphiq-reports-shell" data-page="reports">
+    {%- set _client_q = (client_name or '')|urlencode -%}
+    {%- set _overview_url = url_for('overview_page') -%}
+    {%- if _client_q -%}
+        {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
+    {%- endif -%}
+    <div class="portal-app-layout">
+        {% include 'partials/portal_sidebar_nav.html' %}
+        <div class="portal-app-main">
+            <header class="portal-header">
+                <div class="header-logo">
+                    <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+                    <span class="logo-text">Morph<span class="iq">IQ</span></span>
+                    <span class="logo-divider">Reports</span>
+                    {% if current_user.role == 'admin' and client_name %}
+                        <a href="{{ _overview_url }}" class="client-badge" title="Switch client"><span>{{ client_name }}</span></a>
+                    {% elif client_name %}
+                        <span class="client-badge"><span>{{ client_name }}</span></span>
+                    {% endif %}
+                </div>
+                <div class="header-user-group">
+                    <div class="user-avatar">{{ (user_full_name or current_user.full_name or 'U')[0] }}</div>
+                    <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+                </div>
+            </header>
+
+            <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+                <a href="{{ _overview_url }}">Portfolio</a>
+                <span class="portal-breadcrumb-sep">›</span>
+                <span class="portal-breadcrumb-current">Reports</span>
+            </nav>
+
+            <div class="portal-main reports-page-main">
+                <div class="portal-page-inner">
+                <section class="reports-section">
+                    <h2 class="reports-section-title">Report templates</h2>
+                    <p class="reports-section-lead">Generate PDFs from live portfolio data. Scheduled delivery coming soon.</p>
+                    <div class="reports-template-grid" style="margin-bottom: 0;">
+                        <button type="button" class="reports-template-card" title="Compliance summary">
+                            <span class="reports-template-icon" aria-hidden="true">✓</span>
+                            <span class="reports-template-name">Compliance summary</span>
+                            <span class="reports-template-desc">Certificates, gaps, and deadlines</span>
+                        </button>
+                        <button type="button" class="reports-template-card" title="Portfolio overview">
+                            <span class="reports-template-icon" aria-hidden="true">▦</span>
+                            <span class="reports-template-name">Portfolio overview</span>
+                            <span class="reports-template-desc">Properties, docs, and health at a glance</span>
+                        </button>
+                        <button type="button" class="reports-template-card" title="Expiry forecast">
+                            <span class="reports-template-icon" aria-hidden="true">◷</span>
+                            <span class="reports-template-name">Expiry forecast</span>
+                            <span class="reports-template-desc">Rolling 90-day renewal outlook</span>
+                        </button>
+                        <button type="button" class="reports-template-card" title="Tenancy schedule">
+                            <span class="reports-template-icon" aria-hidden="true">☰</span>
+                            <span class="reports-template-name">Tenancy schedule</span>
+                            <span class="reports-template-desc">Tenants, rents, and term dates</span>
+                        </button>
+                        <button type="button" class="reports-template-card" title="Activity log">
+                            <span class="reports-template-icon" aria-hidden="true">↻</span>
+                            <span class="reports-template-name">Activity log</span>
+                            <span class="reports-template-desc">Uploads, resolutions, and changes</span>
+                        </button>
+                        <button type="button" class="reports-template-card" title="Custom report">
+                            <span class="reports-template-icon" aria-hidden="true">+</span>
+                            <span class="reports-template-name">Custom</span>
+                            <span class="reports-template-desc">Pick fields and filters</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="reports-section">
+                    <h2 class="reports-section-title">Recent reports</h2>
+                    <div class="reports-table-wrap">
+                        <table class="reports-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Report</th>
+                                    <th>Format</th>
+                                    <th>Generated</th>
+                                    <th>Status</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Compliance summary — Q1 2026</td>
+                                    <td>PDF</td>
+                                    <td>18 Mar 2026, 09:14</td>
+                                    <td><span class="reports-status-pill reports-status-pill--ok">Ready</span></td>
+                                    <td>
+                                        <div class="reports-row-actions">
+                                            <button type="button" class="reports-row-btn" title="Download">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="1.5" x2="8" y2="10"/><polyline points="5,7 8,10 11,7"/><path d="M2 13.5h12"/></svg>
+                                            </button>
+                                            <button type="button" class="reports-row-btn" title="Share">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l4 4-4 4"/><path d="M14 6H5a3 3 0 000 6h1"/></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Portfolio overview</td>
+                                    <td>PDF</td>
+                                    <td>12 Mar 2026, 16:02</td>
+                                    <td><span class="reports-status-pill reports-status-pill--ok">Ready</span></td>
+                                    <td>
+                                        <div class="reports-row-actions">
+                                            <button type="button" class="reports-row-btn" title="Download">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="1.5" x2="8" y2="10"/><polyline points="5,7 8,10 11,7"/><path d="M2 13.5h12"/></svg>
+                                            </button>
+                                            <button type="button" class="reports-row-btn" title="Share">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l4 4-4 4"/><path d="M14 6H5a3 3 0 000 6h1"/></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Expiry forecast (90 days)</td>
+                                    <td>PDF</td>
+                                    <td>3 Mar 2026, 11:30</td>
+                                    <td><span class="reports-status-pill reports-status-pill--muted">Expired link</span></td>
+                                    <td>
+                                        <div class="reports-row-actions">
+                                            <button type="button" class="reports-row-btn" title="Download" disabled style="opacity:0.35;cursor:not-allowed;">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="1.5" x2="8" y2="10"/><polyline points="5,7 8,10 11,7"/><path d="M2 13.5h12"/></svg>
+                                            </button>
+                                            <button type="button" class="reports-row-btn" title="Share" disabled style="opacity:0.35;cursor:not-allowed;">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l4 4-4 4"/><path d="M14 6H5a3 3 0 000 6h1"/></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Tenancy schedule</td>
+                                    <td>XLSX</td>
+                                    <td>27 Feb 2026, 08:45</td>
+                                    <td><span class="reports-status-pill reports-status-pill--ok">Ready</span></td>
+                                    <td>
+                                        <div class="reports-row-actions">
+                                            <button type="button" class="reports-row-btn" title="Download">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="1.5" x2="8" y2="10"/><polyline points="5,7 8,10 11,7"/><path d="M2 13.5h12"/></svg>
+                                            </button>
+                                            <button type="button" class="reports-row-btn" title="Share">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l4 4-4 4"/><path d="M14 6H5a3 3 0 000 6h1"/></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="reports-placeholder-note">Example rows — report generation will connect to the backend in a later release.</p>
+                </section>
+
+                <section class="reports-section reports-section--audit">
+                    <div class="reports-section-header">
+                        <div>
+                            <h2 class="reports-section-title">Audit trail</h2>
+                            <p class="reports-section-lead">Recent activity from your portfolio (from MorphIQ logs).</p>
+                        </div>
+                        <span class="reports-section-badge">Last 7 days</span>
+                    </div>
+                    <div class="reports-table-wrap">
+                        <table class="reports-data-table reports-audit-table">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Action</th>
+                                    <th>Description</th>
+                                    <th>User</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reports-audit-tbody">
+                                <tr><td colspan="4" class="reports-audit-loading">Loading activity…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                </div><!-- /portal-page-inner -->
+            </div><!-- /portal-main -->
+        </div>
+    </div>
+</div>
+
+<script>
+    window.MORPHIQ_PORTAL = { clientName: {{ (client_name or '')|tojson|safe }} };
+</script>
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+<script>
+(function () {
+    function withClientQuery(url) {
+        var clientParam = (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName) || "";
+        if (!String(clientParam).trim()) {
+            clientParam = new URLSearchParams(window.location.search).get("client") || "";
+        }
+        if (!String(clientParam).trim()) return url;
+        var sep = url.indexOf("?") >= 0 ? "&" : "?";
+        return url + sep + "client=" + encodeURIComponent(String(clientParam).trim());
+    }
+
+    function esc(s) {
+        if (s == null || s === "") return "—";
+        var d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function fmtWhen(iso) {
+        if (!iso) return "—";
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return esc(String(iso).slice(0, 19));
+        return esc(
+            d.toLocaleString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            })
+        );
+    }
+
+    var tbody = document.getElementById("reports-audit-tbody");
+    if (!tbody) return;
+
+    fetch(withClientQuery("/api/activity?limit=25"), { credentials: "same-origin" })
+        .then(function (r) {
+            return r.json();
+        })
+        .then(function (data) {
+            var entries = (data && data.entries) || [];
+            tbody.innerHTML = "";
+            if (!entries.length) {
+                tbody.innerHTML =
+                    '<tr><td colspan="4" class="reports-audit-empty">No activity recorded yet.</td></tr>';
+                return;
+            }
+            entries.forEach(function (e) {
+                var tr = document.createElement("tr");
+                tr.innerHTML =
+                    "<td>" +
+                    fmtWhen(e.created_at) +
+                    "</td><td>" +
+                    esc(e.action) +
+                    "</td><td>" +
+                    esc(e.description) +
+                    "</td><td>" +
+                    esc(e.user_name || "—") +
+                    "</td>";
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(function () {
+            tbody.innerHTML =
+                '<tr><td colspan="4" class="reports-audit-error">Unable to load audit trail.</td></tr>';
+        });
+})();
+</script>
+</body>
+</html>

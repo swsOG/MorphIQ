@@ -10,50 +10,15 @@
 
 <div class="portal-shell">
     {%- set _client_q = client_name or request.args.get('client') or '' -%}
-    {%- set _base_url = url_for('index') -%}
-    {%- set _compliance_url = url_for('compliance_dashboard') -%}
-    {%- set _activity_url = url_for('activity_page') -%}
-    {%- set _settings_url = url_for('settings_page') -%}
+    {%- set _overview_url = url_for('overview_page') -%}
+    {%- set _properties_url = url_for('properties_page') -%}
     {%- if _client_q -%}
-        {%- set _base_url = _base_url + '?client=' + _client_q -%}
-        {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
-        {%- set _activity_url = _activity_url + '?client=' + _client_q -%}
-        {%- set _settings_url = _settings_url + '?client=' + _client_q -%}
+        {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
+        {%- set _properties_url = _properties_url + '?client=' + _client_q -%}
     {%- endif -%}
-    {%- set _archive_url = _base_url + '#archive' -%}
+    {%- set _archive_url = _properties_url + '#properties' -%}
     <div class="portal-app-layout">
-        <aside class="portal-sidebar">
-            <a href="{{ _base_url }}" class="portal-sidebar-brand">
-                <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="sidebar-logo-img">
-                <span class="sidebar-brand-text">Morph<strong>IQ</strong></span>
-            </a>
-            <nav class="portal-sidebar-nav">
-                <a href="{{ _base_url }}" class="portal-sidebar-link">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                    <span>Dashboard</span>
-                </a>
-                <a href="{{ _base_url }}#archive" class="portal-sidebar-link active">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                    <span>Archive</span>
-                </a>
-                <a href="{{ _compliance_url }}" class="portal-sidebar-link">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>Compliance</span>
-                </a>
-                <a href="{{ _activity_url }}" class="portal-sidebar-link" aria-label="Activity Log">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span>Activity</span>
-                </a>
-                <button type="button" class="portal-sidebar-link ai-assistant-trigger" id="sidebar-ai-assistant" aria-label="Open AI Assistant">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    <span>AI Assistant</span>
-                </button>
-                <a href="{{ _settings_url }}" class="portal-sidebar-link" aria-label="Settings">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    <span>Settings</span>
-                </a>
-            </nav>
-        </aside>
+        {% include 'partials/portal_sidebar_nav.html' %}
         <div class="portal-app-main">
     <header class="portal-header">
         <div class="header-logo">
@@ -92,7 +57,7 @@
     </header>
 
     <nav class="portal-breadcrumb" aria-label="Breadcrumb">
-        <a href="{{ _base_url }}#archive">Portfolio</a>
+        <a href="{{ _overview_url }}">Portfolio</a>
         <span class="portal-breadcrumb-sep">›</span>
         <span class="portal-breadcrumb-current">Document</span>
     </nav>

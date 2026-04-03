@@ -681,10 +681,116 @@
   }
   .modal-btn-submit:hover { box-shadow: 0 2px 12px var(--red-glow); }
 
+  .attention-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--amber);
+    margin-left: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 6px rgba(245, 166, 35, 0.4);
+  }
+
+  .field-group.field-attention input,
+  .field-group.field-attention textarea {
+    border-left: 4px solid var(--amber);
+  }
+
+  .field-missing-hint {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--amber);
+    margin-bottom: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  .verify-gate-error {
+    grid-column: 1 / -1;
+    padding: 10px 14px;
+    background: var(--red-glow);
+    border: 1px solid var(--red-border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--red);
+    line-height: 1.4;
+  }
+
   .doc-table-wrap::-webkit-scrollbar,
   .fields-body::-webkit-scrollbar { width: 6px; }
   .doc-table-wrap::-webkit-scrollbar-thumb,
   .fields-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ─── MERGE / SPLIT ─── */
+  .doc-table .cb-col { width: 36px; text-align: center; padding-left: 10px; padding-right: 4px; }
+  .doc-table .cb-col input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; width: 15px; height: 15px; }
+
+  .btn-merge-selected {
+    display: none;
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, #6b93ff, #4f7df9);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 12px rgba(79, 125, 249, 0.25);
+  }
+  .btn-merge-selected.visible { display: inline-flex; align-items: center; gap: 6px; }
+  .btn-merge-selected:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79, 125, 249, 0.3); }
+  .btn-merge-selected:disabled { opacity: 0.5; cursor: wait; }
+
+  .btn-split {
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--blue-border);
+    background: var(--blue-glow);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-split:hover { background: rgba(79, 125, 249, 0.18); box-shadow: 0 2px 10px var(--accent-glow); }
+  .btn-split:disabled { opacity: 0.5; cursor: wait; }
+
+  .modal-btn-merge {
+    background: linear-gradient(135deg, #4f7df9, #3b6ce7);
+    color: white;
+    border: none;
+  }
+  .modal-btn-merge:hover { box-shadow: 0 2px 12px var(--accent-glow); }
+
+  .merge-doc-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 8px;
+  }
+  .merge-doc-item {
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+  }
+  .merge-doc-item:last-child { border-bottom: none; }
+  .merge-doc-item .merge-doc-type {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-left: 8px;
+  }
+  .merge-target-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
@@ -712,9 +818,10 @@
   <div class="status-cards" id="statusCards"></div>
   <div class="dashboard-actions">
     <button type="button" class="btn-review-all-new" id="btnReviewAllNew" onclick="startReviewAllNew()">Review All New</button>
+    <button type="button" class="btn-merge-selected" id="btnMergeSelected" onclick="showMergeModal()">Merge Selected</button>
     <div class="date-filter">
       <label for="batchDateFilter">Date</label>
-      <select id="batchDateFilter">
+      <select id="batchDateFilter" onchange="batchDateFilter = this.value || null; selectedDocIds.clear(); applyFilterAndRender();">
         <option value="">All dates</option>
       </select>
     </div>
@@ -722,7 +829,7 @@
   <div class="doc-table-wrap">
     <table class="doc-table">
       <thead>
-        <tr><th>Doc ID</th><th>Doc Type</th><th>Timeline (Scan / Review / Export)</th><th>Status</th></tr>
+        <tr><th class="cb-col"></th><th>Doc ID</th><th>Doc Type</th><th>Timeline (Scan / Review / Export)</th><th>Status</th></tr>
       </thead>
       <tbody id="docTableBody"></tbody>
     </table>
@@ -749,6 +856,7 @@
       <span id="reviewStatusBadge" class="badge badge-new">New</span>
       <span id="reviewDocType" style="font-size:13px; color:var(--text-muted);">—</span>
       <span id="reviewCounter" class="counter">—</span>
+      <button type="button" class="btn-split" id="btnSplitPages" onclick="splitCurrentDoc()" style="display:none;">Split Pages</button>
     </div>
   </div>
   <div class="main-split">
@@ -829,6 +937,19 @@
   </div>
 </div>
 
+<div id="mergeModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Merge documents</h3>
+    <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">These documents will be combined into one multi-page PDF:</p>
+    <div class="merge-doc-list" id="mergeDocList"></div>
+    <p class="merge-target-note" id="mergeTargetNote"></p>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-cancel" id="mergeModalCancel">Cancel</button>
+      <button type="button" class="modal-btn-merge" id="mergeModalSubmit">Merge</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const API_URL = "http://127.0.0.1:8765";
 
@@ -841,6 +962,45 @@
   let currentDocIndex = -1;
   let refreshIntervalId = null;
   let rescanDocIds = new Set();
+  let selectedDocIds = new Set();
+
+  const REQUIRED_FIELDS = {
+    "Gas Safety Certificate": ["property_address", "engineer_name", "gas_safe_reg", "inspection_date", "expiry_date", "result"],
+    "EICR": ["property_address", "electrician_name", "inspection_date", "next_inspection_date", "result"],
+    "EPC": ["property_address", "current_rating", "assessment_date", "expiry_date"],
+    "Tenancy Agreement": ["property_address", "tenant_full_name", "start_date", "monthly_rent_amount"],
+    "Deposit Protection Certificate": ["property_address", "tenant_name", "deposit_amount", "protection_date"],
+    "Inventory": ["property_address", "inspection_date"],
+  };
+
+  function computeQuality(doc) {
+    const docType = (doc.doc_type || "").trim();
+    const required = REQUIRED_FIELDS[docType];
+    if (!required) {
+      doc.completeness_score = 0;
+      doc.missing_fields = ["doc_type"];
+      doc.needs_attention = true;
+      return;
+    }
+    const fields = doc.fields || {};
+    const missing = [];
+    let filled = 0;
+    for (const key of required) {
+      const val = (fields[key] || "").toString().trim();
+      if (val) { filled++; } else { missing.push(key); }
+    }
+    const score = required.length > 0 ? Math.round((filled / required.length) * 100) : 0;
+    const addr = (fields.property_address || "").toString().trim();
+    doc.completeness_score = score;
+    doc.missing_fields = missing;
+    doc.needs_attention = !addr || score < 70;
+  }
+
+  function enrichDocsWithQuality(docs) {
+    for (const doc of docs) {
+      computeQuality(doc);
+    }
+  }
 
   function showView(n) {
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
@@ -871,6 +1031,7 @@
       if (!res.ok) return;
       const data = await res.json();
       const newDocs = data.docs || [];
+      enrichDocsWithQuality(newDocs);
       const newCounts = data.counts || {};
       docsData = { docs: newDocs, counts: newCounts };
 
@@ -936,16 +1097,19 @@
 
   function selectClient(name) {
     selectedClient = name;
+    selectedDocIds.clear();
     showView(2);
   }
 
   async function loadDocs() {
-    document.getElementById("docTableBody").innerHTML = "<tr><td colspan=\"4\" style=\"text-align:center; color:var(--text-muted);\">Loading...</td></tr>";
+    document.getElementById("docTableBody").innerHTML = "<tr><td colspan=\"5\" style=\"text-align:center; color:var(--text-muted);\">Loading...</td></tr>";
     try {
       const res = await fetch(`${API_URL}/docs/${encodeURIComponent(selectedClient)}`, { signal: AbortSignal.timeout(10000) });
       if (!res.ok) throw new Error(res.status === 404 ? "Client not found" : "Server error");
       const data = await res.json();
-      docsData = { docs: data.docs || [], counts: data.counts || {} };
+      const loadedDocs = data.docs || [];
+      enrichDocsWithQuality(loadedDocs);
+      docsData = { docs: loadedDocs, counts: data.counts || {} };
       statusFilter = null;
       batchDateFilter = null;
 
@@ -969,7 +1133,7 @@
       applyFilterAndRender();
       loadExportHistory();
     } catch (e) {
-      document.getElementById("docTableBody").innerHTML = "<tr><td colspan=\"4\" style=\"text-align:center; color:var(--red);\">Error loading documents: " + escapeHtml(e.message) + "</td></tr>";
+      document.getElementById("docTableBody").innerHTML = "<tr><td colspan=\"5\" style=\"text-align:center; color:var(--red);\">Error loading documents: " + escapeHtml(e.message) + "</td></tr>";
     }
   }
 
@@ -984,6 +1148,11 @@
       }
       const byDate = !batchDateFilter || d.batch_date === batchDateFilter;
       return byStatus && byDate;
+    });
+    filteredDocs.sort((a, b) => {
+      const aAttn = a.needs_attention === true ? 0 : 1;
+      const bAttn = b.needs_attention === true ? 0 : 1;
+      return aAttn - bAttn;
     });
     renderStatusCards();
     renderDocTable();
@@ -1126,6 +1295,7 @@
 
   function setStatusFilter(status) {
     statusFilter = status;
+    selectedDocIds.clear();
     applyFilterAndRender();
   }
 
@@ -1157,11 +1327,13 @@
       const tr = document.createElement("tr");
       tr.onclick = () => openReviewAt(i);
       const badgeClass = "badge-" + (doc.status === "Needs Review" ? "needs-review" : doc.status.toLowerCase().replace(" ", "-"));
+      const attentionDot = doc.needs_attention === true ? '<span class="attention-dot" title="Needs attention"></span>' : '';
+      const pagesBadge = (doc.page_count || 1) > 1 ? ` <span style="font-size:10px;color:var(--text-muted);font-weight:500;">(${doc.page_count}p)</span>` : '';
       const scanAt = doc.scanned_at || "";
       const reviewedAt = doc.reviewed_at || (doc.review && doc.review.reviewed_at) || "";
       const exportedAt = doc.exported_at || (doc.review && doc.review.exported_at) || "";
       const fmt = (value) => {
-        if (!value) return "—";
+        if (!value) return "\u2014";
         const asIso = value.includes("T") ? value : value.replace(" ", "T");
         const d = new Date(asIso);
         if (isNaN(d.getTime())) return escapeHtml(value);
@@ -1177,8 +1349,10 @@
       const scanText = fmt(scanAt || doc.batch_date);
       const reviewText = fmt(reviewedAt);
       const exportText = fmt(exportedAt);
+      const checked = selectedDocIds.has(doc.doc_id) ? " checked" : "";
       tr.innerHTML =
-        `<td class="doc-id-cell"><span class="doc-id-badge">${escapeHtml(doc.doc_id)}</span></td>` +
+        `<td class="cb-col" onclick="event.stopPropagation()"><input type="checkbox" data-doc-id="${escapeHtml(doc.doc_id)}"${checked} onchange="onMergeCheckboxChange(this)"></td>` +
+        `<td class="doc-id-cell"><span class="doc-id-badge">${escapeHtml(doc.doc_id)}</span>${attentionDot}${pagesBadge}</td>` +
         `<td class="doc-type-cell">${escapeHtml(doc.doc_type)}</td>` +
         `<td class="batch-date-cell">` +
           `<div class="time-row"><span class="time-label">Scan</span><span>${escapeHtml(scanText)}</span></div>` +
@@ -1189,8 +1363,9 @@
       tbody.appendChild(tr);
     });
     if (filteredDocs.length === 0) {
-      tbody.innerHTML = "<tr><td colspan=\"4\" style=\"text-align:center; color:var(--text-muted);\">No documents in this filter.</td></tr>";
+      tbody.innerHTML = "<tr><td colspan=\"5\" style=\"text-align:center; color:var(--text-muted);\">No documents in this filter.</td></tr>";
     }
+    updateMergeButton();
   }
 
   function startReviewAllNew() {
@@ -1229,7 +1404,7 @@
     const total = filteredDocs.length;
     const pos = currentDocIndex + 1;
     document.getElementById("reviewCounter").textContent = pos + " of " + total + (statusFilter ? " " + statusFilter : "");
-    renderFields(doc.fields || {});
+    renderFields(doc.fields || {}, doc.missing_fields);
     document.getElementById("reviewedBy").value = (doc.review && doc.review.reviewed_by) || "Filip";
     document.getElementById("reviewNotes").value = (doc.review && doc.review.notes) || "";
     loadPdfPreview(doc);
@@ -1244,9 +1419,18 @@
       ocrBtn.textContent = "Show OCR Text";
     }
 
+    const gateErr = document.getElementById("verifyGateError");
+    if (gateErr) gateErr.remove();
+
     const reBtn = document.getElementById("btnReprocess");
     if (reBtn) {
       reBtn.style.display = "inline-flex";
+    }
+
+    const splitBtn = document.getElementById("btnSplitPages");
+    if (splitBtn) {
+      splitBtn.style.display = (doc.page_count || 1) > 1 ? "inline-flex" : "none";
+      splitBtn.textContent = `Split Pages (${doc.page_count || 1})`;
     }
   }
 
@@ -1264,15 +1448,22 @@
     return key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  function renderFields(fields) {
+  function renderFields(fields, missingFields) {
     const container = document.getElementById("fieldsBody");
     container.innerHTML = "";
+    const missing = Array.isArray(missingFields) ? missingFields : [];
     for (const [key, value] of Object.entries(fields)) {
       const label = labelFromKey(key);
       const div = document.createElement("div");
-      div.className = "field-group";
+      const isMissing = missing.includes(key);
+      div.className = "field-group" + (isMissing ? " field-attention" : "");
       const val = (value == null) ? "" : String(value);
-      div.innerHTML = `<label>${escapeHtml(label)}</label><input type="text" data-field="${escapeHtml(key)}" value="${escapeHtml(val)}" placeholder="${escapeHtml(label)}...">`;
+      let html = "";
+      if (isMissing) {
+        html += '<span class="field-missing-hint">AI could not extract \u2014 please fill manually</span>';
+      }
+      html += `<label>${escapeHtml(label)}</label><input type="text" data-field="${escapeHtml(key)}" value="${escapeHtml(val)}" placeholder="${escapeHtml(label)}...">`;
+      div.innerHTML = html;
       container.appendChild(div);
     }
   }
@@ -1402,6 +1593,24 @@
   async function saveAndAdvance(status) {
     const doc = getCurrentDoc();
     if (!doc) return;
+
+    const prevErr = document.getElementById("verifyGateError");
+    if (prevErr) prevErr.remove();
+
+    if (status === "Verified") {
+      const addrInput = document.querySelector('#fieldsBody [data-field="property_address"]');
+      const addrVal = addrInput ? addrInput.value.trim() : "";
+      if (!addrVal) {
+        const navActions = document.querySelector(".nav-and-actions");
+        const errDiv = document.createElement("div");
+        errDiv.id = "verifyGateError";
+        errDiv.className = "verify-gate-error";
+        errDiv.textContent = "Property address is required before verification.";
+        navActions.prepend(errDiv);
+        return;
+      }
+    }
+
     const payload = {
       status: status,
       fields: {},
@@ -1524,6 +1733,121 @@
       if (e.target === overlay) closeRescanModal();
     });
   })();
+
+  (function wireMergeModal() {
+    const overlay = document.getElementById("mergeModal");
+    const cancelBtn = document.getElementById("mergeModalCancel");
+    const submitBtn = document.getElementById("mergeModalSubmit");
+    if (cancelBtn) cancelBtn.addEventListener("click", closeMergeModal);
+    if (submitBtn) submitBtn.addEventListener("click", submitMerge);
+    if (overlay) overlay.addEventListener("click", e => {
+      if (e.target === overlay) closeMergeModal();
+    });
+  })();
+
+  // ─── MERGE / SPLIT ───
+
+  function onMergeCheckboxChange(cb) {
+    const docId = cb.dataset.docId;
+    if (cb.checked) {
+      selectedDocIds.add(docId);
+    } else {
+      selectedDocIds.delete(docId);
+    }
+    updateMergeButton();
+  }
+
+  function updateMergeButton() {
+    const btn = document.getElementById("btnMergeSelected");
+    if (!btn) return;
+    if (selectedDocIds.size >= 2) {
+      btn.classList.add("visible");
+      btn.textContent = `Merge Selected (${selectedDocIds.size})`;
+    } else {
+      btn.classList.remove("visible");
+    }
+  }
+
+  function showMergeModal() {
+    if (selectedDocIds.size < 2) return;
+    const list = document.getElementById("mergeDocList");
+    list.innerHTML = "";
+    const ids = Array.from(selectedDocIds).sort();
+    ids.forEach(id => {
+      const doc = docsData.docs.find(d => d.doc_id === id);
+      const div = document.createElement("div");
+      div.className = "merge-doc-item";
+      div.innerHTML = escapeHtml(id) + (doc ? `<span class="merge-doc-type">${escapeHtml(doc.doc_type)}</span>` : "");
+      list.appendChild(div);
+    });
+    document.getElementById("mergeTargetNote").textContent =
+      `The merged document will use ${ids[0]} as the base.`;
+    document.getElementById("mergeModal").classList.add("visible");
+  }
+
+  function closeMergeModal() {
+    document.getElementById("mergeModal").classList.remove("visible");
+  }
+
+  async function submitMerge() {
+    if (selectedDocIds.size < 2) return;
+    closeMergeModal();
+    const ids = Array.from(selectedDocIds).sort();
+    const btn = document.getElementById("btnMergeSelected");
+    if (btn) { btn.disabled = true; btn.textContent = "Merging\u2026"; }
+    try {
+      const res = await fetch(`${API_URL}/merge/${encodeURIComponent(selectedClient)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ doc_ids: ids }),
+        signal: AbortSignal.timeout(120000)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast("Merge failed: " + (data.error || "Unknown error"), "error");
+        return;
+      }
+      showToast(`Merged ${ids.length} documents into ${data.merged_doc_id} (${data.page_count} pages)`, "success");
+      selectedDocIds.clear();
+      loadDocs();
+    } catch (e) {
+      showToast("Merge failed: " + e.message, "error");
+    } finally {
+      if (btn) { btn.disabled = false; updateMergeButton(); }
+    }
+  }
+
+  async function splitCurrentDoc() {
+    const doc = getCurrentDoc();
+    if (!doc) return;
+    const pages = doc.page_count || 1;
+    if (pages < 2) {
+      showToast("This document has only 1 page", "info");
+      return;
+    }
+    if (!confirm(`Split this ${pages}-page document into ${pages} separate documents?`)) return;
+    const splitBtn = document.getElementById("btnSplitPages");
+    if (splitBtn) { splitBtn.disabled = true; splitBtn.textContent = "Splitting\u2026"; }
+    try {
+      const res = await fetch(`${API_URL}/split/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.doc_id)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(120000)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast("Split failed: " + (data.error || "Unknown error"), "error");
+        return;
+      }
+      showToast(`Split into ${data.new_doc_ids.length} documents: ${data.new_doc_ids.join(", ")}`, "success");
+      loadDocs();
+      showView(2);
+    } catch (e) {
+      showToast("Split failed: " + e.message, "error");
+    } finally {
+      if (splitBtn) { splitBtn.disabled = false; }
+    }
+  }
 
   function showToast(msg, type) {
     const t = document.getElementById("toast");

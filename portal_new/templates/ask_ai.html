@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ — Ask AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+</head>
+<body class="ask-ai-body">
+
+<div class="portal-shell morphiq-ask-ai-shell ai-chat-page">
+    {%- set _client_q = client_name or request.args.get('client') or '' -%}
+    {%- set _overview_url = url_for('overview_page') -%}
+    {%- if _client_q -%}
+        {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
+    {%- endif -%}
+    <div class="portal-app-layout">
+        {% include 'partials/portal_sidebar_nav.html' %}
+        <div class="portal-app-main">
+            <header class="portal-header ask-ai-header">
+                <div class="header-logo">
+                    <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+                    <span class="logo-text">Morph<span class="iq">IQ</span></span>
+                    <span class="logo-divider">Ask AI</span>
+                    {% if current_user.role == 'admin' and client_name %}
+                        <a href="{{ _overview_url }}" class="client-badge" title="Switch client"><span>{{ client_name }}</span></a>
+                    {% elif client_name %}
+                        <span class="client-badge"><span>{{ client_name }}</span></span>
+                    {% endif %}
+                </div>
+                <div class="header-user-group ask-ai-header-actions">
+                    <button type="button" class="ask-ai-history-btn" id="ai-chat-clear-chat" title="Clear conversation">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span>New chat</span>
+                    </button>
+                    <div class="user-avatar">{{ current_user.full_name[0] if current_user.full_name else 'U' }}</div>
+                    <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+                </div>
+            </header>
+
+            <main class="ai-chat-main ask-ai-layout" id="ai-chat-page-root">
+                <div class="ask-ai-scroll">
+                    <div class="ask-ai-welcome" id="ai-chat-welcome">
+                        <div class="ask-ai-welcome-icon" aria-hidden="true">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 3a7 7 0 0 0-7 7v4l-2 2h18l-2-2v-4a7 7 0 0 0-7-7z"/>
+                                <path d="M9 18h6"/>
+                                <path d="M10 21h4"/>
+                            </svg>
+                        </div>
+                        <h1 class="ask-ai-welcome-title">Ask anything about your portfolio</h1>
+                        <p class="ask-ai-welcome-subtitle">
+                            <span id="ai-chat-count-props">—</span> properties · <span id="ai-chat-count-docs">—</span> documents
+                        </p>
+
+                        <div class="ask-ai-suggestions" role="group" aria-label="Suggested questions">
+                            <button type="button" class="ai-chat-suggestion-card" data-query="What's expiring this month?">
+                                <span class="ai-chat-suggestion-card-title">Expiring soon</span>
+                                <span class="ai-chat-suggestion-card-text">What's expiring this month?</span>
+                            </button>
+                            <button type="button" class="ai-chat-suggestion-card" data-query="Which properties are non-compliant?">
+                                <span class="ai-chat-suggestion-card-title">Compliance</span>
+                                <span class="ai-chat-suggestion-card-text">Which properties are non-compliant?</span>
+                            </button>
+                            <button type="button" class="ai-chat-suggestion-card" data-query="Portfolio health summary">
+                                <span class="ai-chat-suggestion-card-title">Overview</span>
+                                <span class="ai-chat-suggestion-card-text">Portfolio health summary</span>
+                            </button>
+                            <button type="button" class="ai-chat-suggestion-card" data-query="List all tenants and rents">
+                                <span class="ai-chat-suggestion-card-title">Tenancies</span>
+                                <span class="ai-chat-suggestion-card-text">List all tenants and rents</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <section class="ai-chat-page-messages" id="ai-chat-page-messages" aria-live="polite" aria-label="AI conversation"></section>
+                </div>
+
+                <div class="ask-ai-input-dock">
+                    <p class="ask-ai-input-hints">
+                        <span id="ai-chat-doc-indexed-hint">— documents indexed</span>
+                        <span class="ask-ai-hint-sep" aria-hidden="true">·</span>
+                        <span class="ask-ai-hint-verified">All answers sourced from verified data</span>
+                    </p>
+                    <form class="ai-chat-input-row ask-ai-input-form" id="ai-chat-page-form">
+                        <div class="ai-chat-input-wrap">
+                            <input type="text"
+                                   id="ai-chat-page-input"
+                                   class="ai-chat-page-input"
+                                   placeholder="Ask about this client's properties, documents, or compliance..."
+                                   autocomplete="off">
+                        </div>
+                        <button type="submit" class="ai-chat-page-send" id="ai-chat-page-send" aria-label="Send">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.MORPHIQ_PORTAL = {
+        clientName: {{ client_name|tojson|safe }},
+        showClientPicker: false
+    };
+</script>
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+</body>
+</html>

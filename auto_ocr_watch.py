@@ -2,12 +2,13 @@ import time
 import json
 import shutil
 import subprocess
-import sqlite3
 import sys
 import os
 import re
 from pathlib import Path
 from datetime import datetime
+
+from sync_to_portal import sync_single_doc
 
 env_path = Path(__file__).parent / ".env"
 if env_path.exists():
@@ -24,7 +25,7 @@ if env_path.exists():
 # CONFIGURATION
 # ──────────────────────────────────────────────
 
-BASE = Path(r"C:\ScanSystem_v2")
+BASE = Path(__file__).resolve().parent
 CLIENTS_DIR = BASE / "Clients"
 TEMP = BASE / "temp"
 TEMPLATES = BASE / "Templates"
@@ -84,6 +85,227 @@ def read_meta_if_present(image_path: Path, raw_folder: Path) -> dict | None:
         return meta
     except Exception:
         return None
+
+
+def peek_meta_group_id(image_path: Path, raw_folder: Path) -> str | None:
+    """Read group_id from .meta.json without deleting the file. Returns None if no group_id."""
+    meta_path = raw_folder / (image_path.name + ".meta.json")
+    if not meta_path.exists():
+        return None
+    try:
+        with meta_path.open("r", encoding="utf-8") as f:
+            meta = json.load(f)
+        return meta.get("group_id") or None
+    except Exception:
+        return None
+
+
+def collect_group_images(group_id: str, raw_folder: Path) -> list[tuple[Path, dict]]:
+    """Find all images in raw_folder belonging to the given group_id, sorted by page_number."""
+    members = []
+    for meta_file in raw_folder.glob("*.meta.json"):
+        try:
+            with meta_file.open("r", encoding="utf-8") as f:
+                meta = json.load(f)
+            if meta.get("group_id") != group_id:
+                continue
+            image_name = meta_file.name[: -len(".meta.json")]
+            image_path = raw_folder / image_name
+            if image_path.exists():
+                members.append((image_path, meta))
+        except Exception:
+            continue
+    members.sort(key=lambda x: x[1].get("page_number", 0))
+    return members
+
+
+def process_group(group_id: str, members: list[tuple[Path, dict]],
+                  raw_folder: Path, batches_folder: Path, client_name: str):
+    """Process a completed multi-page document group into a single DOC folder
+    with a combined searchable PDF.
+
+    For a group with only one page, delegates to the normal single-file path.
+    """
+    log(f"GROUP START: {group_id} with {len(members)} pages", client_name)
+
+    # ── Edge case: single page → delegate to normal pipeline ──
+    if len(members) == 1:
+        image_path = members[0][0]
+        log(f"  Single-page group — processing as normal document", client_name)
+        process_file(image_path, raw_folder, batches_folder, client_name)
+        _cleanup_group_files(group_id, members, raw_folder)
+        return
+
+    # ── Wait for every page to be fully written ──
+    for image_path, _meta in members:
+        wait_until_stable(image_path)
+
+    # ── Extract doc info from first page's meta ──
+    first_meta = members[0][1]
+    doc_name = (first_meta.get("doc_name") or "").strip() or None
+    initial_fields = {}
+    prop = (first_meta.get("property_address") or "").strip()
+    if prop:
+        initial_fields["property_address"] = prop
+
+    if doc_name:
+        log(f"  Doc name: {doc_name}", client_name)
+    log("  Doc type: Unknown (AI classification pending)", client_name)
+
+    # ── Create DOC folder ──
+    today = datetime.now().strftime("%Y-%m-%d")
+    batch_folder = batches_folder / today
+    doc_id = get_next_doc_id(batch_folder)
+    doc_folder = batch_folder / doc_id
+    doc_folder.mkdir(parents=True, exist_ok=True)
+    log(f"  DocID: {doc_id} -> {doc_folder}", client_name)
+
+    first_image = members[0][0]
+    output_pdf = doc_folder / (first_image.stem + ".pdf")
+    temp_pngs: list[Path] = []
+    temp_tiff = TEMP / f"{client_name}_{group_id}_combined.tiff"
+
+    try:
+        # ── 1. Preprocess each page with ImageMagick ──
+        for i, (image_path, meta) in enumerate(members):
+            page_num = meta.get("page_number", i + 1)
+            log(f"  Preprocessing page {page_num}: {image_path.name}", client_name)
+            temp_png = TEMP / f"{client_name}_{group_id}_p{page_num}.png"
+            preprocess_for_ocr(image_path, temp_png, client_name)
+            temp_pngs.append(temp_png)
+
+        # ── 2. Merge preprocessed PNGs into a multi-page TIFF ──
+        merge_cmd = [MAGICK] + [str(p) for p in temp_pngs] + ["-density", "300", str(temp_tiff)]
+        log("ImageMagick merge: " + " ".join(merge_cmd), client_name)
+        proc = subprocess.run(merge_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        if proc.stdout:
+            log(proc.stdout, client_name)
+        if proc.returncode != 0:
+            raise RuntimeError(f"ImageMagick merge failed with code {proc.returncode}")
+
+        # ── 3. OCR the multi-page TIFF into a single searchable PDF ──
+        ocr_to_pdf(temp_tiff, output_pdf, client_name)
+
+        # ── 4. Move ALL raw images into the DOC folder ──
+        archived_names: list[str] = []
+        for image_path, _meta in members:
+            archived = doc_folder / image_path.name
+            shutil.move(str(image_path), str(archived))
+            archived_names.append(archived.name)
+
+        # ── 5. Write review.json (first page's meta for doc_name / property) ──
+        scanned_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        review = {
+            "doc_id": doc_id,
+            "doc_type": "Unknown",
+            "doc_type_template": "",
+            "status": "New",
+            "quality_score": "",
+            "files": {
+                "pdf": output_pdf.name,
+                "raw_image": archived_names[0],
+                "raw_images": archived_names,
+            },
+            "fields": {},
+            "review": {
+                "reviewed_by": "",
+                "reviewed_at": "",
+                "exported_at": "",
+                "scanned_at": scanned_at,
+                "notes": "",
+            },
+            "group_id": group_id,
+            "page_count": len(members),
+        }
+        if doc_name:
+            review["doc_name"] = doc_name
+        review_path = doc_folder / "review.json"
+        with review_path.open("w", encoding="utf-8") as f:
+            json.dump(review, f, indent=2, ensure_ascii=False)
+
+        # ── 6. AI prefill ──
+        run_ai_prefill(doc_folder, client_name)
+
+        # ── 7. Sync the AI-classified review.json into portal.db ──
+        # Runs after prefill so doc_type and fields reflect the real classification.
+        # Works even if prefill failed or was skipped (Unknown type, needs_attention).
+        try:
+            sync_single_doc(client_name, doc_id)
+            log(f"Portal sync complete for {doc_id}", client_name)
+        except Exception as e:
+            log(f"WARN: portal sync failed for {doc_id}: {e}", client_name)
+
+        log(f"GROUP SUCCESS: {group_id} -> {doc_id} ({len(members)} pages)", client_name)
+        log(f"  PDF:    {output_pdf}", client_name)
+        log(f"  Images: {', '.join(archived_names)}", client_name)
+        log(f"  Review: {review_path}", client_name)
+
+    except Exception as e:
+        log(f"GROUP ERROR: {group_id}: {e}", client_name)
+        for image_path, _meta in members:
+            archived = doc_folder / image_path.name
+            if not image_path.exists() and archived.exists():
+                try:
+                    shutil.move(str(archived), str(image_path))
+                except Exception:
+                    pass
+        try:
+            if doc_folder.exists() and not any(doc_folder.iterdir()):
+                doc_folder.rmdir()
+        except Exception:
+            pass
+        raise
+    finally:
+        for tp in temp_pngs:
+            try:
+                if tp.exists():
+                    tp.unlink()
+            except Exception:
+                pass
+        try:
+            if temp_tiff.exists():
+                temp_tiff.unlink()
+        except Exception:
+            pass
+
+    # ── 8. Clean up meta files and marker on success ──
+    _cleanup_group_files(group_id, members, raw_folder)
+
+
+def _cleanup_group_files(group_id: str, members: list[tuple[Path, dict]],
+                         raw_folder: Path):
+    """Remove .meta.json sidecars for every group member and the .group_complete marker."""
+    for image_path, _meta in members:
+        meta_path = raw_folder / (image_path.name + ".meta.json")
+        try:
+            if meta_path.exists():
+                meta_path.unlink()
+        except Exception:
+            pass
+    marker_path = raw_folder / f"{group_id}.group_complete"
+    try:
+        if marker_path.exists():
+            marker_path.unlink()
+    except Exception:
+        pass
+
+
+def process_complete_groups(raw_folder: Path, batches_folder: Path, client_name: str):
+    """Scan for .group_complete markers and hand each ready group to process_group."""
+    for marker in raw_folder.glob("*.group_complete"):
+        group_id = marker.stem
+        members = collect_group_images(group_id, raw_folder)
+        if not members:
+            try:
+                marker.unlink()
+            except Exception:
+                pass
+            continue
+        try:
+            process_group(group_id, members, raw_folder, batches_folder, client_name)
+        except Exception as e:
+            log(f"ERROR (skipping group): {group_id}: {e}", client_name)
+
 
 # ──────────────────────────────────────────────
 # HELPERS
@@ -348,122 +570,16 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
         # Trigger AI pre-fill (best-effort, non-blocking for the main pipeline).
         run_ai_prefill(doc_folder, client_name)
 
-        # Insert a row into the portal documents table for this newly scanned document.
-        db = r"C:\ScanSystem_v2\portal.db"
-        conn = None
+        # Sync the now-complete review.json (with AI-classified doc_type and fields)
+        # into portal.db. Works whether prefill succeeded, failed, or was skipped —
+        # the document will always appear in the portal with whatever data is available.
         try:
-            conn = sqlite3.connect(db)
-            cur = conn.cursor()
-
-            source_doc_id = doc_id
-            doc_name_value = doc_name or "Scanned Document"
-            pdf_path_value = str(output_pdf)
-            raw_image_path_value = str(archived_image)
-            scanned_at_value = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            status_value = "verified"
-
-            # Look up or create client
-            cur.execute("SELECT id FROM clients WHERE name = ?", (client_name,))
-            row = cur.fetchone()
-            if row:
-                client_id = row[0]
-            else:
-                client_slug = client_name.strip().lower().replace(" ", "-") or "client"
-                cur.execute(
-                    "INSERT INTO clients (name, slug) VALUES (?, ?)",
-                    (client_name, client_slug),
-                )
-                client_id = cur.lastrowid
-
-            # Look up or create property for this client
-            property_address = initial_fields.get("property_address") if initial_fields else None
-            if not property_address:
-                property_address = "Unassigned property"
-            cur.execute(
-                "SELECT id FROM properties WHERE client_id = ? AND address = ?",
-                (client_id, property_address),
-            )
-            row = cur.fetchone()
-            if row:
-                property_id = row[0]
-            else:
-                cur.execute(
-                    "INSERT INTO properties (client_id, address) VALUES (?, ?)",
-                    (client_id, property_address),
-                )
-                property_id = cur.lastrowid
-
-            # Look up or create a neutral/unknown document type for this initial insert.
-            # sync_to_portal.py will later update this when AI prefill has classified it.
-            doc_type_label = "Unknown"
-            cur.execute(
-                "SELECT id FROM document_types WHERE label = ?",
-                (doc_type_label,),
-            )
-            row = cur.fetchone()
-            if row:
-                document_type_id = row[0]
-            else:
-                doc_type_key = "unknown"
-                cur.execute(
-                    "INSERT INTO document_types (key, label) VALUES (?, ?)",
-                    (doc_type_key, doc_type_label),
-                )
-                document_type_id = cur.lastrowid
-
-            cur.execute(
-                """
-                INSERT INTO documents (
-                    client_id,
-                    property_id,
-                    document_type_id,
-                    source_doc_id,
-                    doc_name,
-                    pdf_path,
-                    raw_image_path,
-                    status,
-                    scanned_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    client_id,
-                    property_id,
-                    document_type_id,
-                    source_doc_id,
-                    doc_name_value,
-                    pdf_path_value,
-                    raw_image_path_value,
-                    status_value,
-                    scanned_at_value,
-                ),
-            )
-            conn.commit()
+            sync_single_doc(client_name, doc_id)
+            log(f"Portal sync complete for {doc_id}", client_name)
         except Exception as e:
-            log(f"WARN: failed to insert document into DB for {doc_id}: {e}", client_name)
-        finally:
-            if conn is not None:
-                try:
-                    conn.close()
-                except Exception:
-                    pass
+            log(f"WARN: portal sync failed for {doc_id}: {e}", client_name)
 
         log(f"SUCCESS: {image_path.name} -> {doc_id}", client_name)
-        try:
-            env = os.environ.copy()
-            prefill_result = subprocess.run(
-                ["python", "ai_prefill.py", str(doc_folder)],
-                capture_output=True,
-                text=True,
-                cwd=r"C:\ScanSystem_v2",
-                env=env,
-            )
-            if prefill_result.returncode == 0:
-                log(f"AI PREFILL: success for {doc_id}", client_name)
-            else:
-                log(f"AI PREFILL WARN: {prefill_result.stderr}", client_name)
-        except Exception as e:
-            log(f"AI PREFILL ERROR: {e}", client_name)
         log(f"  PDF:    {output_pdf}", client_name)
         log(f"  Image:  {archived_image}", client_name)
         log(f"  Review: {review_path}", client_name)
@@ -512,10 +628,14 @@ def main():
                 if file.name.startswith("_"):
                     continue
                 if file.suffix.lower() in [".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp"]:
+                    group_id = peek_meta_group_id(file, raw_folder)
+                    if group_id is not None:
+                        continue
                     try:
                         process_file(file, raw_folder, batches_folder, client_name)
                     except Exception as e:
                         log(f"ERROR (skipping): {file.name}: {e}", client_name)
+            process_complete_groups(raw_folder, batches_folder, client_name)
             check_reprocess_triggers(client_name, client_dir)
         time.sleep(2)
 

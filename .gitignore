@@ -31,3 +31,14 @@ pipeline.log
 
 # OS files
 Thumbs.db
+.DS_Store
+
+# IDE / tool state
+.claude/
+.cursor/
+node_modules/
+
+# Temp and generated data
+temp/
+test_data/
+debug-*.log

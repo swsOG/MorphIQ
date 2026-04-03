@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ — Packs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+</head>
+<body class="packs-body">
+
+<div class="portal-shell morphiq-packs-shell" data-page="packs">
+    {%- set _client_q = (client_name or '')|urlencode -%}
+    {%- set _overview_url = url_for('overview_page') -%}
+    {%- if _client_q -%}
+        {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
+    {%- endif -%}
+    <div class="portal-app-layout">
+        {% include 'partials/portal_sidebar_nav.html' %}
+        <div class="portal-app-main">
+            <header class="portal-header">
+                <div class="header-logo">
+                    <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+                    <span class="logo-text">Morph<span class="iq">IQ</span></span>
+                    <span class="logo-divider">Packs</span>
+                    {% if current_user.role == 'admin' and client_name %}
+                        <a href="{{ _overview_url }}" class="client-badge" title="Switch client"><span>{{ client_name }}</span></a>
+                    {% elif client_name %}
+                        <span class="client-badge"><span>{{ client_name }}</span></span>
+                    {% endif %}
+                </div>
+                <div class="header-user-group">
+                    <div class="user-avatar">{{ (user_full_name or current_user.full_name or 'U')[0] }}</div>
+                    <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+                </div>
+            </header>
+
+            <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+                <a href="{{ _overview_url }}">Portfolio</a>
+                <span class="portal-breadcrumb-sep">›</span>
+                <span class="portal-breadcrumb-current">Packs</span>
+            </nav>
+
+            <div class="portal-main packs-page-main">
+                <div class="packs-split">
+                    <!-- Left panel: pack list -->
+                    <aside class="packs-left" aria-label="Pack list">
+                        <div class="packs-left-head">
+                            <h2 class="packs-left-title">Your packs</h2>
+                            <button type="button" id="packs-new-btn" class="packs-new-btn" title="Create new pack">New pack</button>
+                        </div>
+                        <div id="packs-list" class="packs-list" role="listbox" aria-label="Pack list">
+                            <div class="packs-list-loading">Loading packs…</div>
+                        </div>
+                    </aside>
+
+                    <!-- Right panel: pack builder -->
+                    <main class="packs-right" aria-label="Pack builder">
+                        <!-- Empty state: shown when no pack is selected -->
+                        <div id="packs-detail-empty" class="packs-detail-empty">
+                            <p class="packs-detail-empty-text">Select a pack from the list, or create a new one.</p>
+                        </div>
+
+                        <!-- Loading state -->
+                        <div id="packs-detail-loading" class="packs-detail-loading" hidden>Loading pack…</div>
+
+                        <!-- Content: shown when a pack is loaded -->
+                        <div id="packs-detail-content" hidden>
+                            <header class="packs-builder-header">
+                                <div>
+                                    <h1 id="packs-builder-title" class="packs-builder-title">—</h1>
+                                    <p id="packs-builder-sub" class="packs-builder-sub">0 documents</p>
+                                </div>
+                                <div class="packs-builder-actions">
+                                    <button type="button" id="packs-rename-btn" class="packs-icon-btn" title="Rename pack">Rename</button>
+                                    <button type="button" class="packs-icon-btn" disabled title="Duplicate (coming soon)">Duplicate</button>
+                                </div>
+                            </header>
+
+                            <div class="packs-doc-toolbar">
+                                <button type="button" class="packs-toolbar-btn" disabled title="Add documents (coming soon)">Add documents</button>
+                                <button type="button" class="packs-toolbar-btn" disabled title="Reorder (coming soon)">Reorder</button>
+                            </div>
+
+                            <div class="packs-notes-section">
+                                <button type="button" class="packs-notes-toggle" id="packs-notes-toggle" aria-expanded="false">
+                                    <span>Pack notes</span>
+                                    <svg class="packs-notes-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="4,6 8,10 12,6"/>
+                                    </svg>
+                                </button>
+                                <div class="packs-notes-body" id="packs-notes-body" hidden>
+                                    <textarea id="packs-notes-area" class="packs-notes-area" placeholder="Add internal notes for this pack (visible to your team only)…" rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <div id="packs-doc-empty" class="packs-doc-empty" hidden>
+                                No documents in this pack yet. Use "Add documents" to build your pack.
+                            </div>
+                            <ul id="packs-doc-list" class="packs-doc-list"></ul>
+
+                            <footer class="packs-export-bar">
+                                <span class="packs-export-note">Exports include all documents in this pack in the order shown.</span>
+                                <div class="packs-export-actions">
+                                    <button type="button" class="packs-export-btn packs-export-btn--secondary" data-export-type="zip">Export ZIP</button>
+                                    <button type="button" class="packs-export-btn" data-export-type="pdf">Export PDF bundle</button>
+                                </div>
+                            </footer>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.MORPHIQ_PORTAL = { clientName: {{ (client_name or '')|tojson|safe }} };
+</script>
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+<script>
+(function () {
+    "use strict";
+
+    var selectedPackId = null;
+    var notesTimer     = null;
+
+    var DRAG_SVG = '<svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor" aria-hidden="true">'
+        + '<circle cx="2.5" cy="2" r="1.5"/><circle cx="7.5" cy="2" r="1.5"/>'
+        + '<circle cx="2.5" cy="7" r="1.5"/><circle cx="7.5" cy="7" r="1.5"/>'
+        + '<circle cx="2.5" cy="12" r="1.5"/><circle cx="7.5" cy="12" r="1.5"/>'
+        + '</svg>';
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+
+    function withClient(url) {
+        var cp = new URLSearchParams(window.location.search).get("client")
+            || (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName) || "";
+        if (!cp) return url;
+        return url + (url.includes("?") ? "&" : "?") + "client=" + encodeURIComponent(cp);
+    }
+
+    function esc(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function formatDate(iso) {
+        if (!iso) return "—";
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return String(iso).slice(0, 10);
+        return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    }
+
+    function docTypeClass(slug) {
+        var s = (slug || "").toLowerCase();
+        if (s.includes("gas"))       return "props-doc-type--gas";
+        if (s === "eicr")            return "props-doc-type--eicr";
+        if (s === "epc")             return "props-doc-type--epc";
+        if (s.includes("deposit"))   return "props-doc-type--deposit";
+        if (s.includes("tenancy"))   return "props-doc-type--tenancy";
+        if (s.includes("inventory")) return "props-doc-type--inventory";
+        return "props-doc-type--other";
+    }
+
+    // ── API helpers ───────────────────────────────────────────────────────────
+
+    async function apiJson(method, path, body) {
+        var opts = { method: method, credentials: "same-origin",
+                     headers: { "Content-Type": "application/json" } };
+        if (body !== undefined) opts.body = JSON.stringify(body);
+        var res  = await fetch(withClient(path), opts);
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(data.error || "Request failed (" + res.status + ")");
+        return data;
+    }
+
+    // ── Left panel: pack list ─────────────────────────────────────────────────
+
+    async function loadPacksList() {
+        var listEl = document.getElementById("packs-list");
+        if (!listEl) return;
+        listEl.innerHTML = '<div class="packs-list-loading">Loading packs\u2026</div>';
+        try {
+            var data = await apiJson("GET", "/api/packs");
+            renderPacksList(data.packs || []);
+        } catch (e) {
+            listEl.innerHTML = '<div class="packs-list-empty">Failed to load packs.</div>';
+            console.error("packs list:", e);
+        }
+    }
+
+    function renderPacksList(packs) {
+        var listEl = document.getElementById("packs-list");
+        if (!listEl) return;
+        if (!packs.length) {
+            listEl.innerHTML = '<div class="packs-list-empty">No packs yet \u2014 create one to get started.</div>';
+            return;
+        }
+        listEl.innerHTML = packs.map(function (pk) {
+            var active   = pk.id === selectedPackId ? " packs-list-btn--active" : "";
+            var selected = pk.id === selectedPackId ? "true" : "false";
+            return '<button type="button" class="packs-list-btn' + active + '"'
+                + ' role="option" aria-selected="' + selected + '"'
+                + ' data-pack-id="' + pk.id + '">'
+                + '<div class="packs-list-btn-main">'
+                + '<span class="packs-list-name">' + esc(pk.name) + '</span>'
+                + '<span class="packs-list-meta">Updated ' + esc(formatDate(pk.updated_at)) + '</span>'
+                + '</div>'
+                + '<span class="packs-list-count">' + (pk.doc_count || 0) + '</span>'
+                + '</button>';
+        }).join("");
+        listEl.querySelectorAll(".packs-list-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var id = parseInt(btn.getAttribute("data-pack-id"), 10);
+                if (Number.isFinite(id)) selectPack(id);
+            });
+        });
+    }
+
+    // ── Right panel: pack detail ──────────────────────────────────────────────
+
+    async function selectPack(packId) {
+        selectedPackId = packId;
+        // Update active highlight in list.
+        document.querySelectorAll(".packs-list-btn").forEach(function (b) {
+            var id = parseInt(b.getAttribute("data-pack-id"), 10);
+            b.classList.toggle("packs-list-btn--active", id === packId);
+            b.setAttribute("aria-selected", id === packId ? "true" : "false");
+        });
+
+        var emptyEl   = document.getElementById("packs-detail-empty");
+        var loadingEl = document.getElementById("packs-detail-loading");
+        var contentEl = document.getElementById("packs-detail-content");
+        if (emptyEl)   emptyEl.hidden   = true;
+        if (contentEl) contentEl.hidden = true;
+        if (loadingEl) loadingEl.hidden = false;
+
+        try {
+            var data = await apiJson("GET", "/api/packs/" + packId);
+            renderPackDetail(data.pack);
+            if (loadingEl) loadingEl.hidden = true;
+            if (contentEl) contentEl.hidden = false;
+        } catch (e) {
+            if (loadingEl) loadingEl.hidden = true;
+            if (emptyEl) {
+                emptyEl.hidden = false;
+                var t = emptyEl.querySelector(".packs-detail-empty-text");
+                if (t) t.textContent = "Could not load pack.";
+            }
+            console.error("pack detail:", e);
+        }
+    }
+
+    function renderPackDetail(pack) {
+        var titleEl   = document.getElementById("packs-builder-title");
+        var subEl     = document.getElementById("packs-builder-sub");
+        var notesArea = document.getElementById("packs-notes-area");
+        var docListEl = document.getElementById("packs-doc-list");
+        var docEmptyEl = document.getElementById("packs-doc-empty");
+
+        if (titleEl) titleEl.textContent = pack.name || "Untitled pack";
+
+        var docs = pack.documents || [];
+        if (subEl) subEl.textContent = docs.length + " document" + (docs.length !== 1 ? "s" : "");
+
+        // Notes textarea — auto-save 800 ms after the user stops typing.
+        if (notesArea) {
+            notesArea.value = pack.notes || "";
+            notesArea.oninput = function () {
+                if (notesTimer) clearTimeout(notesTimer);
+                notesTimer = setTimeout(function () {
+                    apiJson("PUT", "/api/packs/" + pack.id, { notes: notesArea.value })
+                        .catch(function (e) { console.error("notes save:", e); });
+                }, 800);
+            };
+        }
+
+        if (!docListEl) return;
+
+        if (!docs.length) {
+            docListEl.innerHTML = "";
+            if (docEmptyEl) docEmptyEl.hidden = false;
+            return;
+        }
+        if (docEmptyEl) docEmptyEl.hidden = true;
+
+        docListEl.innerHTML = docs.map(function (doc, idx) {
+            var tSlug  = doc.doc_type_key  || "";
+            var tClass = docTypeClass(tSlug);
+            var tLabel = esc(doc.doc_type_label || doc.doc_type_key || "Document");
+            var title  = esc(doc.title || doc.doc_type_label || "Document");
+            var meta   = doc.expiry_date
+                ? "Expires " + esc(formatDate(doc.expiry_date))
+                : esc(doc.property_address || "—");
+            return '<li class="packs-doc-row" data-pack-doc-id="' + doc.pack_doc_id + '">'
+                + '<span class="packs-drag-handle" aria-hidden="true">' + DRAG_SVG + '</span>'
+                + '<span class="packs-doc-order">' + (idx + 1) + '</span>'
+                + '<span class="packs-doc-type props-doc-type-label ' + esc(tClass) + '">' + tLabel + '</span>'
+                + '<div class="packs-doc-main">'
+                + '<span class="packs-doc-title">' + title + '</span>'
+                + '<span class="packs-doc-meta">' + meta + '</span>'
+                + '</div>'
+                + '<button type="button" class="packs-doc-remove" aria-label="Remove from pack" title="Remove">\u00d7</button>'
+                + '</li>';
+        }).join("");
+
+        docListEl.querySelectorAll(".packs-doc-remove").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var row = btn.closest(".packs-doc-row");
+                var packDocId = row && parseInt(row.getAttribute("data-pack-doc-id"), 10);
+                if (Number.isFinite(packDocId) && selectedPackId) {
+                    removeDocument(selectedPackId, packDocId);
+                }
+            });
+        });
+    }
+
+    // ── Actions ───────────────────────────────────────────────────────────────
+
+    async function createPack() {
+        var name = window.prompt("Pack name:");
+        if (!name || !name.trim()) return;
+        try {
+            var data = await apiJson("POST", "/api/packs", { name: name.trim() });
+            var newId = data.pack && data.pack.id;
+            await loadPacksList();
+            if (newId) selectPack(newId);
+        } catch (e) {
+            alert("Could not create pack: " + e.message);
+            console.error("create pack:", e);
+        }
+    }
+
+    async function renamePack() {
+        if (!selectedPackId) return;
+        var titleEl = document.getElementById("packs-builder-title");
+        var current = titleEl ? titleEl.textContent : "";
+        var name = window.prompt("New pack name:", current);
+        if (!name || !name.trim()) return;
+        try {
+            await apiJson("PUT", "/api/packs/" + selectedPackId, { name: name.trim() });
+            if (titleEl) titleEl.textContent = name.trim();
+            await loadPacksList();
+        } catch (e) {
+            alert("Could not rename pack: " + e.message);
+            console.error("rename pack:", e);
+        }
+    }
+
+    async function removeDocument(packId, packDocId) {
+        try {
+            await apiJson("DELETE", "/api/packs/" + packId + "/documents/" + packDocId);
+            var data = await apiJson("GET", "/api/packs/" + packId);
+            renderPackDetail(data.pack);
+            await loadPacksList();
+        } catch (e) {
+            alert("Could not remove document: " + e.message);
+            console.error("remove doc:", e);
+        }
+    }
+
+    // ── Notes toggle ──────────────────────────────────────────────────────────
+
+    function bindNotesToggle() {
+        var toggle = document.getElementById("packs-notes-toggle");
+        var body   = document.getElementById("packs-notes-body");
+        if (toggle && body) {
+            toggle.addEventListener("click", function () {
+                var expanded = toggle.getAttribute("aria-expanded") === "true";
+                toggle.setAttribute("aria-expanded", String(!expanded));
+                body.hidden = expanded;
+            });
+        }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+
+    function init() {
+        if (!document.querySelector('[data-page="packs"]')) return;
+
+        bindNotesToggle();
+
+        var newBtn = document.getElementById("packs-new-btn");
+        if (newBtn) newBtn.addEventListener("click", createPack);
+
+        var renameBtn = document.getElementById("packs-rename-btn");
+        if (renameBtn) renameBtn.addEventListener("click", renamePack);
+
+        // Export buttons
+        document.querySelectorAll(".packs-export-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                if (!selectedPackId) return;
+                var exportType = btn.getAttribute("data-export-type") || "zip";
+                window.location = withClient("/api/packs/" + selectedPackId + "/export/" + exportType);
+            });
+        });
+
+        loadPacksList();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+})();
+</script>
+</body>
+</html>

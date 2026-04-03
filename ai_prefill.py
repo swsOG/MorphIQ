@@ -21,7 +21,7 @@ if env_path.exists():
         pass
 
 
-BASE = Path(r"C:\ScanSystem_v2")
+BASE = Path(__file__).resolve().parent
 CLIENTS_DIR = BASE / "Clients"
 
 
@@ -387,6 +387,63 @@ DOC_TYPE_CONFIG: Dict[str, Any] = {
 }
 
 
+REQUIRED_FIELDS: Dict[str, list] = {
+    "Gas Safety Certificate": [
+        "property_address", "engineer_name", "gas_safe_reg",
+        "inspection_date", "expiry_date", "result",
+    ],
+    "EICR": [
+        "property_address", "electrician_name", "inspection_date",
+        "next_inspection_date", "result",
+    ],
+    "EPC": [
+        "property_address", "current_rating", "assessment_date", "expiry_date",
+    ],
+    "Tenancy Agreement": [
+        "property_address", "tenant_full_name", "start_date", "monthly_rent_amount",
+    ],
+    "Deposit Protection Certificate": [
+        "property_address", "tenant_name", "deposit_amount", "protection_date",
+    ],
+    "Inventory": [
+        "property_address", "inspection_date",
+    ],
+}
+
+
+def compute_quality_assessment(review: Dict[str, Any]) -> None:
+    """Compute completeness_score, missing_fields, and needs_attention in-place."""
+    doc_type = (review.get("doc_type") or "").strip()
+
+    if doc_type not in REQUIRED_FIELDS:
+        review["completeness_score"] = 0
+        review["missing_fields"] = ["doc_type"]
+        review["needs_attention"] = True
+        return
+
+    required = REQUIRED_FIELDS[doc_type]
+    fields = review.get("fields") or {}
+
+    missing = []
+    filled = 0
+    for key in required:
+        val = fields.get(key, "")
+        if isinstance(val, str):
+            val = val.strip()
+        if val:
+            filled += 1
+        else:
+            missing.append(key)
+
+    total = len(required)
+    score = int((filled / total) * 100) if total > 0 else 0
+
+    property_address = (fields.get("property_address") or "").strip()
+    review["completeness_score"] = score
+    review["missing_fields"] = missing
+    review["needs_attention"] = (not property_address) or (score < 70)
+
+
 def _needs_doc_type_detection(doc_type: str) -> bool:
     """Return True if doc_type is empty, unknown, or generic and we should run detection."""
     if not doc_type or not doc_type.strip():
@@ -437,7 +494,12 @@ def prefill_doc(doc_folder: Path) -> None:
         pdf_b64 = read_pdf_base64(doc_folder, review)
         detected = detect_doc_type_from_pdf(pdf_b64)
         if not detected:
-            log("Auto-detection returned no type; skipping AI prefill", doc_folder)
+            log("Auto-detection returned no type; marking as Unknown", doc_folder)
+            review["doc_type"] = "Unknown"
+            compute_quality_assessment(review)
+            save_review(doc_folder, review)
+            log(f"Quality assessment: score={review['completeness_score']}%, "
+                f"missing={review['missing_fields']}, needs_attention={review['needs_attention']}", doc_folder)
             return
         doc_type = detected
         review["doc_type"] = doc_type
@@ -450,6 +512,10 @@ def prefill_doc(doc_folder: Path) -> None:
             break
     if not normalized or normalized not in DOC_TYPE_CONFIG:
         log(f"Skipping AI prefill for doc_type '{doc_type}' (no template configured)", doc_folder)
+        compute_quality_assessment(review)
+        save_review(doc_folder, review)
+        log(f"Quality assessment: score={review['completeness_score']}%, "
+            f"missing={review['missing_fields']}, needs_attention={review['needs_attention']}", doc_folder)
         return
 
     log(f"Starting AI prefill for {normalized}", doc_folder)
@@ -471,24 +537,10 @@ def prefill_doc(doc_folder: Path) -> None:
     review["doc_type"] = normalized
     review["status"] = "ai_prefilled"
 
+    compute_quality_assessment(review)
     save_review(doc_folder, review)
-    log("AI prefill completed successfully (status=ai_prefilled)", doc_folder)
-    system_prompt = EXTRACTION_SYSTEM
-    user_prompt = builder_fn(review)
-
-    claude_raw = call_claude_with_pdf(pdf_b64, system_prompt, user_prompt)
-    ai_fields = parse_json_from_claude(claude_raw)
-
-    fields = review.get("fields") or {}
-    for key in target_keys:
-        if key in ai_fields and ai_fields[key] is not None:
-            fields[key] = str(ai_fields[key])
-    review["fields"] = fields
-    review["doc_type"] = normalized
-    review["status"] = "ai_prefilled"
-
-    save_review(doc_folder, review)
-    log("AI prefill completed successfully (status=ai_prefilled)", doc_folder)
+    log(f"AI prefill completed (status=ai_prefilled) — quality: score={review['completeness_score']}%, "
+        f"missing={review['missing_fields']}, needs_attention={review['needs_attention']}", doc_folder)
 
 
 def main() -> None:

@@ -4,7 +4,7 @@ Walks the Clients folder, reads every review.json, and syncs
 documents + fields into portal.db.
 
 Usage:
-    cd C:\ScanSystem_v2
+    cd <project_root>
     python sync_to_portal.py
 
 Safe to run multiple times — updates existing records, inserts new ones.

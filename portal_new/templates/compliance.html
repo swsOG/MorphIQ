@@ -5,54 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MorphIQ — Compliance Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
 </head>
-<body>
+<body class="compliance-body">
 
-<div class="portal-shell">
-    {%- set _client_q = client_name or '' -%}
-    {%- set _base_url = url_for('index') -%}
-    {%- set _compliance_url = url_for('compliance_dashboard') -%}
-    {%- set _activity_url = url_for('activity_page') -%}
-    {%- set _settings_url = url_for('settings_page') -%}
+<div class="portal-shell morphiq-compliance-shell" data-page="compliance">
+    {%- set _client_q = (client_name or '')|urlencode -%}
+    {%- set _overview_url = url_for('overview_page') -%}
     {%- if _client_q -%}
-        {%- set _base_url = _base_url + '?client=' + _client_q -%}
-        {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
-        {%- set _activity_url = _activity_url + '?client=' + _client_q -%}
-        {%- set _settings_url = _settings_url + '?client=' + _client_q -%}
+        {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
     {%- endif -%}
     <div class="portal-app-layout">
-        <aside class="portal-sidebar">
-            <a href="{{ _base_url }}" class="portal-sidebar-brand">
-                <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="sidebar-logo-img">
-                <span class="sidebar-brand-text">Morph<strong>IQ</strong></span>
-            </a>
-            <nav class="portal-sidebar-nav">
-                <a href="{{ _base_url }}" class="portal-sidebar-link">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                    <span>Dashboard</span>
-                </a>
-                <a href="{{ _base_url }}" class="portal-sidebar-link">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                    <span>Archive</span>
-                </a>
-                <a href="{{ _compliance_url }}" class="portal-sidebar-link active">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>Compliance</span>
-                </a>
-                <a href="{{ _activity_url }}" class="portal-sidebar-link" aria-label="Activity Log">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span>Activity</span>
-                </a>
-                <button type="button" class="portal-sidebar-link ai-assistant-trigger" id="sidebar-ai-assistant" aria-label="Open AI Assistant">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    <span>AI Assistant</span>
-                </button>
-                <a href="{{ _settings_url }}" class="portal-sidebar-link" aria-label="Settings">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    <span>Settings</span>
-                </a>
-            </nav>
-        </aside>
+        {% include 'partials/portal_sidebar_nav.html' %}
         <div class="portal-app-main">
             <header class="portal-header">
                 <div class="header-logo">
@@ -61,7 +25,7 @@
                     <span class="logo-divider">Compliance</span>
                     {% if current_user.role == 'admin' %}
                         {% if client_name %}
-                            <a href="{{ _base_url }}" class="client-badge" title="Switch client">
+                            <a href="{{ _overview_url }}" class="client-badge" title="Switch client">
                                 <span>{{ client_name }}</span>
                             </a>
                         {% endif %}
@@ -78,6 +42,8 @@
                     <span class="search-count" id="search-count" style="display:none"></span>
                 </div>
                 <div class="header-user-group">
+                    <button type="button" class="btn-export-report compliance-header-export-btn" id="compliance-export-report" title="Download compliance report PDF">Export report</button>
+                    <button type="button" class="btn-secondary compliance-upload-header-btn" id="compliance-upload-document" title="Upload a document">Upload</button>
                     <div class="notification-bell-wrapper">
                         <button type="button" class="notification-bell" id="notification-bell" title="Notifications">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -94,89 +60,59 @@
             </header>
 
             <nav class="portal-breadcrumb" aria-label="Breadcrumb">
-                <a href="{{ _base_url }}">Portfolio</a>
+                <a href="{{ _overview_url }}">Portfolio</a>
                 <span class="portal-breadcrumb-sep">›</span>
                 <span class="portal-breadcrumb-current">Compliance</span>
             </nav>
 
             <div class="portal-main">
-                <main class="compliance-main compliance-luminous" id="compliance-root">
-                    <div class="content-area">
-                        <div class="archive-full-width-area compliance-full-width-area">
-                            <section class="stats-row compliance-stats-row" id="compliance-stats"></section>
-                            <div id="compliance-risk-banner" class="compliance-risk-banner" style="display:none;"></div>
-                            <div class="filter-bar">
-                                <div class="filter-left">
-                                    <div class="filter-chips" id="compliance-type-chips" role="toolbar" aria-label="Document type">
-                                        <button type="button" class="filter-chip active" data-compliance-filter="all">All</button>
-                                        <button type="button" class="filter-chip" data-compliance-filter="gas_safety">Gas Safety</button>
-                                        <button type="button" class="filter-chip" data-compliance-filter="eicr">EICR</button>
-                                        <button type="button" class="filter-chip" data-compliance-filter="epc">EPC</button>
-                                        <button type="button" class="filter-chip" data-compliance-filter="deposit">Deposit</button>
-                                    </div>
-                                    <div class="sort-control compliance-severity-control">
-                                        <div class="sort-group">
-                                            <span class="sort-label">Status</span>
-                                            <select id="compliance-severity-filter" class="sort-select" aria-label="Filter by status">
-                                                <option value="all">Any status</option>
-                                                <option value="expired">Expired</option>
-                                                <option value="expiring_soon">Expiring soon</option>
-                                                <option value="missing">Missing</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                <main class="compliance-main compliance-matrix-page" id="compliance-root">
+                    <div class="compliance-matrix-layout">
+                        <section id="compliance-matrix-risk-banner" class="compliance-matrix-risk-banner" aria-label="Portfolio risk" hidden>
+                            <div class="compliance-matrix-risk-banner-inner">
+                                <span class="compliance-matrix-risk-icon" aria-hidden="true">⚠</span>
+                                <div class="compliance-matrix-risk-copy">
+                                    <strong class="compliance-matrix-risk-title">Compliance risk</strong>
+                                    <p class="compliance-matrix-risk-line" id="compliance-matrix-risk-line"></p>
                                 </div>
-                                <div class="filter-bar-right">
-                                    <button type="button" class="btn-export-report" id="compliance-export-report" title="Download compliance report PDF">Export</button>
-                                    <button type="button" class="btn-secondary compliance-upload-header-btn" id="compliance-upload-document" title="Upload a document">Upload</button>
-                                </div>
+                            </div>
+                        </section>
+
+                        <div class="compliance-matrix-toolbar" role="toolbar" aria-label="Filter by certificate status">
+                            <div class="compliance-matrix-filter-chips" id="compliance-matrix-filter-chips">
+                                <button type="button" class="compliance-chip compliance-chip--active" data-matrix-filter="all"><span class="compliance-chip-label">All</span> <span class="compliance-chip-count" data-count="all">0</span></button>
+                                <button type="button" class="compliance-chip" data-matrix-filter="expired"><span class="compliance-chip-label">Expired</span> <span class="compliance-chip-count" data-count="expired">0</span></button>
+                                <button type="button" class="compliance-chip" data-matrix-filter="expiring"><span class="compliance-chip-label">Expiring</span> <span class="compliance-chip-count" data-count="expiring">0</span></button>
+                                <button type="button" class="compliance-chip" data-matrix-filter="missing"><span class="compliance-chip-label">Missing</span> <span class="compliance-chip-count" data-count="missing">0</span></button>
+                                <button type="button" class="compliance-chip" data-matrix-filter="valid"><span class="compliance-chip-label">Valid</span> <span class="compliance-chip-count" data-count="valid">0</span></button>
                             </div>
                         </div>
 
-                        <div class="compliance-two-panel">
-                            <div class="compliance-panel-left">
-                                <div class="compliance-actions-section-inner">
-                                    <div class="archive-left-heading" id="compliance-actions-heading">Actions</div>
-                                    <div id="compliance-action-list" class="compliance-action-list-scroll"></div>
-                                </div>
-                            </div>
-                            <aside class="compliance-panel-right">
-                                <div class="archive-workspace-toolbar compliance-workspace-toolbar">
-                                    <div class="archive-workspace-mode-toggle compliance-workspace-mode-toggle" role="tablist" aria-label="Workspace">
-                                        <button type="button" role="tab" class="archive-workspace-mode-btn compliance-workspace-mode-btn active" data-compliance-workspace="health" aria-selected="true">Portfolio health</button>
-                                        <button type="button" role="tab" class="archive-workspace-mode-btn compliance-workspace-mode-btn" data-compliance-workspace="action" aria-selected="false">Action detail</button>
-                                        <button type="button" role="tab" class="archive-workspace-mode-btn compliance-workspace-mode-btn" data-compliance-workspace="history" aria-selected="false">History</button>
-                                    </div>
-                                </div>
-                                <div id="compliance-workspace-health" class="compliance-workspace-pane compliance-workspace-health">
-                                    <div id="compliance-health-panel" class="compliance-health-panel"></div>
-                                    <div class="compliance-show-resolved-wrap">
-                                        <label class="compliance-show-resolved-toggle">
-                                            <input type="checkbox" id="compliance-show-resolved" autocomplete="off">
-                                            <span>Show resolved</span>
-                                        </label>
-                                        <p class="compliance-history-hint">Full list of resolved and active snoozes: open the <strong>History</strong> tab.</p>
-                                    </div>
-                                    <div id="compliance-resolved-section" class="compliance-resolved-section" style="display:none;">
-                                        <div class="compliance-resolved-title">Resolved</div>
-                                        <div id="compliance-resolved-list"></div>
-                                    </div>
-                                </div>
-                                <div id="compliance-workspace-action" class="compliance-workspace-pane compliance-workspace-action" hidden>
-                                    <div id="compliance-action-detail" class="compliance-action-detail"></div>
-                                </div>
-                                <div id="compliance-workspace-history" class="compliance-workspace-pane compliance-workspace-history" hidden>
-                                    <div class="compliance-history-section">
-                                        <div class="compliance-history-section-title">Resolved</div>
-                                        <div id="compliance-history-resolved-list" class="compliance-history-list" role="list"></div>
-                                    </div>
-                                    <div class="compliance-history-section">
-                                        <div class="compliance-history-section-title">Snoozed</div>
-                                        <div id="compliance-history-snoozed-list" class="compliance-history-list" role="list"></div>
-                                    </div>
-                                </div>
-                            </aside>
+                        <div class="compliance-matrix-table-wrap">
+                            <div id="compliance-matrix-loading" class="compliance-matrix-loading">Loading compliance matrix…</div>
+                            <div id="compliance-matrix-empty" class="compliance-matrix-empty" hidden>No properties in this portfolio.</div>
+                            <table class="compliance-matrix-table" id="compliance-matrix-table" hidden>
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="compliance-matrix-th-property">Property</th>
+                                        <th scope="col">Gas</th>
+                                        <th scope="col">EICR</th>
+                                        <th scope="col">EPC</th>
+                                        <th scope="col">Deposit</th>
+                                        <th scope="col" class="compliance-matrix-th-overall">Overall</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="compliance-matrix-tbody"></tbody>
+                            </table>
                         </div>
+
+                        <footer class="compliance-matrix-legend" aria-label="Status legend">
+                            <span class="compliance-matrix-legend-title">Legend</span>
+                            <span class="compliance-matrix-legend-item"><span class="compliance-matrix-cell-badge compliance-matrix-cell-badge--valid">Valid</span> In date</span>
+                            <span class="compliance-matrix-legend-item"><span class="compliance-matrix-cell-badge compliance-matrix-cell-badge--expiring-soon">Expiring</span> Due soon</span>
+                            <span class="compliance-matrix-legend-item"><span class="compliance-matrix-cell-badge compliance-matrix-cell-badge--expired">Expired</span> Overdue</span>
+                            <span class="compliance-matrix-legend-item"><span class="compliance-matrix-cell-badge compliance-matrix-cell-badge--missing">Missing</span> No certificate</span>
+                        </footer>
                     </div>
                 </main>
             </div>
@@ -288,6 +224,326 @@
     window.MORPHIQ_PORTAL = { clientName: {{ (client_name or '')|tojson|safe }} };
 </script>
 <script src="{{ url_for('static', filename='portal.js') }}"></script>
+<script>
+(function () {
+    const CERT_KEYS = ["gas_safety", "eicr", "epc", "deposit"];
+    const FINE_PER_EXPIRED = 6000;
+
+    function withClientQuery(url) {
+        let clientParam = (window.MORPHIQ_COMPLIANCE && window.MORPHIQ_COMPLIANCE.clientName) || "";
+        if (!String(clientParam).trim()) {
+            clientParam = new URLSearchParams(window.location.search).get("client") || "";
+        }
+        if (!String(clientParam).trim()) return url;
+        const sep = url.includes("?") ? "&" : "?";
+        return url + sep + "client=" + encodeURIComponent(String(clientParam).trim());
+    }
+
+    function normStatus(s) {
+        return String(s || "missing").toLowerCase().replace(/\s+/g, "_");
+    }
+
+    function esc(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function formatShortDate(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return String(iso).slice(0, 10);
+        return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    }
+
+    function badgeClass(st) {
+        const s = normStatus(st);
+        if (s === "expiring_soon") return "compliance-matrix-cell-badge--expiring-soon";
+        if (s === "valid") return "compliance-matrix-cell-badge--valid";
+        if (s === "expired") return "compliance-matrix-cell-badge--expired";
+        return "compliance-matrix-cell-badge--missing";
+    }
+
+    function badgeLabel(st) {
+        const s = normStatus(st);
+        if (s === "expiring_soon") return "⚡ Expiring";
+        if (s === "valid") return "✓ Valid";
+        if (s === "expired") return "✗ Expired";
+        return "? Missing";
+    }
+
+    function cellSubline(action, status) {
+        const s = normStatus(status);
+        if (s === "valid") {
+            if (action && action.expiry_date) return formatShortDate(action.expiry_date);
+            return "";
+        }
+        if (s === "missing") return "";
+        if (action && action.expiry_date) return formatShortDate(action.expiry_date);
+        if (action && action.display_text) return (action.display_text || "").replace(/\s+/g, " ").trim().slice(0, 80);
+        if (s === "expired") return "Overdue";
+        if (s === "expiring_soon") return "Due soon";
+        return "";
+    }
+
+    function actionKey(pid, type) {
+        return String(pid ?? "") + "|" + String(type);
+    }
+
+    function buildActionMap(actions) {
+        const m = new Map();
+        (actions || []).forEach(function (a) {
+            const pid = a.property_id;
+            const t = (a.type || "").trim();
+            if (pid == null || !t) return;
+            const k = actionKey(pid, t);
+            if (!m.has(k)) m.set(k, a);
+        });
+        return m;
+    }
+
+    function rowCategory(statuses) {
+        const hasExpired = statuses.some(function (s) { return normStatus(s) === "expired"; });
+        const hasMissing = statuses.some(function (s) { return normStatus(s) === "missing"; });
+        const hasExpiring = statuses.some(function (s) { return normStatus(s) === "expiring_soon"; });
+        const allValid = statuses.every(function (s) { return normStatus(s) === "valid"; });
+        if (hasExpired || hasMissing) return "non_compliant";
+        if (hasExpiring) return "at_risk";
+        if (allValid) return "compliant";
+        return "at_risk";
+    }
+
+    function rowMatchesFilter(row, filter) {
+        if (filter === "all") return true;
+        if (filter === "expired") return row.hasExpired;
+        if (filter === "expiring") return row.hasExpiring;
+        if (filter === "missing") return row.hasMissing;
+        if (filter === "valid") return row.allValid;
+        return true;
+    }
+
+    function propertyHref(pid) {
+        return withClientQuery("/property/" + pid);
+    }
+
+    function renderMatrix(compliance, properties) {
+        const banner = document.getElementById("compliance-matrix-risk-banner");
+        const line = document.getElementById("compliance-matrix-risk-line");
+        const tbody = document.getElementById("compliance-matrix-tbody");
+        const table = document.getElementById("compliance-matrix-table");
+        const loading = document.getElementById("compliance-matrix-loading");
+        const empty = document.getElementById("compliance-matrix-empty");
+        const chipRoot = document.getElementById("compliance-matrix-filter-chips");
+
+        const stats = compliance && compliance.stats ? compliance.stats : {};
+        const overdue = Number(stats.overdue_actions || 0);
+        const exposure = overdue * FINE_PER_EXPIRED;
+
+        if (banner && line) {
+            banner.classList.toggle("compliance-matrix-risk-banner--alert", overdue > 0);
+            banner.classList.toggle("compliance-matrix-risk-banner--ok", overdue === 0);
+            var titleEl = banner.querySelector(".compliance-matrix-risk-title");
+            if (titleEl) titleEl.textContent = overdue > 0 ? "Compliance risk" : "Portfolio status";
+            var iconEl = banner.querySelector(".compliance-matrix-risk-icon");
+            if (iconEl) iconEl.textContent = overdue > 0 ? "⚠" : "✓";
+            if (overdue > 0) {
+                line.innerHTML =
+                    'There are <strong>' +
+                    esc(String(overdue)) +
+                    "</strong> expired certificate" +
+                    (overdue === 1 ? "" : "s") +
+                    ". Maximum fine exposure up to <strong>£" +
+                    esc(exposure.toLocaleString()) +
+                    "</strong> (calculated as £" +
+                    esc(String(FINE_PER_EXPIRED)) +
+                    " per expired certificate).";
+            } else {
+                line.textContent =
+                    "0 expired certificates. £0 maximum fine exposure (expired count × £" +
+                    esc(String(FINE_PER_EXPIRED)) +
+                    ").";
+            }
+            banner.hidden = false;
+        }
+
+        const actions = (compliance && compliance.actions) || [];
+        const actionMap = buildActionMap(actions);
+
+        const rows = (properties || []).map(function (p) {
+            const pid = p.property_id;
+            const statuses = CERT_KEYS.map(function (k) {
+                return normStatus(p[k]);
+            });
+            const hasExpired = statuses.some(function (s) { return s === "expired"; });
+            const hasExpiring = statuses.some(function (s) { return s === "expiring_soon"; });
+            const hasMissing = statuses.some(function (s) { return s === "missing"; });
+            const allValid = statuses.every(function (s) { return s === "valid"; });
+            const cat = rowCategory(statuses.map(function (x) { return x; }));
+            return {
+                property_id: pid,
+                address: p.property_address || "—",
+                statuses: statuses,
+                hasExpired: hasExpired,
+                hasExpiring: hasExpiring,
+                hasMissing: hasMissing,
+                allValid: allValid,
+                category: cat,
+            };
+        });
+
+        const counts = {
+            all: rows.length,
+            expired: rows.filter(function (r) { return r.hasExpired; }).length,
+            expiring: rows.filter(function (r) { return r.hasExpiring; }).length,
+            missing: rows.filter(function (r) { return r.hasMissing; }).length,
+            valid: rows.filter(function (r) { return r.allValid; }).length,
+        };
+
+        if (chipRoot) {
+            chipRoot.querySelectorAll("[data-count]").forEach(function (el) {
+                const k = el.getAttribute("data-count");
+                if (k && counts[k] != null) el.textContent = String(counts[k]);
+            });
+        }
+
+        let activeFilter = "all";
+        if (chipRoot) {
+            chipRoot.querySelectorAll(".compliance-chip").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    activeFilter = btn.getAttribute("data-matrix-filter") || "all";
+                    chipRoot.querySelectorAll(".compliance-chip").forEach(function (b) {
+                        b.classList.toggle("compliance-chip--active", b === btn);
+                    });
+                    applyFilter();
+                });
+            });
+        }
+
+        function applyFilter() {
+            if (!tbody) return;
+            tbody.querySelectorAll("tr[data-matrix-row]").forEach(function (tr) {
+                var tags = tr.getAttribute("data-row-tags") || "";
+                var match = rowMatchesFilter(
+                    {
+                        hasExpired: tags.indexOf("expired") !== -1,
+                        hasExpiring: tags.indexOf("expiring") !== -1,
+                        hasMissing: tags.indexOf("missing") !== -1,
+                        allValid: tags.indexOf("allvalid") !== -1,
+                    },
+                    activeFilter
+                );
+                tr.hidden = !match;
+            });
+        }
+
+        function renderRows() {
+            if (!tbody) return;
+            tbody.innerHTML = rows
+                .map(function (r) {
+                    const pid = r.property_id;
+                        const cells = CERT_KEYS.map(function (key, idx) {
+                        const st = r.statuses[idx];
+                        const act = actionMap.get(actionKey(pid, key));
+                        const bcls = badgeClass(st);
+                        const sub = esc(cellSubline(act, st));
+                        return (
+                            '<td class="compliance-matrix-cell">' +
+                            '<div class="compliance-matrix-cell-inner">' +
+                            '<span class="compliance-matrix-cell-badge ' +
+                            bcls +
+                            '">' +
+                            esc(badgeLabel(st)) +
+                            "</span>" +
+                            (sub ? '<span class="compliance-matrix-cell-sub">' + sub + "</span>" : "") +
+                            "</div></td>"
+                        );
+                    }).join("");
+
+                    var pillClass = "compliance-matrix-pill--compliant";
+                    var pillText = "Compliant";
+                    if (r.category === "non_compliant") {
+                        pillClass = "compliance-matrix-pill--bad";
+                        pillText = "Non-compliant";
+                    } else if (r.category === "at_risk") {
+                        pillClass = "compliance-matrix-pill--risk";
+                        pillText = "At risk";
+                    }
+
+                    var tags =
+                        (r.hasExpired ? "expired " : "") +
+                        (r.hasExpiring ? "expiring " : "") +
+                        (r.hasMissing ? "missing " : "") +
+                        (r.allValid ? "allvalid " : "");
+
+                    return (
+                        '<tr class="compliance-matrix-row" data-matrix-row="1" data-row-tags="' +
+                        esc(tags.trim()) +
+                        '">' +
+                        '<th scope="row" class="compliance-matrix-property">' +
+                        '<a class="compliance-matrix-property-link" href="' +
+                        esc(propertyHref(pid)) +
+                        '">' +
+                        esc(r.address) +
+                        "</a></th>" +
+                        cells +
+                        '<td class="compliance-matrix-cell compliance-matrix-cell-overall"><span class="compliance-matrix-pill ' +
+                        pillClass +
+                        '">' +
+                        esc(pillText) +
+                        "</span></td></tr>"
+                    );
+                })
+                .join("");
+            applyFilter();
+        }
+
+        if (loading) loading.hidden = true;
+        if (!rows.length) {
+            if (empty) empty.hidden = false;
+            if (table) table.hidden = true;
+            return;
+        }
+        if (empty) empty.hidden = true;
+        if (table) table.hidden = false;
+        renderRows();
+    }
+
+    function load() {
+        if (!document.getElementById("compliance-matrix-table")) return;
+
+        Promise.all([
+            fetch(withClientQuery("/api/compliance"), { credentials: "same-origin" }).then(function (r) {
+                return r.json();
+            }),
+            fetch(withClientQuery("/api/properties"), { credentials: "same-origin" }).then(function (r) {
+                return r.json();
+            }),
+        ])
+            .then(function (results) {
+                var comp = results[0];
+                var props = (results[1] && results[1].properties) || [];
+                if (comp && comp.error) {
+                    document.getElementById("compliance-matrix-loading").textContent =
+                        "Unable to load compliance data.";
+                    return;
+                }
+                renderMatrix(comp, props);
+            })
+            .catch(function () {
+                var el = document.getElementById("compliance-matrix-loading");
+                if (el) el.textContent = "Failed to load compliance matrix.";
+            });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", load);
+    } else {
+        load();
+    }
+})();
+</script>
 
 </body>
 </html>

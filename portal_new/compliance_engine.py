@@ -9,7 +9,7 @@ expired, or missing.
 import os
 import sqlite3
 from datetime import datetime, timedelta, date
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Set
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_URL = os.environ.get("DATABASE_URL", os.path.join(BASE_DIR, "..", "portal.db"))
@@ -111,7 +111,8 @@ def evaluate_compliance() -> List[Dict[str, Any]]:
                 p.address AS property_address,
                 c.name AS client_name
             FROM properties p
-            LEFT JOIN clients c ON p.client_id = c.id
+            JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+            WHERE p.deleted_at IS NULL
             """
         ).fetchall()
 
@@ -137,6 +138,7 @@ def evaluate_compliance() -> List[Dict[str, Any]]:
             WHERE
                 d.property_id IN ({placeholders})
                 AND dt.key IN ({type_placeholders})
+                AND d.deleted_at IS NULL
             GROUP BY d.property_id, dt.key
         """
         latest_rows = conn.execute(
@@ -160,6 +162,7 @@ def evaluate_compliance() -> List[Dict[str, Any]]:
                 SELECT document_id, field_key, field_value
                 FROM document_fields
                 WHERE document_id IN ({doc_placeholders})
+                  AND deleted_at IS NULL
                 """,
                 doc_ids,
             ).fetchall()
@@ -200,6 +203,103 @@ def evaluate_compliance() -> List[Dict[str, Any]]:
         return results
     finally:
         conn.close()
+
+
+OTHER_EXPIRY_FIELD_CANDIDATES = (
+    "expiry_date",
+    "next_inspection_date",
+    "valid_until",
+    "valid_to",
+)
+
+
+def _status_other_from_fields(fields: Dict[str, str], today: date | None = None) -> str:
+    """Classify a non-required document using generic expiry fields (same date rules as required types)."""
+    if today is None:
+        today = date.today()
+    expiry_value = None
+    for k in OTHER_EXPIRY_FIELD_CANDIDATES:
+        raw = fields.get(k)
+        if raw:
+            expiry_value = _parse_date(raw)
+            if expiry_value:
+                break
+    return _status_from_expiry(expiry_value, today=today)
+
+
+def count_properties_with_other_present(conn: sqlite3.Connection, property_ids: List[int]) -> int:
+    """
+    Number of properties that have at least one document whose type is not in COMPLIANCE_RULES,
+    and that document is valid or expiring soon (not expired / not missing).
+    """
+    if not property_ids:
+        return 0
+    required_keys = tuple(COMPLIANCE_RULES.keys())
+    placeholders = ",".join("?" * len(property_ids))
+    req_ph = ",".join("?" * len(required_keys))
+    cur = conn.execute(
+        f"""
+        SELECT DISTINCT dt.key
+        FROM documents d
+        JOIN document_types dt ON d.document_type_id = dt.id
+        WHERE d.property_id IN ({placeholders})
+          AND dt.key NOT IN ({req_ph})
+          AND d.deleted_at IS NULL
+        """,
+        (*property_ids, *required_keys),
+    )
+    other_keys = [r[0] for r in cur.fetchall()]
+    if not other_keys:
+        return 0
+    type_placeholders = ",".join("?" for _ in other_keys)
+    prop_placeholders = ",".join("?" for _ in property_ids)
+    latest_docs_sql = f"""
+        SELECT
+            d.id AS document_id,
+            d.property_id,
+            dt.key AS doc_type_key,
+            MAX(
+                COALESCE(d.batch_date, d.scanned_at, d.reviewed_at, d.imported_at)
+            ) AS latest_timestamp
+        FROM documents d
+        LEFT JOIN document_types dt ON d.document_type_id = dt.id
+        WHERE
+            d.property_id IN ({prop_placeholders})
+            AND dt.key IN ({type_placeholders})
+            AND d.deleted_at IS NULL
+        GROUP BY d.property_id, dt.key
+    """
+    latest_rows = conn.execute(
+        latest_docs_sql,
+        (*property_ids, *other_keys),
+    ).fetchall()
+    doc_ids = [row["document_id"] for row in latest_rows]
+    fields_by_doc: Dict[int, Dict[str, str]] = {}
+    if doc_ids:
+        doc_placeholders = ",".join("?" for _ in doc_ids)
+        field_rows = conn.execute(
+            f"""
+            SELECT document_id, field_key, field_value
+            FROM document_fields
+            WHERE document_id IN ({doc_placeholders})
+              AND deleted_at IS NULL
+            """,
+            doc_ids,
+        ).fetchall()
+        for fr in field_rows:
+            d_id = fr["document_id"]
+            fields_by_doc.setdefault(d_id, {})[fr["field_key"]] = fr["field_value"] or ""
+
+    today = date.today()
+    good_props: Set[int] = set()
+    for row in latest_rows:
+        doc_id = row["document_id"]
+        pid = row["property_id"]
+        fields = fields_by_doc.get(doc_id, {})
+        st = _status_other_from_fields(fields, today=today)
+        if st in ("valid", "expiring_soon"):
+            good_props.add(pid)
+    return len(good_props)
 
 
 def build_summary(rows: List[Dict[str, Any]]) -> Dict[str, int]:

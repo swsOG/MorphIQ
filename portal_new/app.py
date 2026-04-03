@@ -21,7 +21,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
 from urllib.parse import quote
-from flask import Flask, render_template, jsonify, request, send_file, abort
+from flask import Flask, render_template, jsonify, request, send_file, abort, redirect, url_for, session
 from flask_login import (
     LoginManager,
     UserMixin,
@@ -37,8 +37,10 @@ from werkzeug.security import check_password_hash
 # (python -m portal_new.app).
 try:
     from . import compliance_engine  # type: ignore[import]
+    from . import soft_delete  # type: ignore[import]
 except ImportError:
     import compliance_engine  # type: ignore[no-redef]
+    import soft_delete  # type: ignore[no-redef]
 
 # ── Config ───────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -153,7 +155,7 @@ def load_user(user_id: str) -> User | None:
             """
             SELECT id, email, full_name, role, client_id, is_active
             FROM users
-            WHERE id = ?
+            WHERE id = ? AND deleted_at IS NULL
             """,
             (user_id,),
         )
@@ -191,7 +193,7 @@ def get_current_client() -> str | None:
         conn = get_db()
         try:
             cur = conn.execute(
-                "SELECT name FROM clients WHERE id = ?",
+                "SELECT name FROM clients WHERE id = ? AND deleted_at IS NULL",
                 (client_id,),
             )
             row = cur.fetchone()
@@ -199,9 +201,18 @@ def get_current_client() -> str | None:
         finally:
             conn.close()
 
-    # Admin (or anything else): fall back to query parameter.
-    client = request.args.get("client", "").strip()
-    return client or None
+    # Admin (or anything else): ?client= param takes priority; persist in session.
+    # If ?client= is present but empty, treat as "switch client" — clear the session.
+    if "client" in request.args:
+        client = request.args.get("client", "").strip()
+        if client:
+            session["selected_client"] = client
+            return client
+        else:
+            session.pop("selected_client", None)
+            return None
+    # No URL param — fall back to whatever was last selected.
+    return session.get("selected_client") or None
 
 
 def _norm_client_name(name: str | None) -> str:
@@ -262,7 +273,7 @@ def cleanup_stale_clients():
     conn = get_db()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT id, name FROM clients")
+        cur.execute("SELECT id, name FROM clients WHERE deleted_at IS NULL")
         rows = cur.fetchall()
 
         for row in rows:
@@ -271,26 +282,7 @@ def cleanup_stale_clients():
 
             if client_name not in disk_clients:
                 # This client's folder was deleted — remove from DB.
-                cur.execute(
-                    """
-                    DELETE FROM document_fields
-                    WHERE document_id IN (SELECT id FROM documents WHERE client_id = ?)
-                    """,
-                    (client_id,),
-                )
-                cur.execute(
-                    "DELETE FROM compliance_records WHERE client_id = ?", (client_id,)
-                )
-                cur.execute(
-                    "DELETE FROM documents WHERE client_id = ?", (client_id,)
-                )
-                cur.execute(
-                    "DELETE FROM tenants WHERE client_id = ?", (client_id,)
-                )
-                cur.execute(
-                    "DELETE FROM properties WHERE client_id = ?", (client_id,)
-                )
-                cur.execute("DELETE FROM clients WHERE id = ?", (client_id,))
+                soft_delete.hard_delete_client_cascade(conn, client_id)
                 print(f"Cleaned up stale client from portal: {client_name}")
 
         conn.commit()
@@ -350,6 +342,44 @@ def ensure_activity_log_table():
         conn.close()
 
 
+def ensure_packs_tables():
+    """Create packs and pack_documents tables if they do not exist (inline migration at startup)."""
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS packs (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id   INTEGER NOT NULL,
+                name        TEXT    NOT NULL,
+                notes       TEXT    DEFAULT '',
+                created_by  INTEGER,
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (client_id)  REFERENCES clients(id),
+                FOREIGN KEY (created_by) REFERENCES users(id)
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pack_documents (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                pack_id     INTEGER NOT NULL,
+                document_id INTEGER NOT NULL,
+                sort_order  INTEGER DEFAULT 0,
+                added_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (pack_id)     REFERENCES packs(id)     ON DELETE CASCADE,
+                FOREIGN KEY (document_id) REFERENCES documents(id)
+            )
+            """
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def log_activity(
     action: str,
     entity_type: str | None = None,
@@ -373,7 +403,11 @@ def log_activity(
     if client_id is None:
         name = get_current_client() if current_user.is_authenticated else None
         if name:
-            row = query_db("SELECT id FROM clients WHERE name = ?", (name,), one=True)
+            row = query_db(
+                "SELECT id FROM clients WHERE name = ? AND deleted_at IS NULL",
+                (name,),
+                one=True,
+            )
             client_id = int(row["id"]) if row else None
         else:
             client_id = None
@@ -432,6 +466,7 @@ COMPLIANCE_EXPIRY_FIELDS = {
     "eicr": ["next_inspection_date", "expiry_date"],
     "epc": ["valid_until", "expiry_date"],
     "deposit-protection": ["expiry_date", "valid_until"],
+    "deposit-protection-certificate": ["expiry_date", "valid_until"],
     "deposit_protection_certificate": ["expiry_date", "valid_until"],
 }
 
@@ -450,7 +485,7 @@ COMPLIANCE_TYPE_META = {
         "label": "EPC",
     },
     "deposit": {
-        "slug": "deposit-protection",
+        "slug": "deposit-protection-certificate",
         "label": "Deposit Protection Certificate",
     },
 }
@@ -746,10 +781,10 @@ def _build_tenant_snapshot(docs: list[dict]) -> dict | None:
 def login():
     if current_user.is_authenticated:
         return (
-            jsonify({"redirect": "/"}),
+            jsonify({"redirect": url_for("overview_page")}),
             302,
         ) if request.is_json else (
-            "", 302, {"Location": "/"}
+            "", 302, {"Location": url_for("overview_page")}
         )
     return render_template("login.html", error=None)
 
@@ -768,7 +803,7 @@ def login_post():
             """
             SELECT id, email, full_name, role, client_id, password_hash, is_active
             FROM users
-            WHERE LOWER(email) = ?
+            WHERE LOWER(email) = ? AND deleted_at IS NULL
             """,
             (email,),
         )
@@ -781,6 +816,17 @@ def login_post():
 
         if not check_password_hash(row["password_hash"], password):
             return render_template("login.html", error="Invalid email or password.")
+
+        if row["client_id"] and (row["role"] or "") == "manager":
+            cr = conn.execute(
+                "SELECT deleted_at FROM clients WHERE id = ?",
+                (row["client_id"],),
+            ).fetchone()
+            if cr and (cr["deleted_at"] if isinstance(cr, sqlite3.Row) else cr[0]):
+                return render_template(
+                    "login.html",
+                    error="Your agency account is no longer available. Contact your administrator.",
+                )
 
         user = User(
             user_id=row["id"],
@@ -803,7 +849,7 @@ def login_post():
         conn.close()
 
     log_activity("user_login", description=f"{email} logged in", user_id=row["id"])
-    return "", 302, {"Location": "/"}
+    return "", 302, {"Location": url_for("overview_page")}
 
 
 @app.route("/logout")
@@ -815,35 +861,94 @@ def logout():
 @app.route("/")
 @login_required
 def index():
-    """Main portal page — search-first document archive."""
+    """Redirect to portfolio overview."""
+    return redirect(url_for("overview_page", **request.args))
+
+
+@app.route("/overview")
+@login_required
+def overview_page():
+    """Portfolio overview (dashboard tab)."""
     client = get_current_client()
-    # #region agent log
-    try:
-        import time as _time  # local import to avoid clashes
-        with open("debug-c11422.log", "a", encoding="utf-8") as _f:
-            _f.write(json.dumps({
-                "sessionId": "c11422",
-                "runId": "pre-fix",
-                "hypothesisId": "H3",
-                "location": "portal_new/app.py:index",
-                "message": "portal_new index route hit",
-                "data": {
-                    "client": bool(client),
-                },
-                "timestamp": int(_time.time() * 1000),
-            }) + "\n")
-    except Exception:
-        pass
-    # #endregion agent log
     return render_template(
-        "portal.html",
+        "overview.html",
         client_name=client or None,
-        active_view="archive",
+        active_view="overview",
         show_client_picker=not bool(client) and getattr(current_user, "role", None) == "admin",
         user_full_name=getattr(current_user, "full_name", None),
         user_email=getattr(current_user, "email", None),
         user_role=getattr(current_user, "role", None),
     )
+
+
+@app.route("/properties")
+@login_required
+def properties_page():
+    """Property list / document workspace (archive tab)."""
+    client = get_current_client()
+    return render_template(
+        "properties.html",
+        client_name=client or None,
+        active_view="properties",
+        show_client_picker=not bool(client) and getattr(current_user, "role", None) == "admin",
+        user_full_name=getattr(current_user, "full_name", None),
+        user_email=getattr(current_user, "email", None),
+        user_role=getattr(current_user, "role", None),
+    )
+
+
+@app.route("/documents")
+@login_required
+def documents_page():
+    client = get_current_client() or ""
+    return render_template(
+        "documents.html",
+        active_view="documents",
+        client_name=client or None,
+        user_full_name=getattr(current_user, "full_name", None),
+        user_email=getattr(current_user, "email", None),
+        user_role=getattr(current_user, "role", None),
+    )
+
+
+@app.route("/packs")
+@login_required
+def packs_page():
+    client = get_current_client() or ""
+    return render_template(
+        "packs.html",
+        active_view="packs",
+        client_name=client or None,
+        user_full_name=getattr(current_user, "full_name", None),
+        user_email=getattr(current_user, "email", None),
+        user_role=getattr(current_user, "role", None),
+    )
+
+
+@app.route("/reports")
+@login_required
+def reports_page():
+    client = get_current_client() or ""
+    return render_template(
+        "reports.html",
+        active_view="reports",
+        client_name=client or None,
+        user_full_name=getattr(current_user, "full_name", None),
+        user_email=getattr(current_user, "email", None),
+        user_role=getattr(current_user, "role", None),
+    )
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard_page():
+    return redirect(url_for("overview_page", **request.args))
+
+
+@app.route("/archive")
+@login_required
+def archive_page():
+    return redirect(url_for("properties_page", **request.args))
 
 
 @app.route("/compliance")
@@ -886,8 +991,8 @@ def compliance_dashboard():
                     """
                     SELECT p.id
                     FROM properties p
-                    JOIN clients c ON p.client_id = c.id
-                    WHERE c.name = ? AND p.address = ?
+                    JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+                    WHERE c.name = ? AND p.address = ? AND p.deleted_at IS NULL
                     LIMIT 1
                     """,
                     (name, address),
@@ -970,8 +1075,8 @@ def property_detail(property_id: int):
             p.address AS property_address,
             c.name AS client_name
         FROM properties p
-        JOIN clients c ON p.client_id = c.id
-        WHERE p.id = ?
+        JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+        WHERE p.id = ? AND p.deleted_at IS NULL
         """,
         (property_id,),
         one=True,
@@ -985,6 +1090,7 @@ def property_detail(property_id: int):
         property_id=prop["property_id"],
         property_address=prop["property_address"],
         client_name=prop["client_name"],
+        active_view="properties",
     )
 
 
@@ -994,7 +1100,7 @@ def _document_view_render(source_doc_id: str, client_name: str, document_db_id: 
         source_doc_id=source_doc_id,
         client_name=client_name,
         document_db_id=document_db_id,
-        active_view="archive",
+        active_view="properties",
         user_full_name=getattr(current_user, "full_name", None),
         user_email=getattr(current_user, "email", None),
         user_role=getattr(current_user, "role", None),
@@ -1011,8 +1117,8 @@ def document_view_by_id(doc_id: int):
         """
         SELECT d.source_doc_id, c.name AS client_name
         FROM documents d
-        JOIN clients c ON d.client_id = c.id
-        WHERE d.id = ?
+        JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        WHERE d.id = ? AND d.deleted_at IS NULL
         """,
         (doc_id,),
         one=True,
@@ -1047,8 +1153,8 @@ def document_view_page(source_doc_id: str):
         """
         SELECT d.id, d.source_doc_id, c.name AS client_name
         FROM documents d
-        JOIN clients c ON d.client_id = c.id
-        WHERE LOWER(TRIM(d.source_doc_id)) = LOWER(TRIM(?))
+        JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        WHERE LOWER(TRIM(d.source_doc_id)) = LOWER(TRIM(?)) AND d.deleted_at IS NULL
         """,
         (raw,),
         one=True,
@@ -1086,11 +1192,16 @@ def settings_page():
 @app.route("/activity")
 @login_required
 def activity_page():
-    """Activity log page — timeline of portal events."""
+    return redirect(url_for("reports_page", **request.args))
+
+
+@app.route("/ask-ai")
+@login_required
+def ask_ai_page():
     client = get_current_client() or ""
     return render_template(
-        "activity.html",
-        active_view="activity",
+        "ask_ai.html",
+        active_view="ask_ai",
         client_name=client or None,
     )
 
@@ -1098,12 +1209,7 @@ def activity_page():
 @app.route("/ai-chat")
 @login_required
 def ai_chat_page():
-    client = get_current_client() or ""
-    return render_template(
-        "ai_chat.html",
-        active_view="ai_chat",
-        client_name=client or None,
-    )
+    return redirect(url_for("ask_ai_page", **request.args))
 
 
 @app.route("/pdf/<path:pdf_path>")
@@ -1126,7 +1232,7 @@ def serve_pdf_by_id(source_doc_id: str):
     This avoids fragile URL-encoding of full Windows paths.
     """
     doc = query_db(
-        "SELECT pdf_path FROM documents WHERE source_doc_id = ?",
+        "SELECT pdf_path FROM documents WHERE source_doc_id = ? AND deleted_at IS NULL",
         (source_doc_id,),
         one=True,
     )
@@ -1160,88 +1266,228 @@ def api_properties():
     Property-first archive view.
 
     Returns one row per property with:
-      - property_id
-      - property_address
-      - client_name
-      - total_documents
-      - latest_activity_date
-      - gas_safety / eicr / epc / deposit compliance statuses
+      - property_id, property_address, client_name
+      - compliance: {gas_safety, eicr, epc, deposit} each with {status, expiry_date}
+        status values: "valid" | "expiring" | "expired" | "missing"
+      - overall_status: "compliant" | "at_risk" | "non_compliant"
+      - doc_count: total non-deleted documents for this property
+      - tenant_name: from the latest tenancy-agreement document fields, or null
+    All queries are batched — no per-property round-trips.
     """
+    # Cert rules mirror compliance_engine.COMPLIANCE_RULES; kept inline so
+    # this endpoint does NOT call compliance_engine (avoids N+1 and a second
+    # DB connection for the full-portfolio scan).
+    _CERT_RULES: dict = {
+        "gas-safety-certificate": {
+            "name": "gas_safety",
+            "expiry_field_candidates": ["expiry_date", "next_inspection_date"],
+        },
+        "eicr": {
+            "name": "eicr",
+            "expiry_field_candidates": ["next_inspection_date", "expiry_date"],
+        },
+        "epc": {
+            "name": "epc",
+            "expiry_field_candidates": ["valid_until", "expiry_date"],
+        },
+        "deposit-protection-certificate": {
+            "name": "deposit",
+            "expiry_field_candidates": ["expiry_date"],
+        },
+    }
+    _EXPIRING_DAYS = 30
+
     client = get_current_client() or ""
 
-    sql = """
+    # ── 1. Fetch all properties for this client ──────────────────────────────
+    prop_sql = """
         SELECT
-            p.id AS property_id,
+            p.id   AS property_id,
             p.address AS property_address,
-            c.name AS client_name,
-            COUNT(d.id) AS total_documents,
-            MAX(
-                COALESCE(
-                    d.batch_date,
-                    d.scanned_at,
-                    d.reviewed_at,
-                    d.imported_at
-                )
-            ) AS latest_activity_date
+            c.name AS client_name
         FROM properties p
-        JOIN clients c ON p.client_id = c.id
-        LEFT JOIN documents d ON d.property_id = p.id
-        WHERE 1=1
+        JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+        WHERE p.deleted_at IS NULL
     """
-    args = []
-
+    prop_args: list = []
     if client:
-        sql += " AND c.name = ?"
-        args.append(client)
+        prop_sql += " AND c.name = ?"
+        prop_args.append(client)
+    prop_sql += " ORDER BY p.address"
 
-    sql += """
-        GROUP BY
-            p.id,
-            p.address,
-            c.name
-        ORDER BY
-            latest_activity_date DESC
-    """
+    properties = query_db(prop_sql, prop_args)
+    if not properties:
+        return jsonify({"properties": [], "count": 0})
 
-    properties = query_db(sql, args)
+    property_ids = [p["property_id"] for p in properties]
+    id_ph = ",".join("?" * len(property_ids))
+    type_keys = list(_CERT_RULES.keys())
+    type_ph = ",".join("?" * len(type_keys))
 
-    # Enrich with compliance statuses using the existing engine so we keep
-    # compliance logic in one place.
-    try:
-        compliance_rows = compliance_engine.evaluate_compliance()
-    except Exception:
-        # If compliance evaluation fails for any reason, we still want the
-        # property list to work; default all statuses to "missing".
-        compliance_rows = []
+    # ── 2. Latest document id per (property_id, cert type) — one batch query ─
+    latest_docs = query_db(
+        f"""
+        SELECT
+            d.property_id,
+            dt.key    AS doc_type_key,
+            MAX(d.id) AS document_id
+        FROM documents d
+        JOIN document_types dt ON d.document_type_id = dt.id
+        WHERE d.property_id IN ({id_ph})
+          AND dt.key IN ({type_ph})
+          AND d.deleted_at IS NULL
+        GROUP BY d.property_id, dt.key
+        """,
+        [*property_ids, *type_keys],
+    )
 
-    compliance_index = {}
-    for row in compliance_rows:
-        key = (
-            (row.get("client") or "").strip(),
-            (row.get("property") or "").strip(),
+    latest_map: dict = {}   # (property_id, doc_type_key) -> document_id
+    all_doc_ids: list = []
+    for row in latest_docs:
+        pid, tkey, did = row["property_id"], row["doc_type_key"], row["document_id"]
+        latest_map[(pid, tkey)] = did
+        all_doc_ids.append(did)
+
+    # ── 3. Expiry fields for those documents — one batch query ───────────────
+    fields_by_doc: dict = {}
+    if all_doc_ids:
+        doc_id_ph = ",".join("?" * len(all_doc_ids))
+        field_rows = query_db(
+            f"""
+            SELECT document_id, field_key, field_value
+            FROM document_fields
+            WHERE document_id IN ({doc_id_ph})
+              AND deleted_at IS NULL
+            """,
+            all_doc_ids,
         )
-        compliance_index[key] = {
-            "gas_safety": row.get("gas_safety", "missing"),
-            "eicr": row.get("eicr", "missing"),
-            "epc": row.get("epc", "missing"),
-            "deposit": row.get("deposit", "missing"),
-        }
+        for fr in field_rows:
+            did = fr["document_id"]
+            fields_by_doc.setdefault(did, {})[fr["field_key"]] = fr["field_value"] or ""
+
+    # ── 4. Document counts per property — one query ──────────────────────────
+    count_rows = query_db(
+        f"""
+        SELECT property_id, COUNT(*) AS cnt
+        FROM documents
+        WHERE property_id IN ({id_ph}) AND deleted_at IS NULL
+        GROUP BY property_id
+        """,
+        property_ids,
+    )
+    doc_count_map = {r["property_id"]: r["cnt"] for r in count_rows}
+
+    # ── 5. Tenant name per property — one query ──────────────────────────────
+    # Prefer field_key = 'tenant_full_name' on the latest tenancy-agreement doc.
+    tenant_rows = query_db(
+        f"""
+        SELECT d.property_id, df.field_value AS tenant_name
+        FROM documents d
+        JOIN document_types dt ON d.document_type_id = dt.id
+        JOIN document_fields df ON df.document_id = d.id
+        WHERE d.property_id IN ({id_ph})
+          AND LOWER(dt.key) = 'tenancy-agreement'
+          AND LOWER(df.field_key) LIKE '%tenant%name%'
+          AND df.field_value IS NOT NULL
+          AND TRIM(df.field_value) != ''
+          AND d.deleted_at IS NULL
+          AND df.deleted_at IS NULL
+        ORDER BY d.property_id, d.id DESC
+        """,
+        property_ids,
+    )
+    tenant_map: dict = {}
+    for r in tenant_rows:
+        pid = r["property_id"]
+        if pid not in tenant_map:
+            tenant_map[pid] = r["tenant_name"]
+
+    # Fallback: any field_key containing 'tenant' on tenancy-agreement docs.
+    missing_pids = [p["property_id"] for p in properties if p["property_id"] not in tenant_map]
+    if missing_pids:
+        mt_ph = ",".join("?" * len(missing_pids))
+        fallback_rows = query_db(
+            f"""
+            SELECT d.property_id, df.field_value AS tenant_name
+            FROM documents d
+            JOIN document_types dt ON d.document_type_id = dt.id
+            JOIN document_fields df ON df.document_id = d.id
+            WHERE d.property_id IN ({mt_ph})
+              AND LOWER(dt.key) = 'tenancy-agreement'
+              AND LOWER(df.field_key) LIKE '%tenant%'
+              AND df.field_value IS NOT NULL
+              AND TRIM(df.field_value) != ''
+              AND d.deleted_at IS NULL
+              AND df.deleted_at IS NULL
+            ORDER BY d.property_id, d.id DESC
+            """,
+            missing_pids,
+        )
+        for r in fallback_rows:
+            pid = r["property_id"]
+            if pid not in tenant_map:
+                tenant_map[pid] = r["tenant_name"]
+
+    # ── 6. Build enriched property objects ───────────────────────────────────
+    today = date.today()
+    expiring_cutoff = today + timedelta(days=_EXPIRING_DAYS)
 
     for prop in properties:
-        key = (
-            (prop.get("client_name") or "").strip(),
-            (prop.get("property_address") or "").strip(),
-        )
-        comp = compliance_index.get(
-            key,
-            {
-                "gas_safety": "missing",
-                "eicr": "missing",
-                "epc": "missing",
-                "deposit": "missing",
-            },
-        )
-        prop.update(comp)
+        pid = prop["property_id"]
+
+        compliance: dict = {}
+        for type_key, rule in _CERT_RULES.items():
+            field_name = rule["name"]
+            doc_id = latest_map.get((pid, type_key))
+
+            if not doc_id:
+                compliance[field_name] = {"status": "missing", "expiry_date": None}
+                continue
+
+            fields = fields_by_doc.get(doc_id, {})
+            expiry_date = None
+            for candidate in rule["expiry_field_candidates"]:
+                raw = fields.get(candidate)
+                if raw:
+                    expiry_date = _parse_date(raw)
+                    if expiry_date:
+                        break
+
+            if expiry_date is None:
+                status = "valid"   # doc present but no expiry recorded → treat as valid
+            elif expiry_date < today:
+                status = "expired"
+            elif expiry_date <= expiring_cutoff:
+                status = "expiring"
+            else:
+                status = "valid"
+
+            compliance[field_name] = {
+                "status": status,
+                "expiry_date": expiry_date.isoformat() if expiry_date else None,
+            }
+
+        # Derive overall_status.
+        statuses = [v["status"] for v in compliance.values()]
+        if any(s in ("expired", "missing") for s in statuses):
+            overall_status = "non_compliant"
+        elif any(s == "expiring" for s in statuses):
+            overall_status = "at_risk"
+        else:
+            overall_status = "compliant"
+
+        prop["compliance"] = compliance
+        prop["overall_status"] = overall_status
+        prop["doc_count"] = doc_count_map.get(pid, 0)
+        prop["total_documents"] = prop["doc_count"]   # backward compat
+        prop["tenant_name"] = tenant_map.get(pid)
+
+        # Flat status strings kept for backward-compat consumers.
+        # Use "expiring_soon" so legacy JS badge logic (certBadgeClass) still
+        # works if it falls back to p[k] rather than p.compliance[k].status.
+        for cert_field, cert_info in compliance.items():
+            st = cert_info["status"]
+            prop[cert_field] = "expiring_soon" if st == "expiring" else st
 
     return jsonify({"properties": properties, "count": len(properties)})
 
@@ -1264,7 +1510,7 @@ def api_clients():
         """
         SELECT id, name, slug
         FROM clients
-        WHERE is_active = 1
+        WHERE is_active = 1 AND deleted_at IS NULL
         ORDER BY name
         """
     )
@@ -1288,6 +1534,7 @@ def api_settings_users():
         """
         SELECT id, email, full_name, role, is_active
         FROM users
+        WHERE deleted_at IS NULL
         ORDER BY full_name, email
         """
     )
@@ -1314,7 +1561,11 @@ def api_activity():
     actions_list = [a.strip() for a in action_filter.split(",") if a.strip()] if action_filter else None
     client_id = None
     if client_name:
-        row = query_db("SELECT id FROM clients WHERE name = ?", (client_name,), one=True)
+        row = query_db(
+            "SELECT id FROM clients WHERE name = ? AND deleted_at IS NULL",
+            (client_name,),
+            one=True,
+        )
         if row:
             client_id = row["id"]
         else:
@@ -1328,7 +1579,7 @@ def api_activity():
                    u.full_name AS user_name
             FROM activity_log a
             LEFT JOIN users u ON a.user_id = u.id
-            WHERE a.client_id = ? AND a.action IN ({placeholders})
+            WHERE a.client_id = ? AND a.deleted_at IS NULL AND a.action IN ({placeholders})
             ORDER BY a.created_at DESC
             LIMIT ? OFFSET ?
             """
@@ -1340,7 +1591,7 @@ def api_activity():
                    u.full_name AS user_name
             FROM activity_log a
             LEFT JOIN users u ON a.user_id = u.id
-            WHERE a.client_id = ?
+            WHERE a.client_id = ? AND a.deleted_at IS NULL
             ORDER BY a.created_at DESC
             LIMIT ? OFFSET ?
             """,
@@ -1353,7 +1604,7 @@ def api_activity():
                    u.full_name AS user_name
             FROM activity_log a
             LEFT JOIN users u ON a.user_id = u.id
-            WHERE a.action IN ({placeholders})
+            WHERE a.action IN ({placeholders}) AND a.deleted_at IS NULL
             ORDER BY a.created_at DESC
             LIMIT ? OFFSET ?
             """
@@ -1365,6 +1616,7 @@ def api_activity():
                    u.full_name AS user_name
             FROM activity_log a
             LEFT JOIN users u ON a.user_id = u.id
+            WHERE a.deleted_at IS NULL
             ORDER BY a.created_at DESC
             LIMIT ? OFFSET ?
             """,
@@ -1391,45 +1643,18 @@ def api_activity():
 @app.route("/api/clients/<int:client_id>", methods=["DELETE"])
 @login_required
 def delete_client(client_id: int):
-    """Delete a client and all their data from portal.db."""
+    """Permanently delete a client and all their data from portal.db (immediate hard delete)."""
     conn = get_db()
     try:
         cur = conn.cursor()
-
-        # Get client name for logging
         cur.execute("SELECT id, name FROM clients WHERE id = ?", (client_id,))
         row = cur.fetchone()
         if not row:
             conn.close()
             return jsonify({"error": "Client not found"}), 404
 
-        # sqlite3.Row or tuple both support index access.
         client_name = row["name"] if isinstance(row, sqlite3.Row) else row[1]
-
-        # 1. document_fields (references documents)
-        cur.execute(
-            """
-            DELETE FROM document_fields
-            WHERE document_id IN (SELECT id FROM documents WHERE client_id = ?)
-            """,
-            (client_id,),
-        )
-
-        # 2. compliance_records (references documents and properties)
-        cur.execute("DELETE FROM compliance_records WHERE client_id = ?", (client_id,))
-
-        # 3. documents (references properties and clients)
-        cur.execute("DELETE FROM documents WHERE client_id = ?", (client_id,))
-
-        # 4. tenants (references properties and clients)
-        cur.execute("DELETE FROM tenants WHERE client_id = ?", (client_id,))
-
-        # 5. properties (references clients)
-        cur.execute("DELETE FROM properties WHERE client_id = ?", (client_id,))
-
-        # 6. client itself
-        cur.execute("DELETE FROM clients WHERE id = ?", (client_id,))
-
+        soft_delete.hard_delete_client_cascade(conn, client_id)
         conn.commit()
     finally:
         conn.close()
@@ -1438,6 +1663,35 @@ def delete_client(client_id: int):
         {
             "success": True,
             "message": f'Deleted client "{client_name}" and all associated data from portal',
+        }
+    )
+
+
+@app.route("/admin/delete-client/<int:client_id>", methods=["POST"])
+@login_required
+def admin_soft_delete_client(client_id: int):
+    """Soft-delete a client (30-day retention before hard purge). Admin only."""
+    if getattr(current_user, "role", None) != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    conn = get_db()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        name, ts = soft_delete.soft_delete_client(conn, client_id)
+        conn.commit()
+    except ValueError as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+    return jsonify(
+        {
+            "success": True,
+            "name": name,
+            "deleted_at": ts,
+            "message": f'"{name}" is scheduled for permanent removal in 30 days.',
         }
     )
 
@@ -1463,8 +1717,8 @@ def api_property_detail(property_id: int):
             p.address AS property_address,
             c.name AS client_name
         FROM properties p
-        JOIN clients c ON p.client_id = c.id
-        WHERE p.id = ?
+        JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+        WHERE p.id = ? AND p.deleted_at IS NULL
         """,
         (property_id,),
         one=True,
@@ -1497,9 +1751,9 @@ def api_property_detail(property_id: int):
             p.address AS property_address
         FROM documents d
         LEFT JOIN document_types dt ON d.document_type_id = dt.id
-        LEFT JOIN clients c ON d.client_id = c.id
-        LEFT JOIN properties p ON d.property_id = p.id
-        WHERE p.id = ?
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        LEFT JOIN properties p ON d.property_id = p.id AND p.deleted_at IS NULL
+        WHERE p.id = ? AND d.deleted_at IS NULL
         ORDER BY
             dt.label ASC,
             COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC
@@ -1512,7 +1766,7 @@ def api_property_detail(property_id: int):
     try:
         for doc in docs:
             cur = conn.execute(
-                "SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ?",
+                "SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ? AND deleted_at IS NULL",
                 (doc["id"],),
             )
             doc["fields"] = {
@@ -1594,7 +1848,7 @@ def api_property_detail(property_id: int):
                 dates = f"{start or '?'} — {end or '?'}"
                 parts.append(dates)
             summary = " · ".join(parts) if parts else None
-        elif doc_type_slug in ("deposit-protection", "deposit_protection_certificate"):
+        elif doc_type_slug in ("deposit-protection-certificate", "deposit-protection", "deposit_protection_certificate"):
             scheme = flat_fields.get("scheme_name") or ""
             cert = flat_fields.get("certificate_number") or ""
             parts = []
@@ -1752,7 +2006,7 @@ def api_property_report(property_id: int):
     if fmt != "pdf":
         return jsonify({"error": "format=pdf required"}), 400
     prop = query_db(
-        "SELECT p.id, p.address AS property_address, c.name AS client_name FROM properties p JOIN clients c ON p.client_id = c.id WHERE p.id = ?",
+        "SELECT p.id, p.address AS property_address, c.name AS client_name FROM properties p JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL WHERE p.id = ? AND p.deleted_at IS NULL",
         (property_id,),
         one=True,
     )
@@ -1763,14 +2017,14 @@ def api_property_report(property_id: int):
         abort(404, description="Property not found")
     docs = query_db(
         """SELECT d.id, d.source_doc_id, d.doc_name, d.status, d.batch_date, d.scanned_at, d.reviewed_at, dt.label AS doc_type, dt.key AS doc_type_slug
-           FROM documents d LEFT JOIN document_types dt ON d.document_type_id = dt.id WHERE d.property_id = ?
+           FROM documents d LEFT JOIN document_types dt ON d.document_type_id = dt.id WHERE d.property_id = ? AND d.deleted_at IS NULL
            ORDER BY dt.label ASC, COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC""",
         (property_id,),
     )
     conn = get_db()
     try:
         for d in docs:
-            cur = conn.execute("SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ?", (d["id"],))
+            cur = conn.execute("SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ? AND deleted_at IS NULL", (d["id"],))
             d["fields"] = {row["field_key"]: {"label": row["field_label"] or row["field_key"], "value": row["field_value"] or ""} for row in cur.fetchall()}
     finally:
         conn.close()
@@ -1824,8 +2078,8 @@ def api_property_download_pack(property_id: int):
         """
         SELECT p.id, p.address AS property_address, c.name AS client_name
         FROM properties p
-        JOIN clients c ON p.client_id = c.id
-        WHERE p.id = ?
+        JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+        WHERE p.id = ? AND p.deleted_at IS NULL
         """,
         (property_id,),
         one=True,
@@ -1846,8 +2100,8 @@ def api_property_download_pack(property_id: int):
             c.name AS client_name
         FROM documents d
         LEFT JOIN document_types dt ON d.document_type_id = dt.id
-        LEFT JOIN clients c ON d.client_id = c.id
-        WHERE d.property_id = ?
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        WHERE d.property_id = ? AND d.deleted_at IS NULL
         """,
         (property_id,),
     )
@@ -1900,28 +2154,40 @@ def api_property_download_pack(property_id: int):
 def api_documents():
     """
     Search and list documents.
-    Query params:
-        q       - search term
-        type    - document type key filter
-        status  - status filter
-        sort    - 'newest' (default), 'oldest', 'name', 'status'
-        limit   - max results (default 100)
 
-    Scoped to the current client when one is active (manager: assigned client;
-    admin: optional ?client= name). Matches archive /api/properties behaviour.
+    Query params:
+        q       — full-text search across doc_name, property address,
+                  document_fields.field_value (LIKE '%term%', OR-combined)
+        type    — document type key, e.g. "gas-safety-certificate", "eicr"
+        status  — review status: "verified" | "ai_prefilled" | "needs_review"
+                  OR compliance state: "valid" | "expiring" | "expired"
+                  (compliance states are computed in Python after field fetch;
+                   review states are pushed down to SQL)
+        sort    — "newest" (default) | "oldest" | "property" | "type"
+        limit   — max results, default 200, max 1000
+
+    Scoped to the current client (manager: assigned client; admin: ?client=).
     """
     q = request.args.get("q", "").strip()
     doc_type = request.args.get("type", "").strip()
     status = request.args.get("status", "").strip()
     sort = request.args.get("sort", "newest").strip()
-    limit = request.args.get("limit", "100").strip()
+    limit_raw = request.args.get("limit", "200").strip()
 
     try:
-        limit = min(int(limit), 500)
+        limit = min(int(limit_raw), 1000)
     except ValueError:
-        limit = 100
+        limit = 200
 
     client_scope = get_current_client() or ""
+
+    # Compliance statuses require Python-side evaluation after field fetch;
+    # review statuses can be pushed straight to SQL.
+    _COMPLIANCE_STATUSES = {"valid", "expiring", "expired"}
+    _REVIEW_STATUSES = {"verified", "ai_prefilled", "new"}
+    compliance_filter = status if status in _COMPLIANCE_STATUSES else ""
+    review_filter = status if status in _REVIEW_STATUSES else ""
+    needs_review_filter = status == "needs_review"
 
     sql = """
         SELECT
@@ -1938,72 +2204,125 @@ def api_documents():
             d.batch_date,
             COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) AS imported_at,
             dt.label AS doc_type,
-            dt.key AS doc_type_slug,
-            c.name AS client_name,
+            dt.key   AS doc_type_slug,
+            c.name   AS client_name,
             p.address AS property_address
         FROM documents d
         LEFT JOIN document_types dt ON d.document_type_id = dt.id
-        LEFT JOIN clients c ON d.client_id = c.id
-        LEFT JOIN properties p ON d.property_id = p.id
-        WHERE 1=1
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        LEFT JOIN properties p ON d.property_id = p.id AND p.deleted_at IS NULL
+        WHERE d.deleted_at IS NULL
     """
-    args = []
+    args: list = []
 
     if client_scope:
         sql += " AND c.name = ?"
         args.append(client_scope)
 
     if q:
+        like = f"%{q}%"
+        # Search doc metadata AND document_fields.field_value in a single pass.
         sql += """
             AND (
                 d.source_doc_id LIKE ?
                 OR d.doc_name LIKE ?
                 OR p.address LIKE ?
-                OR d.status LIKE ?
                 OR dt.label LIKE ?
                 OR c.name LIKE ?
+                OR EXISTS (
+                    SELECT 1
+                    FROM document_fields df_s
+                    WHERE df_s.document_id = d.id
+                      AND df_s.field_value LIKE ?
+                      AND df_s.deleted_at IS NULL
+                )
             )
         """
-        like = f"%{q}%"
         args.extend([like] * 6)
 
     if doc_type:
         sql += " AND dt.key = ?"
         args.append(doc_type)
 
-    if status:
+    # Push review-status filters to SQL; compliance filters handled in Python.
+    if review_filter:
         sql += " AND d.status = ?"
-        args.append(status)
+        args.append(review_filter)
+    elif needs_review_filter:
+        sql += " AND d.status IN ('new', 'ai_prefilled', 'needs_review')"
 
     sort_map = {
-        "newest": "d.scanned_at DESC, COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC",
-        "oldest": "d.scanned_at ASC, COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) ASC",
-        "name": "d.doc_name ASC",
+        "newest":   "COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC",
+        "recent":   "COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC",
+        "oldest":   "COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) ASC",
+        "property": "p.address ASC, COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC",
+        "type":     "dt.label ASC, COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC",
+        # legacy aliases kept for any existing callers
+        "name":   "d.doc_name ASC",
         "status": "d.status ASC",
     }
     sql += f" ORDER BY {sort_map.get(sort, sort_map['newest'])}"
-    sql += " LIMIT ?"
-    args.append(limit)
+
+    # Omit LIMIT when compliance filtering — we filter in Python and then slice.
+    if not compliance_filter:
+        sql += " LIMIT ?"
+        args.append(limit)
 
     docs = query_db(sql, args)
 
-    # Fetch fields for each document
-    conn = get_db()
-    try:
-        for doc in docs:
-            cur = conn.execute(
-                "SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ?",
-                (doc["id"],),
-            )
-            doc["fields"] = {
-                row["field_key"]: {
-                    "label": row["field_label"] or row["field_key"].replace("_", " ").title(),
-                    "value": row["field_value"] or "",
-                }
-                for row in cur.fetchall()
+    # ── Batch-fetch all document fields in one query ─────────────────────────
+    if docs:
+        doc_ids = [d["id"] for d in docs]
+        id_ph = ",".join("?" * len(doc_ids))
+        field_rows = query_db(
+            f"""
+            SELECT document_id, field_key, field_label, field_value
+            FROM document_fields
+            WHERE document_id IN ({id_ph}) AND deleted_at IS NULL
+            """,
+            doc_ids,
+        )
+        fields_by_doc: dict = {}
+        for fr in field_rows:
+            did = fr["document_id"]
+            fields_by_doc.setdefault(did, {})[fr["field_key"]] = {
+                "label": fr["field_label"] or fr["field_key"].replace("_", " ").title(),
+                "value": fr["field_value"] or "",
             }
-    finally:
-        conn.close()
+        for doc in docs:
+            doc["fields"] = fields_by_doc.get(doc["id"], {})
+    else:
+        for doc in docs:
+            doc["fields"] = {}
+
+    # ── Python-side compliance status filter ─────────────────────────────────
+    if compliance_filter:
+        filtered: list = []
+        for doc in docs:
+            slug = (doc.get("doc_type_slug") or "").strip()
+            flat = _flatten_fields(doc.get("fields") or {})
+            comp_status, _, _ = get_compliance_status_for_doc(slug, flat)
+            review = (doc.get("status") or "").lower()
+
+            if compliance_filter == "valid":
+                # A non-compliance doc (comp_status is None) is "valid" only
+                # when it has been verified.
+                if review in ("new", "ai_prefilled", "needs_review"):
+                    continue
+                if comp_status == "valid":
+                    filtered.append(doc)
+                elif comp_status in (None, "no_expiry") and review == "verified":
+                    filtered.append(doc)
+
+            elif compliance_filter == "expiring":
+                if comp_status == "expiring_soon":
+                    filtered.append(doc)
+
+            elif compliance_filter == "expired":
+                if comp_status == "expired":
+                    filtered.append(doc)
+
+        docs = filtered[:limit]
 
     for doc in docs:
         doc["pdf_url"] = scanstation_pdf_url(doc.get("client_name"), doc.get("source_doc_id"))
@@ -2035,9 +2354,9 @@ def api_document_detail_by_id(doc_id: int):
             p.address AS property_address
         FROM documents d
         LEFT JOIN document_types dt ON d.document_type_id = dt.id
-        LEFT JOIN clients c ON d.client_id = c.id
-        LEFT JOIN properties p ON d.property_id = p.id
-        WHERE d.id = ?
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        LEFT JOIN properties p ON d.property_id = p.id AND p.deleted_at IS NULL
+        WHERE d.id = ? AND d.deleted_at IS NULL
         """,
         (doc_id,),
         one=True,
@@ -2051,7 +2370,7 @@ def api_document_detail_by_id(doc_id: int):
         abort(404, description="Document not found")
 
     fields = query_db(
-        "SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ?",
+        "SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ? AND deleted_at IS NULL",
         (doc["id"],),
     )
     doc["fields"] = {
@@ -2091,9 +2410,9 @@ def api_document_detail(source_doc_id):
             p.address AS property_address
         FROM documents d
         LEFT JOIN document_types dt ON d.document_type_id = dt.id
-        LEFT JOIN clients c ON d.client_id = c.id
-        LEFT JOIN properties p ON d.property_id = p.id
-        WHERE LOWER(TRIM(d.source_doc_id)) = LOWER(TRIM(?))
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        LEFT JOIN properties p ON d.property_id = p.id AND p.deleted_at IS NULL
+        WHERE LOWER(TRIM(d.source_doc_id)) = LOWER(TRIM(?)) AND d.deleted_at IS NULL
         """,
         ((source_doc_id or "").strip(),),
         one=True,
@@ -2107,7 +2426,7 @@ def api_document_detail(source_doc_id):
         abort(404, description="Document not found")
 
     fields = query_db(
-        "SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ?",
+        "SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ? AND deleted_at IS NULL",
         (doc["id"],),
     )
     doc["fields"] = {
@@ -2135,8 +2454,8 @@ def serve_document_pdf_by_id(doc_id: int):
             d.pdf_path,
             c.name AS client_name
         FROM documents d
-        LEFT JOIN clients c ON d.client_id = c.id
-        WHERE d.id = ?
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        WHERE d.id = ? AND d.deleted_at IS NULL
         """,
         (doc_id,),
         one=True,
@@ -2172,8 +2491,8 @@ def serve_document_pdf_by_source(source_doc_id: str):
             d.pdf_path,
             c.name AS client_name
         FROM documents d
-        LEFT JOIN clients c ON d.client_id = c.id
-        WHERE LOWER(TRIM(d.source_doc_id)) = LOWER(TRIM(?))
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        WHERE LOWER(TRIM(d.source_doc_id)) = LOWER(TRIM(?)) AND d.deleted_at IS NULL
         """,
         ((source_doc_id or "").strip(),),
         one=True,
@@ -2252,8 +2571,8 @@ def api_documents_upload():
         """
         SELECT p.id, p.client_id, p.address AS property_address, c.name AS client_name
         FROM properties p
-        JOIN clients c ON p.client_id = c.id
-        WHERE p.id = ?
+        JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+        WHERE p.id = ? AND p.deleted_at IS NULL
         """,
         (property_id,),
         one=True,
@@ -2314,29 +2633,547 @@ def api_documents_upload():
     })
 
 
+def _get_client_id_for_name(client_name: str) -> int | None:
+    """Resolve clients.id from a client name. Returns None if not found."""
+    if not client_name:
+        return None
+    row = query_db(
+        "SELECT id FROM clients WHERE name = ? AND deleted_at IS NULL",
+        (client_name,),
+        one=True,
+    )
+    return row["id"] if row else None
+
+
+# ── Packs API ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/packs")
+@login_required
+def api_packs_list():
+    """List all packs for the current client, ordered by most-recently updated."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+    if not client_id:
+        return jsonify({"packs": [], "count": 0})
+
+    packs = query_db(
+        """
+        SELECT
+            pk.id,
+            pk.name,
+            pk.notes,
+            pk.created_at,
+            pk.updated_at,
+            COUNT(pd.id) AS doc_count,
+            u.full_name  AS created_by
+        FROM packs pk
+        LEFT JOIN pack_documents pd ON pd.pack_id = pk.id
+        LEFT JOIN users u           ON u.id = pk.created_by
+        WHERE pk.client_id = ?
+        GROUP BY pk.id
+        ORDER BY pk.updated_at DESC
+        """,
+        (client_id,),
+    )
+    return jsonify({"packs": packs, "count": len(packs)})
+
+
+@app.route("/api/packs", methods=["POST"])
+@login_required
+def api_packs_create():
+    """Create a new pack for the current client."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+    if not client_id:
+        return jsonify({"error": "No client context — cannot create pack"}), 403
+
+    body = request.get_json(silent=True) or {}
+    name = (body.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "Pack name is required"}), 400
+    notes = (body.get("notes") or "").strip()
+    user_id = getattr(current_user, "id", None)
+
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO packs (client_id, name, notes, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+            """,
+            (client_id, name, notes, user_id),
+        )
+        conn.commit()
+        pack_id = cur.lastrowid
+    finally:
+        conn.close()
+
+    pack = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    if pack:
+        pack["doc_count"] = 0
+    return jsonify({"pack": pack}), 201
+
+
+@app.route("/api/packs/<int:pack_id>")
+@login_required
+def api_pack_detail(pack_id: int):
+    """Return a pack and its ordered documents (with fields and expiry dates)."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+
+    pack = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    if not pack or (client_id and pack["client_id"] != client_id):
+        abort(404, description="Pack not found")
+
+    pack_docs = query_db(
+        """
+        SELECT
+            pd.id          AS pack_doc_id,
+            pd.document_id,
+            pd.sort_order,
+            pd.added_at,
+            d.doc_name     AS title,
+            d.status,
+            d.scanned_at,
+            d.batch_date,
+            dt.key         AS doc_type_key,
+            dt.label       AS doc_type_label,
+            p.address      AS property_address,
+            p.id           AS property_id
+        FROM pack_documents pd
+        JOIN documents d      ON d.id = pd.document_id AND d.deleted_at IS NULL
+        LEFT JOIN document_types dt ON d.document_type_id = dt.id
+        LEFT JOIN properties p      ON d.property_id = p.id
+        WHERE pd.pack_id = ?
+        ORDER BY pd.sort_order ASC
+        """,
+        (pack_id,),
+    )
+
+    # Batch-fetch fields for all documents in the pack.
+    if pack_docs:
+        doc_ids = [row["document_id"] for row in pack_docs]
+        id_ph = ",".join("?" * len(doc_ids))
+        field_rows = query_db(
+            f"""
+            SELECT document_id, field_key, field_label, field_value
+            FROM document_fields
+            WHERE document_id IN ({id_ph}) AND deleted_at IS NULL
+            """,
+            doc_ids,
+        )
+        fields_by_doc: dict = {}
+        for fr in field_rows:
+            did = fr["document_id"]
+            fields_by_doc.setdefault(did, {})[fr["field_key"]] = {
+                "label": fr["field_label"] or fr["field_key"].replace("_", " ").title(),
+                "value": fr["field_value"] or "",
+            }
+        for row in pack_docs:
+            row["fields"] = fields_by_doc.get(row["document_id"], {})
+            flat = _flatten_fields(row["fields"])
+            slug = row.get("doc_type_key") or ""
+            comp_status, expiry_iso, _ = get_compliance_status_for_doc(slug, flat)
+            row["expiry_date"] = expiry_iso
+            row["compliance_status"] = comp_status
+
+    result = dict(pack)
+    result["documents"] = pack_docs
+    result["doc_count"] = len(pack_docs)
+    return jsonify({"pack": result})
+
+
+@app.route("/api/packs/<int:pack_id>", methods=["PUT"])
+@login_required
+def api_pack_update(pack_id: int):
+    """Update a pack's name and/or notes."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+
+    pack = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    if not pack or (client_id and pack["client_id"] != client_id):
+        abort(404, description="Pack not found")
+
+    body = request.get_json(silent=True) or {}
+    name = (body.get("name") or "").strip() or pack["name"]
+    notes = body.get("notes")
+    notes = str(notes).strip() if notes is not None else (pack["notes"] or "")
+
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE packs SET name = ?, notes = ?, updated_at = datetime('now') WHERE id = ?",
+            (name, notes, pack_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    updated = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    return jsonify({"pack": updated})
+
+
+@app.route("/api/packs/<int:pack_id>", methods=["DELETE"])
+@login_required
+def api_pack_delete(pack_id: int):
+    """Delete a pack (and its pack_documents rows via CASCADE)."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+
+    pack = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    if not pack or (client_id and pack["client_id"] != client_id):
+        abort(404, description="Pack not found")
+
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM pack_documents WHERE pack_id = ?", (pack_id,))
+        conn.execute("DELETE FROM packs WHERE id = ?", (pack_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"success": True})
+
+
+@app.route("/api/packs/<int:pack_id>/documents", methods=["POST"])
+@login_required
+def api_pack_add_documents(pack_id: int):
+    """Add one or more documents to a pack."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+
+    pack = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    if not pack or (client_id and pack["client_id"] != client_id):
+        abort(404, description="Pack not found")
+
+    body = request.get_json(silent=True) or {}
+    doc_ids = body.get("document_ids") or []
+    if not isinstance(doc_ids, list) or not doc_ids:
+        return jsonify({"error": "document_ids must be a non-empty array"}), 400
+
+    max_row = query_db(
+        "SELECT COALESCE(MAX(sort_order), 0) AS max_order FROM pack_documents WHERE pack_id = ?",
+        (pack_id,),
+        one=True,
+    )
+    next_order = (max_row["max_order"] if max_row else 0) + 1
+
+    conn = get_db()
+    added = 0
+    try:
+        for doc_id in doc_ids:
+            try:
+                doc_id = int(doc_id)
+            except (TypeError, ValueError):
+                continue
+            conn.execute(
+                "INSERT INTO pack_documents (pack_id, document_id, sort_order, added_at) "
+                "VALUES (?, ?, ?, datetime('now'))",
+                (pack_id, doc_id, next_order),
+            )
+            next_order += 1
+            added += 1
+        conn.execute(
+            "UPDATE packs SET updated_at = datetime('now') WHERE id = ?",
+            (pack_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"added": added}), 201
+
+
+@app.route("/api/packs/<int:pack_id>/documents/<int:pack_doc_id>", methods=["DELETE"])
+@login_required
+def api_pack_remove_document(pack_id: int, pack_doc_id: int):
+    """Remove a document from a pack (deletes the pack_documents row only).
+    pack_doc_id is pack_documents.id, not documents.id."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+
+    pack = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    if not pack or (client_id and pack["client_id"] != client_id):
+        abort(404, description="Pack not found")
+
+    conn = get_db()
+    try:
+        conn.execute(
+            "DELETE FROM pack_documents WHERE id = ? AND pack_id = ?",
+            (pack_doc_id, pack_id),
+        )
+        # Re-number sort_order to close the gap.
+        remaining = conn.execute(
+            "SELECT id FROM pack_documents WHERE pack_id = ? ORDER BY sort_order ASC",
+            (pack_id,),
+        ).fetchall()
+        for i, row in enumerate(remaining, start=1):
+            conn.execute(
+                "UPDATE pack_documents SET sort_order = ? WHERE id = ?",
+                (i, row["id"]),
+            )
+        conn.execute(
+            "UPDATE packs SET updated_at = datetime('now') WHERE id = ?",
+            (pack_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"success": True})
+
+
+@app.route("/api/packs/<int:pack_id>/reorder", methods=["PUT"])
+@login_required
+def api_pack_reorder(pack_id: int):
+    """Reorder pack documents. Body: {document_ids: [<pack_doc_id>, ...]} in desired order."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+
+    pack = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    if not pack or (client_id and pack["client_id"] != client_id):
+        abort(404, description="Pack not found")
+
+    body = request.get_json(silent=True) or {}
+    ordered_ids = body.get("document_ids") or []
+    if not isinstance(ordered_ids, list):
+        return jsonify({"error": "document_ids must be an array of pack_doc ids"}), 400
+
+    conn = get_db()
+    try:
+        for i, pack_doc_id in enumerate(ordered_ids, start=1):
+            try:
+                pack_doc_id = int(pack_doc_id)
+            except (TypeError, ValueError):
+                continue
+            conn.execute(
+                "UPDATE pack_documents SET sort_order = ? WHERE id = ? AND pack_id = ?",
+                (i, pack_doc_id, pack_id),
+            )
+        conn.execute(
+            "UPDATE packs SET updated_at = datetime('now') WHERE id = ?",
+            (pack_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"success": True})
+
+
+# ── Pack exports ─────────────────────────────────────────────────────────────
+
+def _pack_docs_with_paths(pack_id: int, client_id: Optional[int]):
+    """Return pack rows joined with their resolved PDF path, ordered by sort_order."""
+    pack = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    if not pack or (client_id and pack["client_id"] != client_id):
+        return None, None
+    rows = query_db(
+        """
+        SELECT pd.id AS pack_doc_id, pd.sort_order,
+               d.id AS doc_id, d.doc_name, d.pdf_path, d.source_doc_id,
+               dt.label AS doc_type_label,
+               c.name  AS client_name
+        FROM   pack_documents pd
+        JOIN   documents d       ON d.id  = pd.document_id AND d.deleted_at IS NULL
+        LEFT JOIN document_types dt ON dt.id = d.document_type_id
+        LEFT JOIN clients c         ON c.id  = d.client_id
+        WHERE  pd.pack_id = ?
+        ORDER  BY pd.sort_order ASC
+        """,
+        (pack_id,),
+    )
+    return pack, rows
+
+
+def _sanitize_filename(name: str, max_len: int = 60) -> str:
+    return re.sub(r"[^\w\-_ ]", "_", name or "").strip()[:max_len]
+
+
+@app.route("/api/packs/<int:pack_id>/export/zip")
+@login_required
+def api_pack_export_zip(pack_id: int):
+    """Download all documents in the pack as a ZIP archive."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+
+    pack, rows = _pack_docs_with_paths(pack_id, client_id)
+    if pack is None:
+        abort(404)
+
+    buf = io.BytesIO()
+    added = 0
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        seen_names: set = set()
+        for row in rows:
+            pdf_path = _resolve_pdf_path_for_document(row)
+            if not pdf_path:
+                continue
+            order = row.get("sort_order", 0)
+            doc_type = _sanitize_filename(row.get("doc_type_label") or "Document")
+            title    = _sanitize_filename(row.get("doc_name") or doc_type)
+            base_name = f"{order:02d}_{doc_type}_{title}.pdf"
+            # deduplicate if two docs share the same generated name
+            candidate = base_name
+            suffix = 1
+            while candidate in seen_names:
+                candidate = f"{order:02d}_{doc_type}_{title}_{suffix}.pdf"
+                suffix += 1
+            seen_names.add(candidate)
+            zf.write(pdf_path, candidate)
+            added += 1
+
+    if not added:
+        return jsonify({"error": "No PDFs found in this pack"}), 404
+
+    buf.seek(0)
+    pack_name = _sanitize_filename(pack["name"])
+    return send_file(
+        buf,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"{pack_name}.zip",
+    )
+
+
+@app.route("/api/packs/<int:pack_id>/export/pdf")
+@login_required
+def api_pack_export_pdf(pack_id: int):
+    """Download all documents in the pack merged into a single PDF with a cover page."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+
+    pack, rows = _pack_docs_with_paths(pack_id, client_id)
+    if pack is None:
+        abort(404)
+
+    # ── Build ReportLab cover page ───────────────────────────────────────────
+    cover_buf = io.BytesIO()
+    doc_obj = SimpleDocTemplate(
+        cover_buf,
+        pagesize=A4,
+        topMargin=28 * mm,
+        bottomMargin=25 * mm,
+        leftMargin=22 * mm,
+        rightMargin=22 * mm,
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "PackTitle",
+        parent=styles["Heading1"],
+        fontSize=20,
+        spaceAfter=6,
+        textColor=colors.HexColor("#0a2e2f"),
+    )
+    sub_style = ParagraphStyle(
+        "PackSub",
+        parent=styles["Normal"],
+        fontSize=10,
+        textColor=colors.HexColor("#555555"),
+        spaceAfter=4,
+    )
+    body_style = ParagraphStyle(
+        "PackBody",
+        parent=styles["Normal"],
+        fontSize=10,
+        spaceAfter=4,
+        textColor=colors.HexColor("#222222"),
+    )
+    story: list = []
+    story.append(Paragraph(pack["name"], title_style))
+    story.append(Paragraph(f"Generated: {date.today().strftime('%d %B %Y')}", sub_style))
+    if pack.get("notes"):
+        story.append(Spacer(1, 4 * mm))
+        story.append(Paragraph(pack["notes"], body_style))
+    story.append(Spacer(1, 6 * mm))
+    story.append(Paragraph(f"Documents in this pack: {len(rows)}", body_style))
+    story.append(Spacer(1, 4 * mm))
+    for i, row in enumerate(rows, 1):
+        label = row.get("doc_type_label") or "Document"
+        name  = row.get("doc_name") or label
+        story.append(Paragraph(f"{i}.  {label} — {name}", body_style))
+    doc_obj.build(story)
+    cover_buf.seek(0)
+
+    # ── Merge cover + document PDFs via pypdf ────────────────────────────────
+    merged_buf = io.BytesIO()
+    try:
+        from pypdf import PdfWriter, PdfReader  # type: ignore
+
+        writer = PdfWriter()
+        for page in PdfReader(cover_buf).pages:
+            writer.add_page(page)
+
+        for row in rows:
+            pdf_path = _resolve_pdf_path_for_document(row)
+            if not pdf_path:
+                continue
+            try:
+                for page in PdfReader(pdf_path).pages:
+                    writer.add_page(page)
+            except Exception:
+                pass  # skip unreadable PDFs silently
+
+        writer.write(merged_buf)
+    except ImportError:
+        # pypdf not available — return cover page only with a note
+        cover_buf.seek(0)
+        from reportlab.platypus import Frame, PageTemplate
+        note_buf = io.BytesIO()
+        note_doc = SimpleDocTemplate(note_buf, pagesize=A4, topMargin=28 * mm, bottomMargin=25 * mm, leftMargin=22 * mm, rightMargin=22 * mm)
+        note_story = [Paragraph(
+            "Note: PDF merging requires the <i>pypdf</i> library (<code>pip install pypdf</code>). "
+            "Only the cover page is included.",
+            body_style,
+        )]
+        note_doc.build(note_story)
+        # merge cover + note
+        from pypdf import PdfWriter, PdfReader  # noqa — will re-raise if truly absent
+        w = PdfWriter()
+        for page in PdfReader(cover_buf).pages:
+            w.add_page(page)
+        for page in PdfReader(note_buf).pages:
+            w.add_page(page)
+        w.write(merged_buf)
+
+    merged_buf.seek(0)
+    pack_name = _sanitize_filename(pack["name"])
+    return send_file(
+        merged_buf,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"{pack_name}_bundle.pdf",
+    )
+
+
 @app.route("/api/stats")
 @login_required
 def api_stats():
     """Dashboard statistics."""
     stats = {
-        "total": query_db("SELECT COUNT(*) as n FROM documents", one=True)["n"],
+        "total": query_db(
+            "SELECT COUNT(*) as n FROM documents WHERE deleted_at IS NULL", one=True
+        )["n"],
         "verified": query_db(
-            "SELECT COUNT(*) as n FROM documents WHERE status = 'verified'", one=True
+            "SELECT COUNT(*) as n FROM documents WHERE status = 'verified' AND deleted_at IS NULL",
+            one=True,
         )["n"],
         "needs_review": query_db(
-            "SELECT COUNT(*) as n FROM documents WHERE status IN ('needs_review', 'new', 'ai_prefilled')",
+            "SELECT COUNT(*) as n FROM documents WHERE status IN ('needs_review', 'new', 'ai_prefilled') AND deleted_at IS NULL",
             one=True,
         )["n"],
         "doc_types": query_db(
             """SELECT dt.label, COUNT(d.id) as count
                FROM documents d
                LEFT JOIN document_types dt ON d.document_type_id = dt.id
+               WHERE d.deleted_at IS NULL
                GROUP BY dt.label"""
         ),
         "clients": query_db(
             """SELECT c.name, COUNT(d.id) as count
                FROM documents d
-               LEFT JOIN clients c ON d.client_id = c.id
+               LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+               WHERE d.deleted_at IS NULL
                GROUP BY c.name"""
         ),
     }
@@ -2371,38 +3208,17 @@ def _deduplicate_compliance_actions(actions: list[dict]) -> list[dict]:
     return out
 
 
-@app.route("/api/compliance")
-@login_required
-def api_compliance():
+def _compute_compliance_snapshot(client_name: str) -> dict:
     """
-    Action-oriented compliance snapshot for properties.
-
-    Query params:
-        client  - client name filter (optional)
-
-    Returns:
-        {
-          "stats": { ... },
-          "actions": [ ... ],
-          "health_by_type": [ ... ]
-        }
+    Shared compliance snapshot for /api/compliance and /api/dashboard-stats.
+    On failure: {"error": str, "details": str}.
+    On success: stats, actions, resolved_actions, health_by_type, plus _raw, _counts.
     """
-    client_name = get_current_client() or ""
- 
     try:
         raw = compliance_engine.evaluate_compliance()
     except Exception as e:
-        # Defensive: never crash the server if compliance evaluation fails.
-        return (
-            jsonify(
-                {
-                    "error": "Failed to evaluate compliance",
-                    "details": str(e),
-                }
-            ),
-            500,
-        )
- 
+        return {"error": "Failed to evaluate compliance", "details": str(e)}
+
     if client_name:
         raw = [r for r in raw if (r.get("client") or "").strip() == client_name]
 
@@ -2412,7 +3228,7 @@ def api_compliance():
     client_id_for_actions = None
     if client_name:
         row = query_db(
-            "SELECT id FROM clients WHERE name = ? LIMIT 1",
+            "SELECT id FROM clients WHERE name = ? AND deleted_at IS NULL LIMIT 1",
             (client_name,),
             one=True,
         )
@@ -2463,8 +3279,8 @@ def api_compliance():
                 """
                 SELECT p.id
                 FROM properties p
-                JOIN clients c ON p.client_id = c.id
-                WHERE c.name = ? AND p.address = ?
+                JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+                WHERE c.name = ? AND p.address = ? AND p.deleted_at IS NULL
                 LIMIT 1
                 """,
                 (name, addr),
@@ -2493,6 +3309,7 @@ def api_compliance():
                 JOIN document_types dt ON d.document_type_id = dt.id
                 WHERE d.property_id = ?
                   AND dt.key = ?
+                  AND d.deleted_at IS NULL
                 ORDER BY COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC
                 LIMIT 1
                 """,
@@ -2504,7 +3321,7 @@ def api_compliance():
  
             doc_id = row[0]
             field_rows = cur.execute(
-                "SELECT field_key, field_value FROM document_fields WHERE document_id = ?",
+                "SELECT field_key, field_value FROM document_fields WHERE document_id = ? AND deleted_at IS NULL",
                 (doc_id,),
             ).fetchall()
             flat_fields = {
@@ -2606,7 +3423,7 @@ def api_compliance():
                 """
                 SELECT property_id, comp_type, status, snoozed_until, resolved_at, resolved_by, notes
                 FROM compliance_actions
-                WHERE client_id = ?
+                WHERE client_id = ? AND deleted_at IS NULL
                 """,
                 (client_id_for_actions,),
             )
@@ -2622,7 +3439,7 @@ def api_compliance():
                     resolved_set.add((pid, ctype))
                     # Resolved list for "Show resolved" section (need property address).
                     addr_row = cur_act.execute(
-                        "SELECT address FROM properties WHERE id = ?",
+                        "SELECT address FROM properties WHERE id = ? AND deleted_at IS NULL",
                         (pid,),
                     ).fetchone()
                     prop_addr = (addr_row[0] if addr_row and isinstance(addr_row, (tuple, list)) else (addr_row["address"] if addr_row else "")) or "Unknown"
@@ -2704,12 +3521,368 @@ def api_compliance():
         "compliant_subtitle": f"{fully_compliant} of {total_properties} properties with all certs valid",
     }
 
-    return jsonify({
+    return {
         "stats": stats,
         "actions": actions,
         "resolved_actions": resolved_list,
         "health_by_type": health_by_type,
-    })
+        "_raw": raw,
+        "_counts": counts,
+    }
+
+
+@app.route("/api/compliance")
+@login_required
+def api_compliance():
+    """
+    Action-oriented compliance snapshot for properties.
+
+    Query params:
+        client  - client name filter (optional)
+
+    Returns:
+        {
+          "stats": { ... },
+          "actions": [ ... ],
+          "health_by_type": [ ... ]
+        }
+    """
+    client_name = get_current_client() or ""
+    data = _compute_compliance_snapshot(client_name)
+    if data.get("error"):
+        return (
+            jsonify(
+                {
+                    "error": data["error"],
+                    "details": data.get("details", ""),
+                }
+            ),
+            500,
+        )
+    return jsonify({k: v for k, v in data.items() if not k.startswith("_")})
+
+
+def _dashboard_property_ids_for_client(client_name: str) -> list[int]:
+    conn = get_db()
+    try:
+        if client_name:
+            rows = conn.execute(
+                """
+                SELECT p.id
+                FROM properties p
+                JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+                WHERE p.deleted_at IS NULL AND c.name = ?
+                """,
+                (client_name,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT p.id
+                FROM properties p
+                JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+                WHERE p.deleted_at IS NULL
+                """,
+            ).fetchall()
+        out: list[int] = []
+        for r in rows:
+            out.append(int(r[0] if isinstance(r, (tuple, list)) else r["id"]))
+        return out
+    finally:
+        conn.close()
+
+
+def _dashboard_total_documents(client_name: str) -> int:
+    conn = get_db()
+    try:
+        if client_name:
+            row = conn.execute(
+                """
+                SELECT COUNT(d.id)
+                FROM documents d
+                JOIN properties p ON d.property_id = p.id AND p.deleted_at IS NULL
+                JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+                WHERE d.deleted_at IS NULL AND c.name = ?
+                """,
+                (client_name,),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT COUNT(d.id) FROM documents d WHERE d.deleted_at IS NULL",
+            ).fetchone()
+        return int(row[0]) if row and row[0] is not None else 0
+    finally:
+        conn.close()
+
+
+DASHBOARD_ATTENTION_LIMIT = 500
+DASHBOARD_ACTIVITY_LIMIT = 500
+
+
+def _build_dashboard_attention_groups(actions: list[dict], client_name: str, limit: int = DASHBOARD_ATTENTION_LIMIT) -> list[dict]:
+    """Group compliance actions by property for the dashboard (same ordering as portal JS)."""
+    type_short = {
+        "gas_safety": "Gas safety",
+        "eicr": "EICR",
+        "epc": "EPC",
+        "deposit": "Deposit protection",
+    }
+    type_order = ["gas_safety", "eicr", "epc", "deposit"]
+    by_pid: dict[int, list[dict]] = {}
+    for a in actions:
+        pid = a.get("property_id")
+        if pid is None:
+            continue
+        by_pid.setdefault(int(pid), []).append(a)
+    groups: list[dict] = []
+    for pid, list_a in by_pid.items():
+        has_risk = any(
+            x.get("status") in ("expired", "missing") for x in list_a
+        )
+        only_expiring = (
+            list_a
+            and not has_risk
+            and all(x.get("status") == "expiring_soon" for x in list_a)
+        )
+        dot = "amber" if only_expiring else "red"
+        types = sorted(
+            {x.get("type") for x in list_a if x.get("type")},
+            key=lambda t: type_order.index(t) if t in type_order else 99,
+        )
+        label_str = " · ".join(type_short.get(str(t), str(t)) for t in types)
+        missing = sum(
+            1 for x in list_a if x.get("status") in ("missing", "expired")
+        )
+        expiring = sum(1 for x in list_a if x.get("status") == "expiring_soon")
+        if missing and not expiring:
+            meta = f"{missing} missing"
+        elif expiring and not missing:
+            meta = f"{expiring} expiring soon"
+        else:
+            parts = []
+            if missing:
+                parts.append(f"{missing} missing")
+            if expiring:
+                parts.append(f"{expiring} expiring soon")
+            meta = ", ".join(parts)
+        title = (list_a[0].get("property") or "Unnamed property").strip()
+        sort_order = min((x.get("sort_order") if x.get("sort_order") is not None else 2) for x in list_a)
+        sort_days_vals = []
+        for x in list_a:
+            sd = x.get("sort_days")
+            sort_days_vals.append(sd if sd is not None else 0)
+        sort_days = min(sort_days_vals) if sort_days_vals else 0
+        params = []
+        if client_name:
+            params.append("client=" + quote(client_name, safe=""))
+        href = "/property/" + str(pid) + ("?" + "&".join(params) if params else "")
+        groups.append(
+            {
+                "property_id": pid,
+                "title": title,
+                "href": href,
+                "label_str": label_str,
+                "meta": meta,
+                "dot": dot,
+                "sort_order": sort_order,
+                "sort_days": sort_days,
+            }
+        )
+    groups.sort(key=lambda g: (g["sort_order"], g["sort_days"]))
+    return groups[:limit]
+
+
+_UPLOAD_PROP_RE = re.compile(r"for property\s+(\d+)", re.I)
+
+
+def _fetch_dashboard_recent_activity(client_name: str, limit: int = DASHBOARD_ACTIVITY_LIMIT) -> list[dict]:
+    """Recent activity rows with property address resolved."""
+    client_id = None
+    if client_name:
+        row = query_db(
+            "SELECT id FROM clients WHERE name = ? AND deleted_at IS NULL LIMIT 1",
+            (client_name,),
+            one=True,
+        )
+        if row:
+            client_id = row["id"]
+        else:
+            client_id = -1
+    if client_id == -1:
+        return []
+
+    if client_id is not None:
+        rows = query_db(
+            """
+            SELECT a.id, a.action, a.entity_type, a.entity_id, a.description, a.created_at,
+                   u.full_name AS user_name
+            FROM activity_log a
+            LEFT JOIN users u ON a.user_id = u.id
+            WHERE a.client_id = ? AND a.deleted_at IS NULL
+              AND a.action IN ('document_uploaded', 'compliance_resolved')
+            ORDER BY a.created_at DESC
+            LIMIT ?
+            """,
+            (client_id, limit),
+        )
+    else:
+        rows = query_db(
+            """
+            SELECT a.id, a.action, a.entity_type, a.entity_id, a.description, a.created_at,
+                   u.full_name AS user_name
+            FROM activity_log a
+            LEFT JOIN users u ON a.user_id = u.id
+            WHERE a.deleted_at IS NULL
+              AND a.action IN ('document_uploaded', 'compliance_resolved')
+            ORDER BY a.created_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        out: list[dict] = []
+        for r in rows or []:
+            action = r["action"]
+            desc = (r["description"] or "").strip()
+            pid = None
+            et = (r["entity_type"] or "").strip()
+            eid = r["entity_id"]
+            if et == "compliance_action" and eid is not None:
+                try:
+                    pid = int(eid)
+                except (TypeError, ValueError):
+                    pid = None
+            if pid is None and action == "document_uploaded":
+                m = _UPLOAD_PROP_RE.search(desc)
+                if m:
+                    try:
+                        pid = int(m.group(1))
+                    except ValueError:
+                        pid = None
+            addr = ""
+            if pid is not None:
+                arow = cur.execute(
+                    "SELECT address FROM properties WHERE id = ? AND deleted_at IS NULL LIMIT 1",
+                    (pid,),
+                ).fetchone()
+                if arow:
+                    addr = (
+                        arow[0]
+                        if isinstance(arow, (tuple, list))
+                        else (arow["address"] or "")
+                    ).strip()
+            kind = "upload" if action == "document_uploaded" else "resolved"
+            out.append(
+                {
+                    "id": r["id"],
+                    "action": action,
+                    "description": desc,
+                    "created_at": r["created_at"] or "",
+                    "user_name": (r["user_name"] or "").strip() or None,
+                    "property_id": pid,
+                    "property_address": addr or (f"Property #{pid}" if pid is not None else ""),
+                    "kind": kind,
+                }
+            )
+        return out
+    finally:
+        conn.close()
+
+
+@app.route("/api/dashboard-stats")
+@login_required
+def api_dashboard_stats():
+    """
+    Aggregated metrics and lists for the portfolio overview (/overview).
+    """
+    client_name = get_current_client() or ""
+    data = _compute_compliance_snapshot(client_name)
+    if data.get("error"):
+        return (
+            jsonify(
+                {
+                    "error": data["error"],
+                    "details": data.get("details", ""),
+                }
+            ),
+            500,
+        )
+
+    raw = data["_raw"]
+    TYPES = ["gas_safety", "eicr", "epc", "deposit"]
+    total_props = len(raw)
+    required_total = total_props * 4
+    present_required = 0
+    for row in raw:
+        for t in TYPES:
+            st = (row.get(t) or "missing").strip()
+            if st in ("valid", "expiring_soon"):
+                present_required += 1
+    compliance_score_pct = (
+        round(100 * present_required / required_total) if required_total else 0
+    )
+
+    labels = {
+        "gas_safety": "Gas Safety",
+        "eicr": "EICR",
+        "epc": "EPC",
+        "deposit": "Deposit Protection",
+        "other": "Other documents",
+    }
+    category_coverage: list[dict] = []
+    for t in TYPES:
+        c = 0
+        for row in raw:
+            st = (row.get(t) or "missing").strip()
+            if st in ("valid", "expiring_soon"):
+                c += 1
+        category_coverage.append(
+            {
+                "key": t,
+                "label": labels[t],
+                "present": c,
+                "total": total_props,
+            }
+        )
+
+    prop_ids = _dashboard_property_ids_for_client(client_name)
+    conn = get_db()
+    try:
+        other_present = compliance_engine.count_properties_with_other_present(conn, prop_ids)
+    finally:
+        conn.close()
+    category_coverage.append(
+        {
+            "key": "other",
+            "label": labels["other"],
+            "present": other_present,
+            "total": total_props,
+        }
+    )
+
+    total_documents = _dashboard_total_documents(client_name)
+    stats = data["stats"]
+    needs_attention = _build_dashboard_attention_groups(
+        data["actions"], client_name, limit=DASHBOARD_ATTENTION_LIMIT
+    )
+    recent_activity = _fetch_dashboard_recent_activity(client_name, limit=DASHBOARD_ACTIVITY_LIMIT)
+
+    return jsonify(
+        {
+            "total_properties": stats["total_properties"],
+            "total_documents": total_documents,
+            "overdue_actions": stats["overdue_actions"],
+            "compliance_score_pct": compliance_score_pct,
+            "required_present": present_required,
+            "required_total": required_total,
+            "category_coverage": category_coverage,
+            "needs_attention": needs_attention,
+            "recent_activity": recent_activity,
+        }
+    )
 
 
 def _build_compliance_report_data(client_name: str):
@@ -2727,7 +3900,11 @@ def _build_compliance_report_data(client_name: str):
     total_properties = len(raw)
     client_id_for_actions = None
     if client_name:
-        row = query_db("SELECT id FROM clients WHERE name = ? LIMIT 1", (client_name,), one=True)
+        row = query_db(
+            "SELECT id FROM clients WHERE name = ? AND deleted_at IS NULL LIMIT 1",
+            (client_name,),
+            one=True,
+        )
         if row:
             client_id_for_actions = row.get("id")
 
@@ -2767,7 +3944,7 @@ def _build_compliance_report_data(client_name: str):
             if not name or not addr:
                 return None
             res = cur.execute(
-                "SELECT p.id FROM properties p JOIN clients c ON p.client_id = c.id WHERE c.name = ? AND p.address = ? LIMIT 1",
+                "SELECT p.id FROM properties p JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL WHERE c.name = ? AND p.address = ? AND p.deleted_at IS NULL LIMIT 1",
                 (name, addr),
             ).fetchone()
             return res[0] if res else None
@@ -2785,14 +3962,17 @@ def _build_compliance_report_data(client_name: str):
             slug = meta["slug"]
             row = cur.execute(
                 """SELECT d.id FROM documents d JOIN document_types dt ON d.document_type_id = dt.id
-                   WHERE d.property_id = ? AND dt.key = ? ORDER BY COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC LIMIT 1""",
+                   WHERE d.property_id = ? AND dt.key = ? AND d.deleted_at IS NULL ORDER BY COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC LIMIT 1""",
                 (property_id, slug),
             ).fetchone()
             if not row:
                 expiry_cache[key] = (None, None)
                 return None, None
             doc_id = row[0]
-            field_rows = cur.execute("SELECT field_key, field_value FROM document_fields WHERE document_id = ?", (doc_id,)).fetchall()
+            field_rows = cur.execute(
+                "SELECT field_key, field_value FROM document_fields WHERE document_id = ? AND deleted_at IS NULL",
+                (doc_id,),
+            ).fetchall()
             flat_fields = {fr[0]: (fr[1] or "").strip() for fr in field_rows}
             _, expiry_iso, days = get_compliance_status_for_doc(slug, flat_fields)
             expiry_cache[key] = (expiry_iso, days)
@@ -2860,7 +4040,7 @@ def _build_compliance_report_data(client_name: str):
         try:
             cur_act = conn_act.cursor()
             cur_act.execute(
-                "SELECT property_id, comp_type, status, snoozed_until FROM compliance_actions WHERE client_id = ?",
+                "SELECT property_id, comp_type, status, snoozed_until FROM compliance_actions WHERE client_id = ? AND deleted_at IS NULL",
                 (client_id_for_actions,),
             )
             for r in cur_act.fetchall():
@@ -3061,7 +4241,7 @@ def api_compliance_resolve():
     try:
         cur = conn.cursor()
         row = cur.execute(
-            "SELECT client_id FROM properties WHERE id = ?",
+            "SELECT client_id FROM properties WHERE id = ? AND deleted_at IS NULL",
             (property_id,),
         ).fetchone()
         if not row:
@@ -3130,7 +4310,7 @@ def api_compliance_snooze():
     try:
         cur = conn.cursor()
         row = cur.execute(
-            "SELECT client_id FROM properties WHERE id = ?",
+            "SELECT client_id FROM properties WHERE id = ? AND deleted_at IS NULL",
             (property_id,),
         ).fetchone()
         if not row:
@@ -3245,8 +4425,8 @@ def api_chat():
         """
         SELECT COUNT(*) AS n
         FROM properties p
-        JOIN clients c ON p.client_id = c.id
-        WHERE c.name = ?
+        JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+        WHERE c.name = ? AND p.deleted_at IS NULL
         """,
         (client_name,),
         one=True,
@@ -3259,8 +4439,8 @@ def api_chat():
             p.id AS property_id,
             p.address AS property_address
         FROM properties p
-        JOIN clients c ON p.client_id = c.id
-        WHERE c.name = ?
+        JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+        WHERE c.name = ? AND p.deleted_at IS NULL
         ORDER BY p.address
         """,
         (client_name,),
@@ -3316,6 +4496,7 @@ def api_chat():
                 JOIN document_types dt ON d.document_type_id = dt.id
                 WHERE d.property_id = ?
                   AND LOWER(dt.key) = 'tenancy-agreement'
+                  AND d.deleted_at IS NULL
                 """,
                 (prop_id,),
             ).fetchall()
@@ -3335,7 +4516,7 @@ def api_chat():
             latest_id = latest_row["id"] if isinstance(latest_row, sqlite3.Row) else latest_row[0]
 
             field_rows = cur.execute(
-                "SELECT field_key, field_value FROM document_fields WHERE document_id = ?",
+                "SELECT field_key, field_value FROM document_fields WHERE document_id = ? AND deleted_at IS NULL",
                 (latest_id,),
             ).fetchall()
             flat_fields = {
@@ -3383,8 +4564,8 @@ def api_chat():
         SELECT dt.label, COUNT(*) AS count
         FROM documents d
         JOIN document_types dt ON d.document_type_id = dt.id
-        JOIN clients c ON d.client_id = c.id
-        WHERE c.name = ?
+        JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        WHERE c.name = ? AND d.deleted_at IS NULL
         GROUP BY dt.label
         ORDER BY COUNT(*) DESC
         """,
@@ -3440,6 +4621,7 @@ def api_chat():
                 JOIN document_types dt ON d.document_type_id = dt.id
                 WHERE d.property_id = ?
                   AND dt.key = ?
+                  AND d.deleted_at IS NULL
                 ORDER BY COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) DESC
                 LIMIT 1
                 """,
@@ -3451,7 +4633,7 @@ def api_chat():
 
             doc_id = row[0]
             field_rows = cur.execute(
-                "SELECT field_key, field_value FROM document_fields WHERE document_id = ?",
+                "SELECT field_key, field_value FROM document_fields WHERE document_id = ? AND deleted_at IS NULL",
                 (doc_id,),
                 ).fetchall()
             flat_fields = {
@@ -3600,10 +4782,6 @@ def api_chat():
 # ── Run ──────────────────────────────────────────────────────────────────────
 with app.app_context():
     try:
-        cleanup_stale_clients()
-    except Exception as e:
-        print(f"Startup cleanup warning: {e}")
-    try:
         ensure_compliance_actions_table()
     except Exception as e:
         print(f"Startup compliance_actions table warning: {e}")
@@ -3611,6 +4789,34 @@ with app.app_context():
         ensure_activity_log_table()
     except Exception as e:
         print(f"Startup activity_log table warning: {e}")
+    try:
+        ensure_packs_tables()
+    except Exception as e:
+        print(f"Startup packs tables warning: {e}")
+    try:
+        _sd_conn = get_db()
+        try:
+            soft_delete.ensure_deleted_at_schema(_sd_conn)
+            _sd_conn.commit()
+        finally:
+            _sd_conn.close()
+    except Exception as e:
+        print(f"Startup client soft-delete schema warning: {e}")
+    try:
+        cleanup_stale_clients()
+    except Exception as e:
+        print(f"Startup cleanup warning: {e}")
+    try:
+        _pu_conn = get_db()
+        try:
+            _n = soft_delete.purge_expired_soft_deletes(_pu_conn)
+            _pu_conn.commit()
+            if _n:
+                print(f"Purged {_n} soft-deleted client(s) past 30-day retention.")
+        finally:
+            _pu_conn.close()
+    except Exception as e:
+        print(f"Startup soft-delete purge warning: {e}")
 
 if __name__ == "__main__":
     print(f"\n  MorphIQ Portal")
