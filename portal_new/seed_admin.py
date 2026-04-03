@@ -47,7 +47,7 @@ def main() -> None:
     conn = get_connection()
     try:
         # Admin user
-        admin_email = "filip@morphiq.co.uk"
+        admin_email = "admin@yourdomain.com"
         if user_exists(conn, admin_email):
             print(f"Admin user {admin_email} already exists — skipping.")
         else:
@@ -61,7 +61,7 @@ def main() -> None:
                     conn,
                     email=admin_email,
                     password=admin_password,
-                    full_name="Filip",
+                    full_name="Admin",
                     role="admin",
                     client_id=None,
                 )

@@ -42,3 +42,8 @@ node_modules/
 temp/
 test_data/
 debug-*.log
+
+# Internal-only files (not for public repo)
+docs/internal/
+leaver.html
+test_doc_generator/

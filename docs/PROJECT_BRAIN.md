@@ -60,12 +60,12 @@
 
 ## SYSTEM ARCHITECTURE
 
-**Deploy root:** `C:\Users\user\OneDrive - University of East London\Desktop\MorphIQ\Product` (Desktop\MorphIQ\Product, OneDrive-synced). **Batch files** use `%~dp0` (directory of the script), so paths are **relative to the script location**—no hardcoded drive root in `.bat` files; Python resolves `BASE` the same way from each script.
+**Deploy root:** `C:\Projects\MorphIQ\Product`. **Batch files** use `%~dp0` (directory of the script), so paths are **relative to the script location**—no hardcoded drive root in `.bat` files; Python resolves `BASE` the same way from each script.
 
 **Core layout:**
 
 ```
-C:\Users\user\OneDrive - University of East London\Desktop\MorphIQ\Product\
+C:\Projects\MorphIQ\Product\
 ├── auto_ocr_watch.py, server.py, export_client.py, sync_to_portal.py, ai_prefill.py
 ├── scan_station.html, review_station.html, viewer.html
 ├── Start_System_v2.bat, Stop_System.bat, Stop_Watcher.bat, setup_check.bat
@@ -212,7 +212,7 @@ Session plan:
 
 1. MVP-first; letting/property focus; human verification; per-doc pricing; deliverable = Excel + folders + viewer (+ portal for demos).
 2. Capture path: Camo/phone then DSLR acceptable for MVP.
-3. Deploy root is **Desktop\MorphIQ\Product** (full path `C:\Users\user\OneDrive - University of East London\Desktop\MorphIQ\Product`). The legacy ScanSystem_v2 root on `C:\` is stale and abandoned. Batch/scripts use `%~dp0` or script-dir resolution—no hardcoded deploy root in committed `.bat` files.
+3. Deploy root is **Desktop\MorphIQ\Product** (full path `C:\Projects\MorphIQ\Product`). The legacy ScanSystem_v2 root on `C:\` is stale and abandoned. Batch/scripts use `%~dp0` or script-dir resolution—no hardcoded deploy root in committed `.bat` files.
 4. **GitHub:** private repo at the deploy root (`Desktop\MorphIQ\Product`). Old clone at `Documents\GitHub\MorphIQ` is abandoned.
 5. **Secrets:** `ANTHROPIC_API_KEY` (and related) loaded from `.env` only—never hardcoded in committed files.
 6. AI doc-type matching **contains**-based, not exact string equality (see `ai_prefill.py`).
@@ -296,7 +296,7 @@ Session plan:
 | 2026-03-23 | Portal: `/dashboard` full-viewport layout (`portal-main--stack`); compliance hero + **`GET /api/dashboard-stats`** (shared snapshot with `/api/compliance`, other-doc coverage, lists up to 500 rows); `compliance_engine` other-present helper. **Cursor** |
 | 2026-03-22 | Ops: BitLocker; `.env`; `setup_check.bat`; `rerun_prefill.py`; GitHub. Portal: `/ai-chat`; `/dashboard` & `/archive`; overview (attention-by-property, coverage). **Cursor** |
 | 2026-03-21 | `setup_check.bat`: `%~dp0` for `auto_ocr_watch.py` + `Templates\tenancy_agreement.json`; stale `C:\` root removed; fixed parenthesized `if`/`echo` pitfalls (summary line, ImageMagick URL `^#`). **Cursor** |
-| 2026-03-21 | Deploy root set to OneDrive `...\MorphIQ\Product`; bulk test B/C synced (OCR ok, AI prefill skipped, Unknown\|New). **Cursor** |
+| 2026-03-21 | Deploy root set to `C:\Projects\MorphIQ\Product`; bulk test B/C synced (OCR ok, AI prefill skipped, Unknown\|New). **Cursor** |
 | 2026-03-21 | Portal: same-tab archive→document; viewer close (×/Escape) to `#archive`; same-origin PDF + PDF.js fit-page; AI FAB icon-only + partial; no Archive footer brand; `/document/by-id` + client/source match; `imported_at` SQL fix. **`bulk_import.py`:** stdlib stress feeder (`--source`/`--client`, `.bulk_import.json`, `--cleanup`). **Cursor** |
 | 2026-03-20 | Portal: luminous archive shell, compliance History tab, snooze 1–730, `tojson` fixes, dead-code cleanup. |
 | 2026-03-16 | Logo assets; resolve/snooze UX; dashboard Overview/Archive; storage bar removed; FE compliance dedup. |
