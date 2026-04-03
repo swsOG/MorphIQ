@@ -109,13 +109,27 @@ Morph IQ is a local-first document scanning and compliance platform built for UK
 
 ## Screenshots
 
-| Portal Overview | Properties |
-|----------------|------------|
-| ![Portal Overview](docs/screenshots/overview.png) | ![Properties](docs/screenshots/properties.png) |
+**1 — Capture** · ScanStation with live session intelligence. Browse files or use a phone camera via Camo. AI classifies document type and extracts fields automatically after each scan.
 
-| Compliance Matrix | Document Viewer |
-|------------------|----------------|
-| ![Compliance](docs/screenshots/compliance.png) | ![Document View](docs/screenshots/document_view.png) |
+![ScanStation](docs/screenshots/01_scanstation.png)
+
+---
+
+**2 — Verify** · ReviewStation shows AI-extracted fields alongside the scanned PDF. Every required field is pre-filled; the reviewer confirms or corrects before marking Verified.
+
+![ReviewStation](docs/screenshots/02_reviewstation.png)
+
+---
+
+**3 — Compliance** · Portal Properties page. Compliance strip shows live cert status per property. Red = expired, amber = expiring, teal = compliant. Document cards show structured extracted fields.
+
+![Portal Properties](docs/screenshots/03_portal_properties.png)
+
+---
+
+**4 — Documents** · Document grid with type tags, AI PREFILLED trust badges, and extracted key fields inline. Filter by type (Gas, EICR, EPC, Tenancy, Deposit, Inventory) or status.
+
+![Portal Documents](docs/screenshots/04_portal_documents.png)
 
 ---
 
