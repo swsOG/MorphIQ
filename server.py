@@ -47,8 +47,8 @@ from sync_to_portal import sync_portal_for_clients, sync_single_doc
 # CONFIGURATION
 # ──────────────────────────────────────────────
 
-# Filesystem root: same folder as this script (contains Clients/, Templates/) so dev copies
-# work without mirroring C:\ScanSystem_v2. Override with MORPHIQ_BASE or SCANSTATION_BASE.
+# Filesystem root: same folder as this script (contains Clients/, Templates/).
+# Override with MORPHIQ_BASE or SCANSTATION_BASE env vars.
 _base_env = (os.environ.get("MORPHIQ_BASE") or os.environ.get("SCANSTATION_BASE") or "").strip()
 BASE = Path(_base_env).resolve() if _base_env else Path(__file__).resolve().parent
 HOST = "127.0.0.1"  # Localhost only — never exposed to network

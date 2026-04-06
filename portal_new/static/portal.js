@@ -3557,9 +3557,6 @@
                         client: clientName || "",
                     }),
                 };
-                // Debug logging for chat requests to help diagnose 400 errors.
-                console.log("Chat request:", url, options);
-
                 const res = await fetch(url, options);
 
                 let responseText = "";

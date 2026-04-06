@@ -59,7 +59,26 @@
                                 <p class="settings-account-name">{{ user_full_name }}</p>
                                 <span class="settings-role-badge settings-role-{{ user_role }}">{% if user_role == 'admin' %}Admin{% elif user_role == 'manager' %}Manager{% else %}{{ (user_role or 'user')|capitalize }}{% endif %}</span>
                                 <div class="settings-account-actions">
-                                    <button type="button" class="btn-secondary settings-btn-disabled" disabled title="Coming soon">Change password</button>
+                                    <button type="button" class="btn-secondary" id="btn-show-change-password">Change password</button>
+                                </div>
+                            </div>
+                            <div id="change-password-form" class="settings-inline-form" hidden>
+                                <div class="settings-form-row">
+                                    <label class="settings-label" for="cp-current">Current password</label>
+                                    <input type="password" id="cp-current" class="settings-input" autocomplete="current-password">
+                                </div>
+                                <div class="settings-form-row">
+                                    <label class="settings-label" for="cp-new">New password</label>
+                                    <input type="password" id="cp-new" class="settings-input" autocomplete="new-password" placeholder="Min 8 characters">
+                                </div>
+                                <div class="settings-form-row">
+                                    <label class="settings-label" for="cp-confirm">Confirm new password</label>
+                                    <input type="password" id="cp-confirm" class="settings-input" autocomplete="new-password">
+                                </div>
+                                <div id="cp-error" class="settings-form-error" hidden></div>
+                                <div class="settings-form-actions">
+                                    <button type="button" class="btn-primary" id="btn-save-password">Save password</button>
+                                    <button type="button" class="btn-secondary" id="btn-cancel-password">Cancel</button>
                                 </div>
                             </div>
                         </section>
@@ -75,16 +94,49 @@
                                             <th>Name</th>
                                             <th>Email</th>
                                             <th>Role</th>
+                                            <th>Client</th>
                                             <th>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody id="settings-users-tbody">
-                                        <tr><td colspan="4" class="settings-loading">Loading…</td></tr>
+                                        <tr><td colspan="5" class="settings-loading">Loading…</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="settings-section-actions">
-                                <button type="button" class="btn-secondary settings-btn-disabled" disabled title="Coming soon">Invite user</button>
+                                <button type="button" class="btn-secondary" id="btn-show-add-user">Add user</button>
+                            </div>
+                            <div id="add-user-form" class="settings-inline-form" hidden>
+                                <div class="settings-form-row">
+                                    <label class="settings-label" for="au-email">Email</label>
+                                    <input type="email" id="au-email" class="settings-input" autocomplete="off">
+                                </div>
+                                <div class="settings-form-row">
+                                    <label class="settings-label" for="au-name">Full name</label>
+                                    <input type="text" id="au-name" class="settings-input" autocomplete="off">
+                                </div>
+                                <div class="settings-form-row">
+                                    <label class="settings-label" for="au-role">Role</label>
+                                    <select id="au-role" class="settings-select">
+                                        <option value="manager">Manager</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div class="settings-form-row" id="au-client-row">
+                                    <label class="settings-label" for="au-client">Client</label>
+                                    <select id="au-client" class="settings-select">
+                                        <option value="">— Select client —</option>
+                                    </select>
+                                </div>
+                                <div class="settings-form-row">
+                                    <label class="settings-label" for="au-password">Initial password</label>
+                                    <input type="password" id="au-password" class="settings-input" autocomplete="new-password" placeholder="Min 8 characters">
+                                </div>
+                                <div id="au-error" class="settings-form-error" hidden></div>
+                                <div class="settings-form-actions">
+                                    <button type="button" class="btn-primary" id="btn-save-user">Create user</button>
+                                    <button type="button" class="btn-secondary" id="btn-cancel-user">Cancel</button>
+                                </div>
                             </div>
                         </section>
                         {% endif %}
@@ -113,10 +165,10 @@
                         </section>
 
                         {% if is_admin %}
-                        <section class="settings-card settings-card--dark settings-danger" id="settings-manage-clients-section">
+                        <section class="settings-card settings-card--dark" id="settings-manage-clients-section">
                             <h2 class="settings-card-title">Manage clients</h2>
-                            <p class="settings-danger-desc">Remove a client from the portal. Data is retained for 30 days, then permanently deleted.</p>
-                            <div id="settings-client-delete-msg" class="settings-inline-msg" role="status" aria-live="polite" hidden></div>
+                            <p class="settings-card-lead">Agencies with access to the MorphIQ portal.</p>
+                            <div id="settings-client-msg" class="settings-inline-msg" role="status" aria-live="polite" hidden></div>
                             <div class="settings-table-wrap">
                                 <table class="settings-users-table settings-clients-table" id="settings-clients-table">
                                     <thead>
@@ -126,6 +178,37 @@
                                         </tr>
                                     </thead>
                                     <tbody id="settings-clients-tbody">
+                                        <tr><td colspan="2" class="settings-loading">Loading…</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="settings-section-actions">
+                                <button type="button" class="btn-secondary" id="btn-show-add-client">Add client</button>
+                            </div>
+                            <div id="add-client-form" class="settings-inline-form" hidden>
+                                <div class="settings-form-row">
+                                    <label class="settings-label" for="ac-name">Agency name</label>
+                                    <input type="text" id="ac-name" class="settings-input" autocomplete="off" placeholder="e.g. Harlow &amp; Essex Lettings">
+                                </div>
+                                <div id="ac-error" class="settings-form-error" hidden></div>
+                                <div class="settings-form-actions">
+                                    <button type="button" class="btn-primary" id="btn-save-client">Create client</button>
+                                    <button type="button" class="btn-secondary" id="btn-cancel-client">Cancel</button>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="settings-card settings-card--dark settings-danger" id="settings-danger-clients-section">
+                            <h2 class="settings-card-title">Remove clients</h2>
+                            <p class="settings-danger-desc">Data is retained for 30 days after removal, then permanently deleted.</p>
+                            <div class="settings-table-wrap">
+                                <table class="settings-users-table settings-clients-delete-table" id="settings-clients-delete-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Client</th>
+                                            <th class="settings-col-action">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="settings-clients-delete-tbody">
                                         <tr><td colspan="2" class="settings-loading">Loading…</td></tr>
                                     </tbody>
                                 </table>
@@ -278,105 +361,269 @@
         });
     }
 
-    var tbody = document.getElementById('settings-users-tbody');
-    if (tbody && window.MORPHIQ_SETTINGS && window.MORPHIQ_SETTINGS.isAdmin) {
-        fetch('/api/settings/users', { credentials: 'same-origin' })
-            .then(function(r) {
-                if (!r.ok) throw new Error('Forbidden');
-                return r.json();
-            })
-            .then(function(data) {
-                var users = data.users || [];
-                tbody.innerHTML = '';
-                if (users.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="settings-empty">No users found.</td></tr>';
-                } else {
-                    function esc(s) {
-                        if (s == null || s === '') return '—';
-                        var d = document.createElement('div');
-                        d.textContent = s;
-                        return d.innerHTML;
-                    }
-                    users.forEach(function(u) {
-                        var tr = document.createElement('tr');
-                        tr.innerHTML = '<td>' + esc(u.full_name) + '</td><td>' + esc(u.email) + '</td><td>' + esc(u.role) + '</td><td>' + (u.is_active ? 'Active' : 'Inactive') + '</td>';
-                        tbody.appendChild(tr);
-                    });
-                }
-            })
-            .catch(function() {
-                if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="settings-error">Failed to load users.</td></tr>';
-            });
+    function esc(s) {
+        if (s == null || s === '') return '—';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
     }
 
-    var clientsTbody = document.getElementById('settings-clients-tbody');
-    var clientDeleteMsg = document.getElementById('settings-client-delete-msg');
-    function showClientDeleteMsg(text) {
-        if (!clientDeleteMsg) return;
-        clientDeleteMsg.textContent = text;
-        clientDeleteMsg.hidden = false;
-        window.setTimeout(function() {
-            clientDeleteMsg.hidden = true;
-        }, 8000);
+    // ── Users table ────────────────────────────────────────────────────────────
+    var usersTbody = document.getElementById('settings-users-tbody');
+    function loadUsers() {
+        if (!usersTbody || !window.MORPHIQ_SETTINGS || !window.MORPHIQ_SETTINGS.isAdmin) return;
+        fetch('/api/settings/users', { credentials: 'same-origin' })
+            .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+            .then(function(data) {
+                var users = data.users || [];
+                usersTbody.innerHTML = '';
+                if (users.length === 0) {
+                    usersTbody.innerHTML = '<tr><td colspan="5" class="settings-empty">No users found.</td></tr>';
+                    return;
+                }
+                users.forEach(function(u) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML = '<td>' + esc(u.full_name) + '</td>'
+                        + '<td>' + esc(u.email) + '</td>'
+                        + '<td>' + esc(u.role) + '</td>'
+                        + '<td>' + esc(u.client_name) + '</td>'
+                        + '<td>' + (u.is_active ? 'Active' : 'Inactive') + '</td>';
+                    usersTbody.appendChild(tr);
+                });
+            })
+            .catch(function() {
+                if (usersTbody) usersTbody.innerHTML = '<tr><td colspan="5" class="settings-error">Failed to load users.</td></tr>';
+            });
     }
-    function loadClientsForDelete() {
+    loadUsers();
+
+    // ── Add user form ──────────────────────────────────────────────────────────
+    var addUserForm = document.getElementById('add-user-form');
+    var auRoleEl = document.getElementById('au-role');
+    var auClientRow = document.getElementById('au-client-row');
+    var auClientEl = document.getElementById('au-client');
+    var auError = document.getElementById('au-error');
+
+    document.getElementById('btn-show-add-user') && document.getElementById('btn-show-add-user').addEventListener('click', function() {
+        if (addUserForm) addUserForm.hidden = !addUserForm.hidden;
+        if (!addUserForm.hidden) {
+            // populate client dropdown
+            fetch('/api/clients', { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    auClientEl.innerHTML = '<option value="">— Select client —</option>';
+                    (data.clients || []).forEach(function(c) {
+                        var opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.name || ('Client ' + c.id);
+                        auClientEl.appendChild(opt);
+                    });
+                });
+        }
+    });
+
+    if (auRoleEl) auRoleEl.addEventListener('change', function() {
+        if (auClientRow) auClientRow.hidden = auRoleEl.value === 'admin';
+    });
+
+    document.getElementById('btn-cancel-user') && document.getElementById('btn-cancel-user').addEventListener('click', function() {
+        if (addUserForm) addUserForm.hidden = true;
+        if (auError) { auError.hidden = true; auError.textContent = ''; }
+    });
+
+    document.getElementById('btn-save-user') && document.getElementById('btn-save-user').addEventListener('click', function() {
+        var btn = this;
+        var email = (document.getElementById('au-email').value || '').trim();
+        var name = (document.getElementById('au-name').value || '').trim();
+        var role = auRoleEl ? auRoleEl.value : 'manager';
+        var clientId = auClientEl ? (auClientEl.value ? parseInt(auClientEl.value, 10) : null) : null;
+        var password = (document.getElementById('au-password').value || '');
+        if (auError) { auError.hidden = true; auError.textContent = ''; }
+        btn.disabled = true;
+        fetch('/admin/users', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, full_name: name, role: role, client_id: clientId, password: password })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(result) {
+            if (result.ok && result.data.success) {
+                addUserForm.hidden = true;
+                document.getElementById('au-email').value = '';
+                document.getElementById('au-name').value = '';
+                document.getElementById('au-password').value = '';
+                loadUsers();
+            } else {
+                if (auError) { auError.textContent = result.data.error || 'Failed to create user.'; auError.hidden = false; }
+            }
+        })
+        .catch(function() { if (auError) { auError.textContent = 'Request failed.'; auError.hidden = false; } })
+        .finally(function() { btn.disabled = false; });
+    });
+
+    // ── Clients table ──────────────────────────────────────────────────────────
+    var clientsTbody = document.getElementById('settings-clients-tbody');
+    var clientMsg = document.getElementById('settings-client-msg');
+    function showClientMsg(text) {
+        if (!clientMsg) return;
+        clientMsg.textContent = text;
+        clientMsg.hidden = false;
+        window.setTimeout(function() { clientMsg.hidden = true; }, 8000);
+    }
+    function loadClientsTable() {
         if (!clientsTbody || !window.MORPHIQ_SETTINGS || !window.MORPHIQ_SETTINGS.isAdmin) return;
         fetch('/api/clients', { credentials: 'same-origin' })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                var clients = data.clients || [];
                 clientsTbody.innerHTML = '';
-                if (clients.length === 0) {
-                    clientsTbody.innerHTML = '<tr><td colspan="2" class="settings-empty">No clients.</td></tr>';
-                    return;
-                }
-                function esc(s) {
-                    if (s == null || s === '') return '—';
-                    var d = document.createElement('div');
-                    d.textContent = s;
-                    return d.innerHTML;
-                }
-                clients.forEach(function(c) {
-                    var name = c.name || c.slug || ('Client ' + c.id);
+                (data.clients || []).forEach(function(c) {
+                    var name = c.name || ('Client ' + c.id);
                     var tr = document.createElement('tr');
-                    tr.setAttribute('data-client-id', String(c.id));
-                    tr.innerHTML = '<td class="settings-client-name">' + esc(name) + '</td><td class="settings-col-action">'
-                        + '<button type="button" class="btn-secondary settings-btn-delete-client" data-client-id="' + String(c.id) + '">Delete</button></td>';
+                    tr.innerHTML = '<td>' + esc(name) + '</td><td>—</td>';
                     clientsTbody.appendChild(tr);
                 });
-                clientsTbody.querySelectorAll('.settings-btn-delete-client').forEach(function(btn) {
+                if (clientsTbody.children.length === 0)
+                    clientsTbody.innerHTML = '<tr><td colspan="2" class="settings-empty">No clients.</td></tr>';
+            })
+            .catch(function() { if (clientsTbody) clientsTbody.innerHTML = '<tr><td colspan="2" class="settings-error">Failed to load.</td></tr>'; });
+    }
+    loadClientsTable();
+
+    // ── Add client form ────────────────────────────────────────────────────────
+    var addClientForm = document.getElementById('add-client-form');
+    var acNameEl = document.getElementById('ac-name');
+    var acError = document.getElementById('ac-error');
+
+    document.getElementById('btn-show-add-client') && document.getElementById('btn-show-add-client').addEventListener('click', function() {
+        if (addClientForm) addClientForm.hidden = !addClientForm.hidden;
+    });
+    document.getElementById('btn-cancel-client') && document.getElementById('btn-cancel-client').addEventListener('click', function() {
+        if (addClientForm) addClientForm.hidden = true;
+        if (acError) { acError.hidden = true; acError.textContent = ''; }
+        if (acNameEl) acNameEl.value = '';
+    });
+    document.getElementById('btn-save-client') && document.getElementById('btn-save-client').addEventListener('click', function() {
+        var btn = this;
+        var name = (acNameEl ? acNameEl.value : '').trim();
+        if (acError) { acError.hidden = true; acError.textContent = ''; }
+        btn.disabled = true;
+        fetch('/admin/clients', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(result) {
+            if (result.ok && result.data.success) {
+                addClientForm.hidden = true;
+                if (acNameEl) acNameEl.value = '';
+                loadClientsTable();
+                showClientMsg(result.data.name + ' created.');
+                // refresh default client dropdown too
+                if (defaultClientEl) {
+                    var opt = document.createElement('option');
+                    opt.value = result.data.name;
+                    opt.textContent = result.data.name;
+                    defaultClientEl.appendChild(opt);
+                }
+            } else {
+                if (acError) { acError.textContent = result.data.error || 'Failed to create client.'; acError.hidden = false; }
+            }
+        })
+        .catch(function() { if (acError) { acError.textContent = 'Request failed.'; acError.hidden = false; } })
+        .finally(function() { btn.disabled = false; });
+    });
+
+    // ── Delete client table ────────────────────────────────────────────────────
+    var clientsDeleteTbody = document.getElementById('settings-clients-delete-tbody');
+    function loadClientsForDelete() {
+        if (!clientsDeleteTbody || !window.MORPHIQ_SETTINGS || !window.MORPHIQ_SETTINGS.isAdmin) return;
+        fetch('/api/clients', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var clients = data.clients || [];
+                clientsDeleteTbody.innerHTML = '';
+                if (clients.length === 0) {
+                    clientsDeleteTbody.innerHTML = '<tr><td colspan="2" class="settings-empty">No clients.</td></tr>';
+                    return;
+                }
+                clients.forEach(function(c) {
+                    var name = c.name || ('Client ' + c.id);
+                    var tr = document.createElement('tr');
+                    tr.setAttribute('data-client-id', String(c.id));
+                    tr.innerHTML = '<td class="settings-client-name">' + esc(name) + '</td>'
+                        + '<td class="settings-col-action"><button type="button" class="btn-secondary settings-btn-delete-client" data-client-id="' + c.id + '">Remove</button></td>';
+                    clientsDeleteTbody.appendChild(tr);
+                });
+                clientsDeleteTbody.querySelectorAll('.settings-btn-delete-client').forEach(function(btn) {
                     btn.addEventListener('click', function() {
                         var row = btn.closest('tr');
-                        var cname = row && row.querySelector('.settings-client-name') ? row.querySelector('.settings-client-name').textContent.trim() : 'this client';
+                        var cname = row ? row.querySelector('.settings-client-name').textContent.trim() : 'this client';
                         var cid = btn.getAttribute('data-client-id');
-                        if (!confirm('Are you sure you want to delete ' + cname + '? This cannot be undone for 30 days.')) return;
+                        if (!confirm('Remove ' + cname + '? Data kept for 30 days then permanently deleted.')) return;
                         btn.disabled = true;
                         fetch('/admin/delete-client/' + encodeURIComponent(cid), { method: 'POST', credentials: 'same-origin' })
                             .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
                             .then(function(result) {
                                 if (result.ok && result.data.success) {
-                                    var goneName = (result.data.name || cname);
                                     if (row) row.remove();
-                                    if (defaultClientEl) {
-                                        Array.prototype.forEach.call(defaultClientEl.options, function(opt) {
-                                            if (opt.value === goneName) opt.remove();
-                                        });
-                                    }
-                                    showClientDeleteMsg(goneName + ' deleted. Will be permanently removed in 30 days.');
+                                    loadClientsTable();
                                 } else {
                                     alert((result.data && result.data.error) || 'Delete failed.');
+                                    btn.disabled = false;
                                 }
                             })
-                            .catch(function() { alert('Request failed.'); })
-                            .finally(function() { btn.disabled = false; });
+                            .catch(function() { alert('Request failed.'); btn.disabled = false; });
                     });
                 });
             })
-            .catch(function() {
-                if (clientsTbody) clientsTbody.innerHTML = '<tr><td colspan="2" class="settings-error">Failed to load clients.</td></tr>';
-            });
+            .catch(function() { if (clientsDeleteTbody) clientsDeleteTbody.innerHTML = '<tr><td colspan="2" class="settings-error">Failed to load.</td></tr>'; });
     }
     loadClientsForDelete();
+
+    // ── Change password ────────────────────────────────────────────────────────
+    var cpForm = document.getElementById('change-password-form');
+    var cpError = document.getElementById('cp-error');
+    document.getElementById('btn-show-change-password') && document.getElementById('btn-show-change-password').addEventListener('click', function() {
+        if (cpForm) cpForm.hidden = !cpForm.hidden;
+    });
+    document.getElementById('btn-cancel-password') && document.getElementById('btn-cancel-password').addEventListener('click', function() {
+        if (cpForm) cpForm.hidden = true;
+        if (cpError) { cpError.hidden = true; cpError.textContent = ''; }
+        ['cp-current','cp-new','cp-confirm'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    });
+    document.getElementById('btn-save-password') && document.getElementById('btn-save-password').addEventListener('click', function() {
+        var btn = this;
+        var current = document.getElementById('cp-current').value || '';
+        var newPw = (document.getElementById('cp-new').value || '').trim();
+        var confirm = (document.getElementById('cp-confirm').value || '').trim();
+        if (cpError) { cpError.hidden = true; cpError.textContent = ''; }
+        if (newPw !== confirm) {
+            if (cpError) { cpError.textContent = 'New passwords do not match.'; cpError.hidden = false; }
+            return;
+        }
+        btn.disabled = true;
+        fetch('/api/settings/password', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ current_password: current, new_password: newPw })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(result) {
+            if (result.ok && result.data.success) {
+                if (cpForm) cpForm.hidden = true;
+                ['cp-current','cp-new','cp-confirm'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+                alert('Password changed successfully.');
+            } else {
+                if (cpError) { cpError.textContent = result.data.error || 'Failed to change password.'; cpError.hidden = false; }
+            }
+        })
+        .catch(function() { if (cpError) { cpError.textContent = 'Request failed.'; cpError.hidden = false; } })
+        .finally(function() { btn.disabled = false; });
+    });
 
     var clearResolvedBtn = document.getElementById('settings-clear-resolved');
     if (clearResolvedBtn) {

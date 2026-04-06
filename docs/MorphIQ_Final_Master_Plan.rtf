@@ -1,0 +1,283 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Calibri;}{\f1 Arial;}}
+\viewkind4\uc1\pard\sa120\sl276\slmult1\f0\fs22
+\pard\qc\sa240\b\f1\fs34 MorphIQ Final Master Plan\b0\par
+\pard\qc\sa180\i\fs24 Execution plan to take MorphIQ from current audited state to a production-ready platform for five letting agencies\i0\par
+\pard\sa120\fs22 Prepared on 6 April 2026 for the MorphIQ Product project.\par
+\pard\sa120\fs22 This document combines the diagnostic audit summary, target operating model, execution roadmap, technical checklist, security checklist, client onboarding checklist, launch checklist, and definition of done so the remaining work can be executed systematically.\par
+\pard\sa160\b\f1\fs28 1. Executive Summary\b0\par
+\pard\sa120\fs22 I completed a read-only diagnostic audit of the current MorphIQ codebase, portal, database, authentication layer, pipeline components, templates, issue markers, and git state. I verified that the project root is Desktop\\\\MorphIQ\\\\Product, that portal.db and .env both exist, that the portal Flask app is live in portal_new/app.py, that the scan pipeline files exist, and that the project is already beyond prototype stage.\par
+\pard\sa120\fs22 The audit confirmed that the current database contains 17 clients, 218 properties, 460 documents, 1614 document fields, 2 users, 1 pack, and 24 compliance actions. Authentication is implemented using Flask-Login, with a users table, login and logout routes, a current-client helper, and login protection on most routes. The pipeline integration from auto_ocr_watch.py into sync_to_portal.py is present, which means the OCR to AI prefill to portal sync flow is structurally connected.\par
+\pard\sa120\fs22 The same audit also found important gaps that must be closed before client onboarding and production launch: some sensitive routes are not fully protected, some mutations are not fully tenant-scoped, there are legacy path references to C:\\\\ScanSystem_v2 in a few places, there is leftover debug logging, there are duplicate or stale templates, and the current architecture is not yet packaged as a production-grade platform with agency isolation, operational controls, backups, monitoring, deployment automation, and client support processes.\par
+\pard\sa120\fs22 The target state for this master plan is a platform that can support five separate letting agencies, where each client has isolated access to its own data and users, no client can ever access another client's data, and super-admin users can access all clients in a controlled and auditable way. The platform must work both locally on Windows for operations and on a Hetzner VPS for production.\par
+\pard\sa120\fs22 This master plan assumes a go-live standard where a real customer can be onboarded without manual firefighting. That means the system must be secure, testable, recoverable, documented, observable, backed up, and operationally supportable, not just coded.\par
+\pard\sa160\b\f1\fs28 2. Summary Of What I Audited\b0\par
+\pard\sa120\b\fs24 2.1 File structure and environment\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Confirmed project root contains the portal app, scanning pipeline scripts, SQLite database, docs, clients folder, templates, and operational batch files.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Confirmed portal.db exists in the Product root.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Confirmed .env exists in the Product root.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Confirmed portal_new contains app.py, compliance_engine.py, soft_delete.py, migration utilities, templates, static assets, and some duplicate or legacy-looking portal assets under portal_new/portal/.\par
+\pard\sa120\b\fs24 2.2 Database audit\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified tables: activity_log, clients, compliance_actions, compliance_records, document_fields, document_types, documents, pack_documents, packs, properties, tenants, users.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified users table exists with role and client_id fields.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified Harlow & Essex Lettings exists with 7 properties and 38 documents.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified current data shape is already client-oriented, but not yet production-grade from an isolation and administration perspective.\par
+\pard\sa120\b\fs24 2.3 Authentication and route audit\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified Flask-Login is imported and configured.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified a User class exists and users are loaded from the database.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified login and logout routes exist.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified most portal and API routes are protected with login_required.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Found access-control gaps: some PDF-serving routes are public, some destructive or state-changing routes do not fully enforce admin or tenant boundaries.\par
+\pard\sa120\b\fs24 2.4 Pipeline audit\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified auto_ocr_watch.py imports sync_single_doc from sync_to_portal.py.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified ai_prefill.py supports Tenancy Agreement, Gas Safety Certificate, EICR, EPC, Deposit Protection Certificate, and Inventory.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified ai_prefill.py currently hardcodes the Claude model name.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified server.py exists and runs on port 8765.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verified compliance_engine.py tracks gas safety, EICR, EPC, and deposit compliance types.\par
+\pard\sa120\b\fs24 2.5 Issues scan\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Found TODO placeholder in overview packs section.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Found legacy C:\\\\ScanSystem_v2 references in import_fields.py and setup documentation.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Found debug logging in the AI chat route and Flask debug mode enabled in portal_new/app.py when run directly.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Found architectural documentation still referring to future PostgreSQL scaling.\par
+\pard\sa160\b\f1\fs28 3. Target End State\b0\par
+\pard\sa120\fs22 MorphIQ will be a production-ready document scanning and compliance platform for five letting agencies, deployed on a Hetzner VPS, with a secure admin model, a documented local operations mode, and a controlled onboarding process for new agencies.\par
+\pard\sa120\b\fs24 3.1 Business and operational target\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Each agency has its own login area, its own users, and data isolation that prevents cross-client access.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Super-admin users can view and manage all agencies from a controlled admin layer.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab The system supports scanning, OCR, AI extraction, human review, sync to portal, compliance reporting, property packs, and agency-level reporting.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab The system has documented onboarding, backups, recovery, support, monitoring, and release management.\par
+\pard\sa120\b\fs24 3.2 Technical target\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Production application runs on Hetzner behind a reverse proxy with HTTPS.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Production database is organized by client and designed to prevent client data crossover.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Authentication, authorization, audit logging, password handling, and session security are fully implemented and tested.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Critical flows are covered by automated and manual test suites.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Deployment, rollback, backup, restore, and environment configuration are documented and repeatable.\par
+\pard\sa160\b\f1\fs28 4. Required Architecture Decisions\b0\par
+\pard\sa120\fs22 Because the target is five agencies with strict separation and reliable administration, the architecture must be deliberately defined before feature finishing begins. The recommended architecture is below.\par
+\pard\sa120\b\fs24 4.1 Recommended production model\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Use one production MorphIQ application deployment on Hetzner.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Use one central application codebase and one central admin control plane.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Use one database server technology that supports production operations cleanly. Recommended: PostgreSQL for production, while keeping SQLite only for local development or transitional tooling if needed.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Implement client isolation at the application, query, service, and admin layers using a mandatory client or tenant boundary model.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Every agency user belongs to exactly one client tenant. Every business record belongs to exactly one client tenant. Every agency-facing query must be automatically constrained to that tenant.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Super-admin users can switch client context, but every admin action must still be logged with actor, timestamp, client, route, and action type.\par
+\pard\sa120\b\fs24 4.2 Why this is the recommended model\b0\par
+\pard\sa120\fs22 The current project already behaves like a client-oriented multi-tenant application, even though some parts of the data model and route protection still need tightening. Running five separate code deployments and five separate operational stacks would make support, release management, and upgrades heavier. A single secured platform with strict tenant isolation and role-based access is the most practical route for finishing the product cleanly and operating it on your Hetzner VPS.\par
+\pard\sa120\b\fs24 4.3 Non-negotiable security rules\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab No agency user can query, download, mutate, export, or infer another agency's data.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab All document, property, compliance, pack, report, and activity endpoints must enforce tenant scope server-side.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab All admin-only actions must require explicit admin role checks.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab All PDF and file-serving routes must be authenticated and tenant-checked.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Passwords must be stored only as secure hashes and managed by a proper reset flow.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab All secrets must be environment-managed and never hardcoded.\par
+\pard\sa160\b\f1\fs28 5. Master Workstreams\b0\par
+\pard\sa120\fs22 The rest of the project should be executed as eight workstreams. Each workstream must be completed to exit criteria before the next go-live milestone.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Workstream A: architecture and deployment foundation.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Workstream B: data model and tenant isolation.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Workstream C: authentication, authorization, and security.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Workstream D: core portal completion.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Workstream E: pipeline and operational workflow.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Workstream F: testing and quality assurance.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Workstream G: production readiness and observability.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Workstream H: client onboarding and commercial operations.\par
+\pard\sa160\b\f1\fs28 6. Phased Delivery Roadmap\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Phase 0: Freeze scope, create the delivery board, classify every item as blocker, must-have, should-have, or post-launch, and lock staging and production success criteria.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Phase 1: Secure the platform by fixing auth gaps, tenant gaps, public file routes, destructive route permissions, debug logging, and startup validation.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Phase 2: Normalize the data and user model by finalizing tenant ownership rules, user roles, password reset flow, migrations, and seed data.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Phase 3: Finish the portal and operator workflow by completing active pages, removing stale pages, and validating user journeys.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Phase 4: Productionize the pipeline by validating scan, OCR, AI prefill, review, sync, retries, duplicate handling, and failure paths.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Phase 5: Build the hosting, deployment, and support layer on Hetzner with reverse proxy, HTTPS, process management, backups, restore tests, and monitoring.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Phase 6: Run internal UAT and one controlled pilot onboarding before wider launch.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Phase 7: Launch the five-agency offering only after all quality gates are signed off.\par
+\pard\sa160\b\f1\fs28 7. Final Execution Checklist\b0\par
+\pard\sa120\fs22 This is the single execution checklist to work through. Nothing should be considered complete until each item is signed off.\par
+\pard\sa120\b\fs24 7.1 Project control and planning\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create one master tracker with columns: item, owner, environment, priority, status, blocker, evidence, sign-off date.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Map every finding from this audit into a tracker item.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Define staging exit criteria, production exit criteria, and pilot exit criteria.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Freeze non-essential feature ideas until launch-critical work is complete.\par
+\pard\sa120\b\fs24 7.2 Environment and infrastructure\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create local, staging, and production environment definitions.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Document all required environment variables for portal, pipeline, database, email, AI, and file storage.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Set up Hetzner VPS base hardening: OS updates, firewall, fail2ban or equivalent, non-root deployment user, SSH key-only access, time sync, and log rotation.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Set up reverse proxy with HTTPS and automatic certificate renewal.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Set up process management for portal app, API server, background jobs, and scheduled tasks.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Set up staging deployment separate from production.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create deployment script or pipeline with rollback procedure.\par
+\pard\sa120\b\fs24 7.3 Database architecture and migrations\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Choose final production database engine. Recommended: PostgreSQL for production.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Design final schema ownership model so each table either has client_id directly or is linked safely through owned parent records.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Review all current tables and add missing tenancy fields or constraints where required.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add foreign keys, indexes, uniqueness rules, and not-null constraints required for production integrity.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create migration scripts for schema setup and future upgrades.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create seed scripts for super-admin user, demo client, and role defaults.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create backup job and test restore into a clean environment.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create data retention and deletion policy for client offboarding.\par
+\pard\sa120\b\fs24 7.4 Authentication and authorization\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Define final roles: super_admin, internal_admin, client_manager, optional reviewer, optional read_only.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Ensure every user record is role-based and client-scoped where appropriate.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Audit every route and service for login_required coverage.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Audit every route and service for role checks on admin-only actions.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Audit every route and service for tenant checks on read, write, export, and download actions.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Lock down PDF and file-serving endpoints so they require authentication and tenant validation.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add secure password hashing review, login throttling or rate limiting, session timeout, secure cookie settings, CSRF protection where needed, and logout hardening.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Implement forgot-password and reset-password flow with email delivery and expiry tokens.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add admin user management screen or script for creating client users safely.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add login and admin action audit logging.\par
+\pard\sa120\b\fs24 7.5 Tenant isolation and client security\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create one authoritative helper or service layer for resolving current tenant context.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Remove any route-level shortcuts that query by raw ID without verifying tenant ownership.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verify document, property, compliance, packs, reports, activity, and chat endpoints all inherit tenant scope.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Verify client switching is available only to authorized admins and is recorded in logs.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add tests for cross-tenant access attempts on every sensitive endpoint.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add export and download protections so filenames, URLs, and object paths do not leak other clients' data.\par
+\pard\sa120\b\fs24 7.6 Portal completion\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Identify which templates are active and which are stale or duplicate.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Remove or archive unused templates and duplicate portal assets after confirming no route depends on them.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Finish packs page, including creation, listing, adding docs, reordering, export ZIP, and export PDF.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Finish reports page and confirm filters, exports, and compliance summaries are accurate.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Finish settings page, especially user management and notification preferences.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Resolve activity page routing so the intended activity experience is clear and not duplicated.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Review AI chat page, its data access scope, prompt rules, and failure handling.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Remove placeholder or sample UI content before launch.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Check all pages for mobile and desktop usability.\par
+\pard\sa120\b\fs24 7.7 Scanning and document pipeline\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Document the complete operational file layout for ScanStation, OCR watcher, AI prefill, review station, export, and portal sync.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Remove remaining legacy base-path assumptions and replace them with explicit environment-driven configuration.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate scan ingestion on clean sample batches for all supported document types.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate OCR quality thresholds, failure states, and retry behavior.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate AI prefill for each supported document type and unsupported-document fallback behavior.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate review workflow and review.json persistence.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate sync_single_doc and full sync jobs for insert, update, duplicate rerun, moved property, deleted client, and missing file scenarios.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Ensure pipeline events create useful logs for support and troubleshooting.\par
+\pard\sa120\b\fs24 7.8 Compliance engine and reporting\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Define the exact compliance rules by document type, required fields, expiry rules, and warning windows.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Review gas safety, EICR, EPC, and deposit rule logic for legal correctness and business expectations.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate compliance calculations against hand-checked sample data.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Ensure resolved and snoozed compliance actions remain tenant-safe and role-appropriate.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add reporting outputs for property-level and client-level compliance summaries.\par
+\pard\sa120\b\fs24 7.9 Data quality and client onboarding data\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Clean current client records, test records, junk records, and placeholder clients from the production candidate dataset.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Define required minimum fields for client, property, document, and user records.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create import or onboarding process for new agencies, users, properties, and initial documents.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Define naming conventions for clients, properties, batches, doc IDs, and exports.\par
+\pard\sa120\b\fs24 7.10 Secrets and configuration\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Move all secrets to environment variables or a secrets manager workflow.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Remove any development fallback secrets from production configuration.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add startup checks that fail fast when required configuration is missing.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create separate local, staging, and production env templates.\par
+\pard\sa120\b\fs24 7.11 Logging, monitoring, and supportability\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Replace ad-hoc debug prints with structured logging.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create consistent log categories for auth, pipeline, sync, compliance, exports, and admin actions.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add error monitoring and uptime monitoring.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Add health check endpoints for portal app and API server.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create log retention policy and storage location.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create operational dashboard or simple support checklist for daily system health checks.\par
+\pard\sa120\b\fs24 7.12 Testing\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create unit tests for auth helpers, tenant filters, compliance logic, and utility functions.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create integration tests for login, property or document access, PDF serving, packs, reports, and compliance actions.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create end-to-end test script for scan to portal flow.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create regression checklist for each release.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create security test cases for cross-tenant access, broken object access, unauthenticated routes, weak password reset, and session misuse.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Run full manual UAT on staging with real-world scenarios.\par
+\pard\sa120\b\fs24 7.13 Documentation and runbooks\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Update setup guide so it reflects the current project structure and not old ScanSystem_v2 assumptions.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create operator guide for scanning team.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create reviewer guide for ReviewStation usage.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create admin guide for user creation, client onboarding, support, and reporting.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create backup and restore runbook.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create incident response and rollback runbook.\par
+\pard\sa120\b\fs24 7.14 Pre-launch cleanup\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Remove stale code paths, duplicate templates, obsolete docs, and placeholder content.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Remove debug logs and development-only settings.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Confirm git branch is clean and tagged for release.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create release notes and version baseline.\par
+\pard\sa160\b\f1\fs28 8. Client Isolation Model\b0\par
+\pard\sa120\fs22 The platform must treat client isolation as a core invariant, not a UI preference. The following model must be implemented and tested before any agency launch.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Each agency has one client record and one or more agency users attached only to that client.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Every property belongs to one client.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Every document belongs to one client and, where applicable, one property.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Every compliance record and pack belongs to one client, directly or indirectly through owned records.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Every agency-facing query must derive its scope from authenticated user context, never from trusting user-supplied IDs alone.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Admins can view all clients, but every admin view must still be explicit about which client is being viewed or changed.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Audit logs must record actor, role, client context, entity type, entity ID, timestamp, and action.\par
+\pard\sa160\b\f1\fs28 9. User and Login Model\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Super admin: full cross-client access, client switching, user creation, destructive maintenance, exports, and audit review.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Internal admin: internal support and operations role with controlled permissions defined by policy.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Client manager: can manage only their agency's data and users according to granted permissions.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Reviewer: can verify documents and review compliance for their agency only if this role is required operationally.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Read-only user: can view agency information but cannot mutate records if this role is needed for some agencies.\par
+\pard\sa120\fs22 Each of the five agencies should have at minimum one primary client manager account and one backup admin-approved contact account. You should also maintain at least one emergency internal super-admin account outside normal daily use.\par
+\pard\sa160\b\f1\fs28 10. Five-Agency Launch Preparation Checklist\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create the five client records with final production names and slugs.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create initial client manager users for each agency.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create password reset invitations or first-login setup process.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Load or import each agency's property portfolio.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate agency-specific branding or labels if required.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate each agency can log in and only see its own properties, documents, packs, activity, and reports.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate admin can switch into each agency context and back out safely.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate one full document lifecycle for each agency using representative sample documents.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Validate export outputs and downloads for each agency.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Provide each agency with login instructions, support contact, and issue reporting process.\par
+\pard\sa160\b\f1\fs28 11. Hetzner VPS Production Build Checklist\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Provision VPS with stable OS, firewall, deployment user, SSH key access, and patching policy.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Install Python runtime, database engine, reverse proxy, SSL tooling, and process manager.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create application directory structure for releases, shared config, logs, backups, and uploads.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Deploy application code to staging first, then production.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Configure environment variables and secret files securely.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Configure reverse proxy routes for portal and API endpoints.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Enable HTTPS and redirect HTTP to HTTPS.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Configure service auto-start on reboot.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Configure scheduled backups for database and critical documents.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Run restore test from backup before onboarding any customer.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Configure monitoring alerts for downtime, disk space, certificate expiry, and backup failures.\par
+\pard\sa160\b\f1\fs28 12. Local Operations Checklist\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Document exact Windows setup for scanning operators.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Document how local scan batches are created, named, processed, reviewed, and synced.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Ensure local setup does not depend on outdated hardcoded root paths.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create quick health-check script for local operators.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Create issue escalation guide for OCR failure, AI failure, sync failure, and portal access failure.\par
+\pard\sa160\b\f1\fs28 13. Quality Gates\b0\par
+\pard\sa120\b\fs24 13.1 Security gate\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab No unauthenticated access to protected data or files.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab No cross-tenant access path found in tests.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Admin-only actions require admin role and are audited.\par
+\pard\sa120\b\fs24 13.2 Data gate\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Migrations run cleanly on fresh and existing environments.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Backups and restores are proven.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Sample onboarding and data imports run without manual database surgery.\par
+\pard\sa120\b\fs24 13.3 Functional gate\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Core portal flows pass: login, property browsing, document viewing, PDF viewing, packs, compliance, reports, settings, activity, AI chat.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Core pipeline flows pass: scan, OCR, AI prefill, review, sync, portal visibility.\par
+\pard\sa120\b\fs24 13.4 Operational gate\b0\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Deployment is repeatable.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Rollback is documented and tested.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Monitoring and alerts are live.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Runbooks exist and are usable by someone other than the original builder.\par
+\pard\sa160\b\f1\fs28 14. Definition Of Done\b0\par
+\pard\sa120\fs22 MorphIQ should only be considered finished for launch when all of the following are true.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab A new client can be onboarded without code edits or database hand-fixing.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Each agency user can access only their own tenant data.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Admins can manage all agencies safely through audited controls.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab The scan-to-portal workflow works end to end for all supported document types.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab The portal pages are complete, current, and free from placeholder content or stale duplicates.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab All production secrets, backups, monitoring, deployment, and restore procedures are implemented.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Automated tests and manual UAT pass on staging.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab Pilot onboarding succeeds for at least one real or realistic client account before full rollout.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab You can confidently invite a letting agency customer into the platform without warning them about unfinished features or manual workarounds.\par
+\pard\sa160\b\f1\fs28 15. Immediate Next Actions\b0\par
+\pard\sa120\fs22 Use these as the next execution sequence once you reopen development.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 1. Convert this document into backlog tickets grouped by the eight workstreams.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 2. Start with the security and tenant-isolation fixes found in the audit.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 3. Decide and lock the production database strategy for Hetzner.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 4. Build staging and production infrastructure before late-stage feature work expands further.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 5. Run one full hardening pass on auth, downloads, destructive routes, and admin controls.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 6. Finish the portal gaps and remove stale assets or templates.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 7. Stabilize and test the full scan-to-portal pipeline against representative agency data.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 8. Build backups, monitoring, deployment, and restore tests.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 9. Prepare one pilot agency onboarding pack and execute it end to end.\par
+\pard\li360\fi-180\sa80\fs22 \'95\tab 10. Only after pilot sign-off, onboard the remaining agencies.\par
+\pard\sa160\b\f1\fs28 16. Closing Assessment\b0\par
+\pard\sa120\fs22 MorphIQ is already far enough along that this should be treated as a finishing and productionization project, not a greenfield rebuild. The platform has genuine assets in place: a portal, authentication base, pipeline components, a working client-oriented data model, and live business data patterns. The correct path now is disciplined hardening, completion, cleanup, hosting, and operations design. If this plan is executed in order, you will end with a platform that is not only feature-complete, but safe to run for real agencies on your Hetzner VPS and practical to support day to day.\par
+}
+

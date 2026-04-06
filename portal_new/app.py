@@ -30,7 +30,7 @@ from flask_login import (
     login_required,
     current_user,
 )
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 # Import compliance engine in a way that works both when this file is executed
 # as a script (python portal_new/app.py) and when imported as a package
@@ -44,7 +44,7 @@ except ImportError:
 
 # ── Config ───────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_URL = os.environ.get("DATABASE_URL", os.path.join(BASE_DIR, "..", "portal.db"))
+DATABASE_URL = os.environ.get("DATABASE_URL", os.path.normpath(os.path.join(BASE_DIR, "..", "portal.db")))
 
 
 def get_clients_dir() -> str:
@@ -53,7 +53,7 @@ def get_clients_dir() -> str:
 
     Priority:
       1. MORPHIQ_CLIENTS_DIR — path to Clients (or set it to .../Clients)
-      2. BASE_DIR/Clients — e.g. C:\\ScanSystem_v2 when BASE_DIR is set
+      2. BASE_DIR/Clients — relative to the project root when BASE_DIR is set
       3. dirname(portal.db)/Clients — repo/project root when DATABASE_URL is default
     """
     explicit = (os.environ.get("MORPHIQ_CLIENTS_DIR") or "").strip()
@@ -1213,8 +1213,27 @@ def ai_chat_page():
 
 
 @app.route("/pdf/<path:pdf_path>")
+@login_required
 def serve_pdf(pdf_path):
     """Serve a PDF file from the filesystem (legacy path-based route)."""
+    # Resolve the tenant scope before serving anything.
+    doc = query_db(
+        """
+        SELECT c.name AS client_name
+        FROM documents d
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        WHERE d.pdf_path = ? AND d.deleted_at IS NULL
+        """,
+        (pdf_path,),
+        one=True,
+    )
+    if not doc:
+        abort(404, description="PDF not found")
+
+    client_scope = get_current_client() or ""
+    if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
+        abort(404, description="PDF not found")
+
     candidates = [
         pdf_path,
         os.path.join(BASE_DIR, "..", pdf_path),
@@ -1226,17 +1245,27 @@ def serve_pdf(pdf_path):
 
 
 @app.route("/pdf-by-id/<source_doc_id>")
+@login_required
 def serve_pdf_by_id(source_doc_id: str):
     """
     Serve a PDF by looking up its path in portal.db using source_doc_id.
     This avoids fragile URL-encoding of full Windows paths.
     """
     doc = query_db(
-        "SELECT pdf_path FROM documents WHERE source_doc_id = ? AND deleted_at IS NULL",
+        """
+        SELECT d.pdf_path, c.name AS client_name
+        FROM documents d
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        WHERE d.source_doc_id = ? AND d.deleted_at IS NULL
+        """,
         (source_doc_id,),
         one=True,
     )
     if not doc:
+        abort(404, description="Document not found")
+
+    client_scope = get_current_client() or ""
+    if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
         abort(404, description="Document not found")
 
     raw_path = (doc.get("pdf_path") or "").strip()
@@ -1532,10 +1561,12 @@ def api_settings_users():
         return jsonify({"error": "Forbidden"}), 403
     users = query_db(
         """
-        SELECT id, email, full_name, role, is_active
-        FROM users
-        WHERE deleted_at IS NULL
-        ORDER BY full_name, email
+        SELECT u.id, u.email, u.full_name, u.role, u.is_active,
+               u.client_id, c.name AS client_name
+        FROM users u
+        LEFT JOIN clients c ON u.client_id = c.id AND c.deleted_at IS NULL
+        WHERE u.deleted_at IS NULL
+        ORDER BY u.full_name, u.email
         """
     )
     return jsonify({"users": users})
@@ -1694,6 +1725,115 @@ def admin_soft_delete_client(client_id: int):
             "message": f'"{name}" is scheduled for permanent removal in 30 days.',
         }
     )
+
+
+@app.route("/admin/clients", methods=["POST"])
+@login_required
+def admin_create_client():
+    """Create a new client. Admin only."""
+    if getattr(current_user, "role", None) != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "Client name is required"}), 400
+    conn = get_db()
+    try:
+        existing = conn.execute(
+            "SELECT id FROM clients WHERE LOWER(name) = LOWER(?) AND deleted_at IS NULL",
+            (name,),
+        ).fetchone()
+        if existing:
+            return jsonify({"error": "A client with this name already exists"}), 409
+        cur = conn.execute("INSERT INTO clients (name) VALUES (?)", (name,))
+        conn.commit()
+        return jsonify({"success": True, "id": cur.lastrowid, "name": name}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/admin/users", methods=["POST"])
+@login_required
+def admin_create_user():
+    """Create a new portal user. Admin only."""
+    if getattr(current_user, "role", None) != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    full_name = (data.get("full_name") or "").strip()
+    role = (data.get("role") or "manager").strip()
+    client_id = data.get("client_id") or None
+    password = data.get("password") or ""
+
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+    if role not in ("admin", "manager"):
+        return jsonify({"error": "Invalid role — must be admin or manager"}), 400
+    if len(password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters"}), 400
+    if role == "manager" and not client_id:
+        return jsonify({"error": "Manager users must be assigned to a client"}), 400
+
+    conn = get_db()
+    try:
+        existing = conn.execute(
+            "SELECT id FROM users WHERE LOWER(email) = ? AND deleted_at IS NULL",
+            (email,),
+        ).fetchone()
+        if existing:
+            return jsonify({"error": "A user with this email already exists"}), 409
+        pw_hash = generate_password_hash(password)
+        cur = conn.execute(
+            """
+            INSERT INTO users (email, full_name, role, client_id, password_hash, is_active)
+            VALUES (?, ?, ?, ?, ?, 1)
+            """,
+            (email, full_name or email, role, client_id, pw_hash),
+        )
+        conn.commit()
+        return jsonify({"success": True, "id": cur.lastrowid, "email": email}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/settings/password", methods=["POST"])
+@login_required
+def api_change_password():
+    """Change the current user's own password."""
+    data = request.get_json(silent=True) or {}
+    current_pw = data.get("current_password") or ""
+    new_pw = (data.get("new_password") or "").strip()
+
+    if not current_pw or not new_pw:
+        return jsonify({"error": "Both current and new password are required"}), 400
+    if len(new_pw) < 8:
+        return jsonify({"error": "New password must be at least 8 characters"}), 400
+
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT password_hash FROM users WHERE id = ? AND deleted_at IS NULL",
+            (current_user.id,),
+        ).fetchone()
+        if not row or not check_password_hash(row["password_hash"], current_pw):
+            return jsonify({"error": "Current password is incorrect"}), 403
+        conn.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (generate_password_hash(new_pw), current_user.id),
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/properties/<int:property_id>")
@@ -4823,4 +4963,4 @@ if __name__ == "__main__":
     print(f"  Database: {DATABASE_URL}")
     print(f"  Clients:  {get_clients_dir()}")
     print(f"  Open: http://127.0.0.1:5000\n")
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)

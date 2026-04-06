@@ -6230,6 +6230,51 @@ body {
 .settings-section-actions {
     margin-top: 12px;
 }
+.settings-inline-form {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(122,175,166,0.2);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.settings-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.settings-input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(122,175,166,0.3);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    padding: 8px 10px;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.settings-input:focus {
+    border-color: var(--accent);
+}
+.settings-form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+.settings-form-error {
+    color: #e07070;
+    font-size: 13px;
+    padding: 6px 0;
+}
+.settings-card-lead {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 12px;
+}
 .settings-btn-disabled {
     opacity: 0.6;
     cursor: not-allowed;

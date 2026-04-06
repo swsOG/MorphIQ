@@ -4,7 +4,6 @@ Walks the Clients folder, finds review.json files, and populates
 the document_fields table in portal.db.
 
 Usage:
-    cd C:\ScanSystem_v2
     python portal_new\import_fields.py
 
 This is safe to run multiple times — it skips fields that already exist.
