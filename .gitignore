@@ -36,6 +36,7 @@ Thumbs.db
 # IDE / tool state
 .claude/
 .cursor/
+.cursorrules
 node_modules/
 
 # Temp and generated data
