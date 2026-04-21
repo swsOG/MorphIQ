@@ -1317,6 +1317,17 @@ body.properties-body {
     opacity: 0.85;
 }
 
+.props-btn-review {
+    background: rgba(251, 191, 36, 0.14);
+    border-color: rgba(251, 191, 36, 0.42);
+    color: #fbbf24;
+}
+
+.props-btn-review:hover {
+    background: rgba(251, 191, 36, 0.22);
+    border-color: rgba(251, 191, 36, 0.58);
+}
+
 .props-btn-pdf {
     background: rgba(122, 175, 166, 0.18);
     border-color: rgba(122, 175, 166, 0.5);
@@ -1340,6 +1351,15 @@ body.properties-body {
     font-weight: 600;
     color: #94a3b8;
     text-transform: capitalize;
+}
+
+.doc-lib-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(26, 58, 59, 0.8);
 }
 
 @media (max-width: 900px) {
@@ -2508,8 +2528,21 @@ body.packs-body {
     border-radius: 8px;
     border: 1px solid #1a3a3b;
     background: rgba(10, 31, 32, 0.5);
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.packs-toolbar-btn:hover:not(:disabled) {
+    border-color: rgba(122, 175, 166, 0.55);
+    color: #f8fafc;
+    background: rgba(122, 175, 166, 0.16);
+}
+
+.packs-toolbar-btn:disabled {
     color: #64748b;
     cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .packs-doc-list {
@@ -2565,7 +2598,13 @@ body.packs-body {
     color: #64748b;
     font-size: 18px;
     line-height: 1;
-    cursor: not-allowed;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.packs-doc-remove:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
 }
 
 .packs-export-bar {
@@ -2599,7 +2638,13 @@ body.packs-body {
     border: 1px solid rgba(122, 175, 166, 0.45);
     background: rgba(122, 175, 166, 0.18);
     color: #7aafa6;
-    cursor: not-allowed;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.packs-export-btn:hover {
+    border-color: rgba(122, 175, 166, 0.7);
+    color: #d1fae5;
 }
 
 .packs-export-btn--secondary {
@@ -3639,4 +3684,308 @@ body.settings-body {
     background: #3b1010;
     color: #f87171;
     border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.packs-add-modal {
+    max-width: 760px;
+    width: min(760px, calc(100vw - 2rem));
+    max-height: min(78vh, 860px);
+}
+
+.packs-add-header-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.packs-add-subtitle {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.82rem;
+}
+
+.packs-add-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px 0;
+    border-bottom: 1px solid rgba(122, 175, 166, 0.12);
+}
+
+.packs-add-controls-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.packs-add-back-btn {
+    border: 1px solid rgba(122, 175, 166, 0.28);
+    background: rgba(11, 31, 32, 0.85);
+    color: #cbd5e1;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.packs-add-back-btn:hover {
+    border-color: rgba(122, 175, 166, 0.55);
+    color: #f8fafc;
+}
+
+.packs-add-results {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.packs-add-search {
+    width: 100%;
+    border: 1px solid rgba(122, 175, 166, 0.22);
+    border-radius: 10px;
+    background: rgba(7, 23, 24, 0.86);
+    color: #e2e8f0;
+    padding: 11px 13px;
+    font-size: 0.92rem;
+    outline: none;
+    margin-bottom: 14px;
+}
+
+.packs-add-search:focus {
+    border-color: rgba(122, 175, 166, 0.68);
+    box-shadow: 0 0 0 3px rgba(122, 175, 166, 0.14);
+}
+
+.packs-add-body {
+    padding: 12px 16px 14px;
+}
+
+.packs-add-folder {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid rgba(122, 175, 166, 0.14);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(18, 35, 37, 0.96), rgba(10, 24, 25, 0.96));
+    color: #e2e8f0;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+
+.packs-add-folder + .packs-add-folder,
+.packs-add-doc-row + .packs-add-doc-row {
+    margin-top: 10px;
+}
+
+.packs-add-folder:hover {
+    border-color: rgba(122, 175, 166, 0.48);
+    background: linear-gradient(180deg, rgba(24, 43, 44, 0.98), rgba(11, 28, 29, 0.98));
+    transform: translateY(-1px);
+}
+
+.packs-add-folder-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    color: #7aafa6;
+    background: rgba(122, 175, 166, 0.14);
+    flex-shrink: 0;
+}
+
+.packs-add-folder-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+}
+
+.packs-add-folder-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.packs-add-folder-meta {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.packs-add-folder-count {
+    min-width: 34px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(122, 175, 166, 0.12);
+    color: #d1fae5;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.packs-add-doc-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid rgba(122, 175, 166, 0.14);
+    border-radius: 14px;
+    background: rgba(10, 24, 25, 0.95);
+    cursor: pointer;
+}
+
+.packs-add-doc-row:hover {
+    border-color: rgba(122, 175, 166, 0.42);
+    background: rgba(13, 29, 30, 0.98);
+}
+
+.packs-add-doc-check {
+    margin-top: 4px;
+    width: 16px;
+    height: 16px;
+    accent-color: #7aafa6;
+    flex-shrink: 0;
+}
+
+.packs-add-doc-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.packs-add-doc-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.packs-add-doc-title {
+    color: #f8fafc;
+    font-size: 0.92rem;
+    font-weight: 600;
+    min-width: 0;
+}
+
+.packs-add-doc-type {
+    flex-shrink: 0;
+}
+
+.packs-add-doc-meta {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    text-transform: capitalize;
+}
+
+.packs-add-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 12px;
+}
+
+.packs-add-empty-copy {
+    margin: 0;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.packs-add-reset-btn,
+.packs-add-submit {
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.packs-add-reset-btn {
+    border: 1px solid rgba(122, 175, 166, 0.26);
+    background: transparent;
+    color: #cbd5e1;
+    padding: 8px 12px;
+}
+
+.packs-add-reset-btn:hover {
+    border-color: rgba(122, 175, 166, 0.5);
+    color: #f8fafc;
+}
+
+.packs-add-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.packs-add-selection {
+    color: #94a3b8;
+    font-size: 0.82rem;
+}
+
+.packs-add-submit {
+    border: 1px solid rgba(122, 175, 166, 0.52);
+    background: rgba(122, 175, 166, 0.18);
+    color: #d1fae5;
+    padding: 10px 16px;
+}
+
+.packs-add-submit:hover:not(:disabled) {
+    border-color: rgba(122, 175, 166, 0.76);
+    background: rgba(122, 175, 166, 0.26);
+}
+
+.packs-add-submit:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .packs-add-modal {
+        width: calc(100vw - 1rem);
+        max-height: 84vh;
+    }
+
+    .packs-add-controls-top,
+    .packs-add-footer,
+    .packs-add-doc-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .packs-add-results {
+        white-space: normal;
+    }
+}
+
+/* Explorer-system alignment for overview */
+.ov-hero-stats.portal-summary-strip {
+    gap: 12px;
+}
+
+.ov-stat-card.portal-summary-chip {
+    min-height: 0;
+    border-radius: 16px;
+    padding: 14px 16px;
+}
+
+.ov-panel {
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(10, 31, 32, 0.98) 0%, rgba(8, 27, 28, 0.98) 100%);
+}
+
+.ov-pack-card {
+    border-radius: 16px;
+    border-style: solid;
+    background: rgba(12, 41, 41, 0.68);
 }

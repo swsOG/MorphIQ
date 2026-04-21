@@ -302,13 +302,17 @@ def client_stats(client_name: str):
 
 def _find_doc_folder(client_name: str, doc_id: str):
     """Find the DOC-XXXXX folder for a client by scanning Batches/date/ folders. Returns Path or None."""
+    raw_doc_id = (doc_id or "").strip()
+    if len(raw_doc_id) >= 16 and raw_doc_id[10:16] == "__DOC-":
+        raw_doc_id = raw_doc_id[12:]
+
     batches_path = BASE / "Clients" / client_name / "Batches"
     if not batches_path.exists():
         return None
     for date_folder in batches_path.iterdir():
         if not date_folder.is_dir():
             continue
-        doc_folder = date_folder / doc_id
+        doc_folder = date_folder / raw_doc_id
         if doc_folder.is_dir() and (doc_folder / "review.json").exists():
             return doc_folder
     return None

@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict
+from urllib.parse import quote
 import urllib.request
 import urllib.error
 
@@ -328,7 +329,96 @@ def call_claude_with_pdf(
     raise RuntimeError("No text content returned from Claude")
 
 
-def parse_json_from_claude(text: str) -> Dict[str, Any]:
+def call_gemini_with_pdf(
+    pdf_b64: str,
+    system_prompt: str,
+    user_prompt: str,
+    model: str = "gemini-2.5-flash",
+) -> str:
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is not set")
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{quote(model, safe='')}"
+        f":generateContent?key={quote(api_key, safe='')}"
+    )
+
+    body = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": user_prompt,
+                    },
+                    {
+                        "inline_data": {
+                            "mime_type": "application/pdf",
+                            "data": pdf_b64,
+                        }
+                    },
+                ]
+            }
+        ],
+        "system_instruction": {
+            "parts": [
+                {"text": system_prompt}
+            ]
+        },
+    }
+
+    data = json.dumps(body).encode("utf-8")
+    headers = {
+        "Content-Type": "application/json",
+    }
+
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            resp_data = resp.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Gemini API error {e.code}: {error_body}") from e
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"Error calling Gemini API: {e}") from e
+
+    payload = json.loads(resp_data)
+    candidates = payload.get("candidates") or []
+    if not candidates:
+        raise RuntimeError("No candidates returned from Gemini")
+
+    parts = ((candidates[0].get("content") or {}).get("parts")) or []
+    for item in parts:
+        text = item.get("text")
+        if text:
+            return text
+    raise RuntimeError("No text content returned from Gemini")
+
+
+def get_ai_provider() -> str:
+    provider = (os.getenv("AI_PROVIDER") or "").strip().lower()
+    if provider:
+        return provider
+    return "gemini"
+
+
+def call_model_with_pdf(
+    pdf_b64: str,
+    system_prompt: str,
+    user_prompt: str,
+) -> str:
+    provider = get_ai_provider()
+    if provider == "gemini":
+        model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        return call_gemini_with_pdf(pdf_b64, system_prompt, user_prompt, model=model)
+    if provider == "anthropic":
+        model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+        return call_claude_with_pdf(pdf_b64, system_prompt, user_prompt, model=model)
+    raise RuntimeError(f"Unsupported AI_PROVIDER: {provider}")
+
+
+def parse_json_from_model(text: str) -> Dict[str, Any]:
     cleaned = text.strip()
     # Handle ```json ... ``` wrappers if present
     if cleaned.startswith("```"):
@@ -475,7 +565,7 @@ def _normalize_doc_type(raw: str) -> str:
 
 def detect_doc_type_from_pdf(pdf_b64: str) -> str:
     """Call Claude to classify the document; returns one of RECOGNIZED_DOC_TYPES (or raw response)."""
-    raw = call_claude_with_pdf(pdf_b64, DETECTION_SYSTEM, DETECTION_USER)
+    raw = call_model_with_pdf(pdf_b64, DETECTION_SYSTEM, DETECTION_USER)
     return _normalize_doc_type(raw.strip())
 
 
@@ -526,8 +616,8 @@ def prefill_doc(doc_folder: Path) -> None:
     system_prompt = EXTRACTION_SYSTEM
     user_prompt = builder_fn(review)
 
-    claude_raw = call_claude_with_pdf(pdf_b64, system_prompt, user_prompt)
-    ai_fields = parse_json_from_claude(claude_raw)
+    model_raw = call_model_with_pdf(pdf_b64, system_prompt, user_prompt)
+    ai_fields = parse_json_from_model(model_raw)
 
     fields = review.get("fields") or {}
     for key in target_keys:

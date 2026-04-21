@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MorphIQ — Packs</title>
+    <title>MorphIQ - Packs</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
 </head>
@@ -37,38 +37,33 @@
 
             <nav class="portal-breadcrumb" aria-label="Breadcrumb">
                 <a href="{{ _overview_url }}">Portfolio</a>
-                <span class="portal-breadcrumb-sep">›</span>
+                <span class="portal-breadcrumb-sep">></span>
                 <span class="portal-breadcrumb-current">Packs</span>
             </nav>
 
             <div class="portal-main packs-page-main">
-                <div class="packs-split">
-                    <!-- Left panel: pack list -->
-                    <aside class="packs-left" aria-label="Pack list">
+                <div class="packs-split portal-workspace-shell portal-workspace-shell--split">
+                    <aside class="packs-left portal-surface-card" aria-label="Pack list">
                         <div class="packs-left-head">
                             <h2 class="packs-left-title">Your packs</h2>
-                            <button type="button" id="packs-new-btn" class="packs-new-btn" title="Create new pack">New pack</button>
+                            <button type="button" id="packs-new-btn" class="packs-new-btn portal-action-btn portal-action-btn--primary" title="Create new pack">New pack</button>
                         </div>
                         <div id="packs-list" class="packs-list" role="listbox" aria-label="Pack list">
-                            <div class="packs-list-loading">Loading packs…</div>
+                            <div class="packs-list-loading">Loading packs...</div>
                         </div>
                     </aside>
 
-                    <!-- Right panel: pack builder -->
-                    <main class="packs-right" aria-label="Pack builder">
-                        <!-- Empty state: shown when no pack is selected -->
+                    <main class="packs-right portal-surface-card" aria-label="Pack builder">
                         <div id="packs-detail-empty" class="packs-detail-empty">
                             <p class="packs-detail-empty-text">Select a pack from the list, or create a new one.</p>
                         </div>
 
-                        <!-- Loading state -->
-                        <div id="packs-detail-loading" class="packs-detail-loading" hidden>Loading pack…</div>
+                        <div id="packs-detail-loading" class="packs-detail-loading" hidden>Loading pack...</div>
 
-                        <!-- Content: shown when a pack is loaded -->
                         <div id="packs-detail-content" hidden>
                             <header class="packs-builder-header">
                                 <div>
-                                    <h1 id="packs-builder-title" class="packs-builder-title">—</h1>
+                                    <h1 id="packs-builder-title" class="packs-builder-title">-</h1>
                                     <p id="packs-builder-sub" class="packs-builder-sub">0 documents</p>
                                 </div>
                                 <div class="packs-builder-actions">
@@ -77,9 +72,9 @@
                                 </div>
                             </header>
 
-                            <div class="packs-doc-toolbar">
-                                <button type="button" class="packs-toolbar-btn" disabled title="Add documents (coming soon)">Add documents</button>
-                                <button type="button" class="packs-toolbar-btn" disabled title="Reorder (coming soon)">Reorder</button>
+                            <div class="packs-doc-toolbar portal-summary-strip">
+                                <button type="button" id="packs-add-btn" class="packs-toolbar-btn portal-action-btn portal-action-btn--primary">Add documents</button>
+                                <button type="button" id="packs-reorder-btn" class="packs-toolbar-btn portal-action-btn portal-action-btn--quiet">Reorder</button>
                             </div>
 
                             <div class="packs-notes-section">
@@ -90,7 +85,7 @@
                                     </svg>
                                 </button>
                                 <div class="packs-notes-body" id="packs-notes-body" hidden>
-                                    <textarea id="packs-notes-area" class="packs-notes-area" placeholder="Add internal notes for this pack (visible to your team only)…" rows="3"></textarea>
+                                    <textarea id="packs-notes-area" class="packs-notes-area" placeholder="Add internal notes for this pack (visible to your team only)..." rows="3"></textarea>
                                 </div>
                             </div>
 
@@ -99,17 +94,52 @@
                             </div>
                             <ul id="packs-doc-list" class="packs-doc-list"></ul>
 
-                            <footer class="packs-export-bar">
+                            <footer class="packs-export-bar portal-results-shell">
                                 <span class="packs-export-note">Exports include all documents in this pack in the order shown.</span>
                                 <div class="packs-export-actions">
-                                    <button type="button" class="packs-export-btn packs-export-btn--secondary" data-export-type="zip">Export ZIP</button>
-                                    <button type="button" class="packs-export-btn" data-export-type="pdf">Export PDF bundle</button>
+                                    <button type="button" class="packs-export-btn packs-export-btn--secondary portal-action-btn portal-action-btn--quiet" data-export-type="zip">Export ZIP</button>
+                                    <button type="button" class="packs-export-btn portal-action-btn portal-action-btn--primary" data-export-type="pdf">Export PDF bundle</button>
                                 </div>
                             </footer>
                         </div>
                     </main>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div id="packs-add-modal" class="atp-backdrop packs-add-backdrop" hidden aria-hidden="true">
+    <div class="atp-modal packs-add-modal portal-modal-card" role="dialog" aria-modal="true" aria-labelledby="packs-add-title">
+        <div class="atp-modal-header">
+            <div class="packs-add-header-copy">
+                <h2 id="packs-add-title" class="atp-modal-title">Add documents to pack</h2>
+                <p class="packs-add-subtitle">Browse by property and choose the documents you want to include.</p>
+            </div>
+            <button type="button" id="packs-add-close" class="atp-modal-close" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="packs-add-controls">
+            <div class="packs-add-controls-top">
+                <button type="button" id="packs-add-back" class="packs-add-back-btn" hidden>Back to properties</button>
+                <span id="packs-add-results" class="packs-add-results">Loading...</span>
+            </div>
+            <input
+                type="search"
+                id="packs-add-search"
+                class="packs-add-search"
+                placeholder="Search by property address, document type, title, or status"
+                autocomplete="off"
+            >
+        </div>
+
+        <div id="packs-add-body" class="atp-modal-body packs-add-body">
+            <div class="atp-loading">Loading documents...</div>
+        </div>
+
+        <div class="atp-modal-footer packs-add-footer">
+            <div id="packs-add-selection" class="packs-add-selection">0 documents selected</div>
+            <button type="button" id="packs-add-submit" class="packs-add-submit">Add selected</button>
         </div>
     </div>
 </div>
@@ -123,15 +153,22 @@
     "use strict";
 
     var selectedPackId = null;
-    var notesTimer     = null;
+    var notesTimer = null;
+    var currentPack = null;
+    var reorderActive = false;
+    var draggedPackDocId = null;
+    var availableDocs = [];
+    var addBrowserState = {
+        propertyKey: null,
+        query: "",
+        selectedDocIds: new Set(),
+    };
 
     var DRAG_SVG = '<svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor" aria-hidden="true">'
         + '<circle cx="2.5" cy="2" r="1.5"/><circle cx="7.5" cy="2" r="1.5"/>'
         + '<circle cx="2.5" cy="7" r="1.5"/><circle cx="7.5" cy="7" r="1.5"/>'
         + '<circle cx="2.5" cy="12" r="1.5"/><circle cx="7.5" cy="12" r="1.5"/>'
         + '</svg>';
-
-    // ── Utilities ─────────────────────────────────────────────────────────────
 
     function withClient(url) {
         var cp = new URLSearchParams(window.location.search).get("client")
@@ -147,7 +184,7 @@
     }
 
     function formatDate(iso) {
-        if (!iso) return "—";
+        if (!iso) return "-";
         var d = new Date(iso);
         if (isNaN(d.getTime())) return String(iso).slice(0, 10);
         return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -155,33 +192,273 @@
 
     function docTypeClass(slug) {
         var s = (slug || "").toLowerCase();
-        if (s.includes("gas"))       return "props-doc-type--gas";
-        if (s === "eicr")            return "props-doc-type--eicr";
-        if (s === "epc")             return "props-doc-type--epc";
-        if (s.includes("deposit"))   return "props-doc-type--deposit";
-        if (s.includes("tenancy"))   return "props-doc-type--tenancy";
+        if (s.includes("gas")) return "props-doc-type--gas";
+        if (s === "eicr") return "props-doc-type--eicr";
+        if (s === "epc") return "props-doc-type--epc";
+        if (s.includes("deposit")) return "props-doc-type--deposit";
+        if (s.includes("tenancy")) return "props-doc-type--tenancy";
         if (s.includes("inventory")) return "props-doc-type--inventory";
         return "props-doc-type--other";
     }
 
-    // ── API helpers ───────────────────────────────────────────────────────────
-
-    async function apiJson(method, path, body) {
-        var opts = { method: method, credentials: "same-origin",
-                     headers: { "Content-Type": "application/json" } };
-        if (body !== undefined) opts.body = JSON.stringify(body);
-        var res  = await fetch(withClient(path), opts);
-        var data = await res.json().catch(function () { return {}; });
-        if (!res.ok) throw new Error(data.error || "Request failed (" + res.status + ")");
-        return data;
+    function normalizeText(value) {
+        return String(value == null ? "" : value).trim().toLowerCase();
     }
 
-    // ── Left panel: pack list ─────────────────────────────────────────────────
+    function propertyDisplayName(doc) {
+        return String(doc && doc.property_address ? doc.property_address : "Unassigned documents");
+    }
+
+    function propertyKeyForDoc(doc) {
+        if (doc && Number.isFinite(Number(doc.property_id))) {
+            return "property:" + String(doc.property_id);
+        }
+        return "address:" + normalizeText(propertyDisplayName(doc));
+    }
+
+    function summarizeDocTypes(documents) {
+        var counts = {};
+        documents.forEach(function (doc) {
+            var label = doc.doc_type_label || doc.doc_type_key || "Document";
+            counts[label] = (counts[label] || 0) + 1;
+        });
+        var summary = Object.keys(counts).sort().slice(0, 3).map(function (label) {
+            return counts[label] + " " + label;
+        });
+        return summary.join(" | ");
+    }
+
+    function groupAvailableDocuments(documents) {
+        var groups = new Map();
+        documents.forEach(function (doc) {
+            var key = propertyKeyForDoc(doc);
+            if (!groups.has(key)) {
+                groups.set(key, {
+                    key: key,
+                    property_id: Number.isFinite(Number(doc.property_id)) ? Number(doc.property_id) : null,
+                    property_address: propertyDisplayName(doc),
+                    documents: [],
+                });
+            }
+            groups.get(key).documents.push(doc);
+        });
+
+        return Array.from(groups.values()).map(function (group) {
+            group.documents.sort(function (a, b) {
+                var addressCompare = propertyDisplayName(a).localeCompare(propertyDisplayName(b));
+                if (addressCompare !== 0) return addressCompare;
+                var typeCompare = String(a.doc_type_label || a.doc_type_key || "").localeCompare(String(b.doc_type_label || b.doc_type_key || ""));
+                if (typeCompare !== 0) return typeCompare;
+                return String(a.title || "").localeCompare(String(b.title || ""));
+            });
+            group.type_summary = summarizeDocTypes(group.documents);
+            group.doc_count = group.documents.length;
+            return group;
+        }).sort(function (a, b) {
+            return a.property_address.localeCompare(b.property_address);
+        });
+    }
+
+    function getGroupedAvailableDocuments() {
+        return groupAvailableDocuments(availableDocs);
+    }
+
+    function getCurrentPropertyGroup() {
+        var groups = getGroupedAvailableDocuments();
+        for (var i = 0; i < groups.length; i += 1) {
+            if (groups[i].key === addBrowserState.propertyKey) return groups[i];
+        }
+        return null;
+    }
+
+    function propertyMatchesQuery(group, query) {
+        if (!query) return true;
+        if (normalizeText(group.property_address).includes(query)) return true;
+        return group.documents.some(function (doc) {
+            return [
+                doc.title,
+                doc.doc_type_label,
+                doc.doc_type_key,
+                doc.status,
+                doc.property_address,
+            ].some(function (value) {
+                return normalizeText(value).includes(query);
+            });
+        });
+    }
+
+    function filteredGroups() {
+        var query = normalizeText(addBrowserState.query);
+        return getGroupedAvailableDocuments().filter(function (group) {
+            return propertyMatchesQuery(group, query);
+        });
+    }
+
+    function filteredDocumentsForGroup(group) {
+        var query = normalizeText(addBrowserState.query);
+        if (!group) return [];
+        if (!query) return group.documents.slice();
+        return group.documents.filter(function (doc) {
+            return [
+                doc.title,
+                doc.doc_type_label,
+                doc.doc_type_key,
+                doc.status,
+                doc.property_address,
+            ].some(function (value) {
+                return normalizeText(value).includes(query);
+            });
+        });
+    }
+
+    function selectedDocCount() {
+        return addBrowserState.selectedDocIds.size;
+    }
+
+    function updateAddButton() {
+        var btn = document.getElementById("packs-add-btn");
+        if (btn) btn.disabled = !selectedPackId;
+    }
+
+    function updateReorderButton() {
+        var btn = document.getElementById("packs-reorder-btn");
+        if (!btn) return;
+        btn.textContent = reorderActive ? "Save order" : "Reorder";
+        btn.disabled = !selectedPackId || !(currentPack && currentPack.documents && currentPack.documents.length > 1);
+    }
+
+    function updateSelectionSummary() {
+        var summary = document.getElementById("packs-add-selection");
+        var submit = document.getElementById("packs-add-submit");
+        var count = selectedDocCount();
+        if (summary) {
+            summary.textContent = count + " document" + (count === 1 ? "" : "s") + " selected";
+        }
+        if (submit) {
+            submit.disabled = count === 0;
+        }
+    }
+
+    function updateAddBrowserHeader() {
+        var results = document.getElementById("packs-add-results");
+        var back = document.getElementById("packs-add-back");
+        var group = getCurrentPropertyGroup();
+
+        if (back) back.hidden = !group;
+
+        if (!results) return;
+        if (group) {
+            var docs = filteredDocumentsForGroup(group);
+            results.textContent = docs.length + " document" + (docs.length === 1 ? "" : "s") + " in " + group.property_address;
+            return;
+        }
+
+        var groups = filteredGroups();
+        results.textContent = groups.length + " propert" + (groups.length === 1 ? "y" : "ies");
+    }
+
+    function renderAddBrowserEmpty(message) {
+        var body = document.getElementById("packs-add-body");
+        if (!body) return;
+        body.innerHTML = ''
+            + '<div class="packs-add-empty">'
+            +   '<p class="packs-add-empty-copy">' + esc(message) + '</p>'
+            +   '<button type="button" class="packs-add-reset-btn" data-action="reset-search">Clear search</button>'
+            + '</div>';
+    }
+
+    function renderPropertyFolders() {
+        var body = document.getElementById("packs-add-body");
+        if (!body) return;
+
+        var groups = filteredGroups();
+        if (!groups.length) {
+            renderAddBrowserEmpty("No properties match your search.");
+            return;
+        }
+
+        body.innerHTML = groups.map(function (group) {
+            return ''
+                + '<button type="button" class="packs-add-folder" data-property-key="' + esc(group.key) + '">'
+                +   '<span class="packs-add-folder-icon" aria-hidden="true">'
+                +     '<svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg">'
+                +       '<path d="M1.5 3.25C1.5 2.14543 2.39543 1.25 3.5 1.25H6.41074C6.86795 1.25 7.31156 1.4067 7.66745 1.69418L8.73255 2.55582C9.08844 2.8433 9.53205 3 9.98926 3H14.5C15.6046 3 16.5 3.89543 16.5 5V10.5C16.5 11.6046 15.6046 12.5 14.5 12.5H3.5C2.39543 12.5 1.5 11.6046 1.5 10.5V3.25Z" stroke="currentColor" stroke-width="1.3"/>'
+                +     '</svg>'
+                +   '</span>'
+                +   '<span class="packs-add-folder-main">'
+                +     '<span class="packs-add-folder-name">' + esc(group.property_address) + '</span>'
+                +     '<span class="packs-add-folder-meta">' + esc(group.type_summary || "Documents available") + '</span>'
+                +   '</span>'
+                +   '<span class="packs-add-folder-count">' + group.doc_count + '</span>'
+                + '</button>';
+        }).join("");
+    }
+
+    function renderPropertyDocuments(group) {
+        var body = document.getElementById("packs-add-body");
+        if (!body) return;
+
+        var docs = filteredDocumentsForGroup(group);
+        if (!docs.length) {
+            renderAddBrowserEmpty("No documents in this property match your search.");
+            return;
+        }
+
+        body.innerHTML = docs.map(function (doc) {
+            var docId = Number(doc.id);
+            var checked = addBrowserState.selectedDocIds.has(docId) ? ' checked' : '';
+            var badgeClass = docTypeClass(doc.doc_type_key || "");
+            return ''
+                + '<label class="packs-add-doc-row">'
+                +   '<input type="checkbox" class="packs-add-doc-check" value="' + docId + '"' + checked + '>'
+                +   '<span class="packs-add-doc-main">'
+                +     '<span class="packs-add-doc-head">'
+                +       '<span class="packs-add-doc-title">' + esc(doc.title || "Document") + '</span>'
+                +       '<span class="packs-add-doc-type props-doc-type-label ' + esc(badgeClass) + '">' + esc(doc.doc_type_label || doc.doc_type_key || "Document") + '</span>'
+                +     '</span>'
+                +     '<span class="packs-add-doc-meta">' + esc(doc.status || "unknown") + '</span>'
+                +   '</span>'
+                + '</label>';
+        }).join("");
+    }
+
+    function renderAddBrowser() {
+        var group = getCurrentPropertyGroup();
+        updateAddBrowserHeader();
+        updateSelectionSummary();
+        if (group) {
+            renderPropertyDocuments(group);
+            return;
+        }
+        renderPropertyFolders();
+    }
+
+    function resetAddBrowserState() {
+        addBrowserState.propertyKey = null;
+        addBrowserState.query = "";
+        addBrowserState.selectedDocIds = new Set();
+        var input = document.getElementById("packs-add-search");
+        if (input) input.value = "";
+        updateSelectionSummary();
+    }
+
+    async function apiJson(method, path, body) {
+        var opts = {
+            method: method,
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" }
+        };
+        if (body !== undefined) opts.body = JSON.stringify(body);
+        var res = await fetch(withClient(path), opts);
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")"));
+        return data;
+    }
 
     async function loadPacksList() {
         var listEl = document.getElementById("packs-list");
         if (!listEl) return;
-        listEl.innerHTML = '<div class="packs-list-loading">Loading packs\u2026</div>';
+        listEl.innerHTML = '<div class="packs-list-loading">Loading packs...</div>';
         try {
             var data = await apiJson("GET", "/api/packs");
             renderPacksList(data.packs || []);
@@ -195,11 +472,11 @@
         var listEl = document.getElementById("packs-list");
         if (!listEl) return;
         if (!packs.length) {
-            listEl.innerHTML = '<div class="packs-list-empty">No packs yet \u2014 create one to get started.</div>';
+            listEl.innerHTML = '<div class="packs-list-empty">No packs yet - create one to get started.</div>';
             return;
         }
         listEl.innerHTML = packs.map(function (pk) {
-            var active   = pk.id === selectedPackId ? " packs-list-btn--active" : "";
+            var active = pk.id === selectedPackId ? " packs-list-btn--active" : "";
             var selected = pk.id === selectedPackId ? "true" : "false";
             return '<button type="button" class="packs-list-btn' + active + '"'
                 + ' role="option" aria-selected="' + selected + '"'
@@ -219,27 +496,25 @@
         });
     }
 
-    // ── Right panel: pack detail ──────────────────────────────────────────────
-
     async function selectPack(packId) {
         selectedPackId = packId;
-        // Update active highlight in list.
         document.querySelectorAll(".packs-list-btn").forEach(function (b) {
             var id = parseInt(b.getAttribute("data-pack-id"), 10);
             b.classList.toggle("packs-list-btn--active", id === packId);
             b.setAttribute("aria-selected", id === packId ? "true" : "false");
         });
 
-        var emptyEl   = document.getElementById("packs-detail-empty");
+        var emptyEl = document.getElementById("packs-detail-empty");
         var loadingEl = document.getElementById("packs-detail-loading");
         var contentEl = document.getElementById("packs-detail-content");
-        if (emptyEl)   emptyEl.hidden   = true;
+        if (emptyEl) emptyEl.hidden = true;
         if (contentEl) contentEl.hidden = true;
         if (loadingEl) loadingEl.hidden = false;
 
         try {
             var data = await apiJson("GET", "/api/packs/" + packId);
             renderPackDetail(data.pack);
+            updateAddButton();
             if (loadingEl) loadingEl.hidden = true;
             if (contentEl) contentEl.hidden = false;
         } catch (e) {
@@ -254,8 +529,11 @@
     }
 
     function renderPackDetail(pack) {
-        var titleEl   = document.getElementById("packs-builder-title");
-        var subEl     = document.getElementById("packs-builder-sub");
+        currentPack = pack || null;
+        reorderActive = false;
+
+        var titleEl = document.getElementById("packs-builder-title");
+        var subEl = document.getElementById("packs-builder-sub");
         var notesArea = document.getElementById("packs-notes-area");
         var docListEl = document.getElementById("packs-doc-list");
         var docEmptyEl = document.getElementById("packs-doc-empty");
@@ -265,7 +543,6 @@
         var docs = pack.documents || [];
         if (subEl) subEl.textContent = docs.length + " document" + (docs.length !== 1 ? "s" : "");
 
-        // Notes textarea — auto-save 800 ms after the user stops typing.
         if (notesArea) {
             notesArea.value = pack.notes || "";
             notesArea.oninput = function () {
@@ -282,22 +559,22 @@
         if (!docs.length) {
             docListEl.innerHTML = "";
             if (docEmptyEl) docEmptyEl.hidden = false;
+            updateReorderButton();
             return;
         }
         if (docEmptyEl) docEmptyEl.hidden = true;
 
         docListEl.innerHTML = docs.map(function (doc, idx) {
-            var tSlug  = doc.doc_type_key  || "";
+            var tSlug = doc.doc_type_key || "";
             var tClass = docTypeClass(tSlug);
-            var tLabel = esc(doc.doc_type_label || doc.doc_type_key || "Document");
-            var title  = esc(doc.title || doc.doc_type_label || "Document");
-            var meta   = doc.expiry_date
+            var title = esc(doc.title || doc.doc_type_label || "Document");
+            var meta = doc.expiry_date
                 ? "Expires " + esc(formatDate(doc.expiry_date))
-                : esc(doc.property_address || "—");
-            return '<li class="packs-doc-row" data-pack-doc-id="' + doc.pack_doc_id + '">'
+                : esc(doc.property_address || "-");
+            return '<li class="packs-doc-row" data-pack-doc-id="' + doc.pack_doc_id + '" draggable="' + (reorderActive ? "true" : "false") + '">'
                 + '<span class="packs-drag-handle" aria-hidden="true">' + DRAG_SVG + '</span>'
                 + '<span class="packs-doc-order">' + (idx + 1) + '</span>'
-                + '<span class="packs-doc-type props-doc-type-label ' + esc(tClass) + '">' + tLabel + '</span>'
+                + '<span class="packs-doc-type props-doc-type-label ' + esc(tClass) + '">' + esc(doc.doc_type_label || doc.doc_type_key || "Document") + '</span>'
                 + '<div class="packs-doc-main">'
                 + '<span class="packs-doc-title">' + title + '</span>'
                 + '<span class="packs-doc-meta">' + meta + '</span>'
@@ -315,9 +592,122 @@
                 }
             });
         });
+
+        if (reorderActive) bindReorderHandlers();
+        updateReorderButton();
     }
 
-    // ── Actions ───────────────────────────────────────────────────────────────
+    function bindReorderHandlers() {
+        var docListEl = document.getElementById("packs-doc-list");
+        if (!docListEl) return;
+        docListEl.querySelectorAll(".packs-doc-row").forEach(function (row) {
+            row.draggable = true;
+            row.addEventListener("dragstart", function () {
+                draggedPackDocId = row.getAttribute("data-pack-doc-id");
+                row.classList.add("is-dragging");
+            });
+            row.addEventListener("dragend", function () {
+                draggedPackDocId = null;
+                row.classList.remove("is-dragging");
+                docListEl.querySelectorAll(".packs-doc-row").forEach(function (r, idx) {
+                    var num = r.querySelector(".packs-doc-order");
+                    if (num) num.textContent = String(idx + 1);
+                });
+            });
+            row.addEventListener("dragover", function (e) {
+                if (!draggedPackDocId) return;
+                e.preventDefault();
+            });
+            row.addEventListener("drop", function (e) {
+                if (!draggedPackDocId) return;
+                e.preventDefault();
+                var dragged = docListEl.querySelector('.packs-doc-row[data-pack-doc-id="' + draggedPackDocId + '"]');
+                if (!dragged || dragged === row) return;
+                var rect = row.getBoundingClientRect();
+                var before = (e.clientY - rect.top) < (rect.height / 2);
+                docListEl.insertBefore(dragged, before ? row : row.nextSibling);
+            });
+        });
+    }
+
+    function closeAddModal() {
+        var modal = document.getElementById("packs-add-modal");
+        if (modal) modal.hidden = true;
+        resetAddBrowserState();
+        var body = document.getElementById("packs-add-body");
+        if (body) body.innerHTML = '<div class="atp-loading">Loading documents...</div>';
+    }
+
+    function handleAddBodyClick(event) {
+        var folder = event.target.closest(".packs-add-folder");
+        if (folder) {
+            addBrowserState.propertyKey = folder.getAttribute("data-property-key");
+            renderAddBrowser();
+            return;
+        }
+
+        var resetBtn = event.target.closest("[data-action='reset-search']");
+        if (resetBtn) {
+            addBrowserState.query = "";
+            var input = document.getElementById("packs-add-search");
+            if (input) input.value = "";
+            renderAddBrowser();
+        }
+    }
+
+    function handleAddBodyChange(event) {
+        var checkbox = event.target.closest(".packs-add-doc-check");
+        if (!checkbox) return;
+        var docId = parseInt(checkbox.value, 10);
+        if (!Number.isFinite(docId)) return;
+        if (checkbox.checked) {
+            addBrowserState.selectedDocIds.add(docId);
+        } else {
+            addBrowserState.selectedDocIds.delete(docId);
+        }
+        updateSelectionSummary();
+    }
+
+    async function loadAvailableDocuments() {
+        var body = document.getElementById("packs-add-body");
+        if (!body || !selectedPackId) return;
+        body.innerHTML = '<div class="atp-loading">Loading documents...</div>';
+        try {
+            var data = await apiJson("GET", "/api/packs/" + selectedPackId + "/available-documents");
+            availableDocs = data.documents || [];
+            renderAddBrowser();
+        } catch (e) {
+            body.innerHTML = '<div class="atp-error">Failed to load available documents.</div>';
+            console.error("available docs:", e);
+        }
+    }
+
+    function openAddModal() {
+        if (!selectedPackId) return;
+        var modal = document.getElementById("packs-add-modal");
+        if (!modal) return;
+        resetAddBrowserState();
+        modal.hidden = false;
+        loadAvailableDocuments();
+    }
+
+    async function addSelectedDocuments() {
+        if (!selectedPackId) return;
+        var selectedIds = Array.from(addBrowserState.selectedDocIds.values());
+        if (!selectedIds.length) {
+            alert("Choose at least one document to add.");
+            return;
+        }
+        try {
+            await apiJson("POST", "/api/packs/" + selectedPackId + "/documents", { document_ids: selectedIds });
+            closeAddModal();
+            await selectPack(selectedPackId);
+            await loadPacksList();
+        } catch (e) {
+            alert("Could not add documents: " + e.message);
+            console.error("add docs:", e);
+        }
+    }
 
     async function createPack() {
         var name = window.prompt("Pack name:");
@@ -361,11 +751,38 @@
         }
     }
 
-    // ── Notes toggle ──────────────────────────────────────────────────────────
+    async function toggleReorder() {
+        if (!selectedPackId || !currentPack || !(currentPack.documents || []).length) return;
+        if (!reorderActive) {
+            reorderActive = true;
+            var docListEl = document.getElementById("packs-doc-list");
+            if (docListEl) {
+                docListEl.querySelectorAll(".packs-doc-row").forEach(function (row) {
+                    row.draggable = true;
+                });
+            }
+            bindReorderHandlers();
+            updateReorderButton();
+            return;
+        }
+
+        var orderedIds = Array.from(document.querySelectorAll("#packs-doc-list .packs-doc-row"))
+            .map(function (row) { return parseInt(row.getAttribute("data-pack-doc-id"), 10); })
+            .filter(function (value) { return Number.isFinite(value); });
+        try {
+            await apiJson("PUT", "/api/packs/" + selectedPackId + "/reorder", { document_ids: orderedIds });
+            reorderActive = false;
+            await selectPack(selectedPackId);
+            await loadPacksList();
+        } catch (e) {
+            alert("Could not save document order: " + e.message);
+            console.error("reorder:", e);
+        }
+    }
 
     function bindNotesToggle() {
         var toggle = document.getElementById("packs-notes-toggle");
-        var body   = document.getElementById("packs-notes-body");
+        var body = document.getElementById("packs-notes-body");
         if (toggle && body) {
             toggle.addEventListener("click", function () {
                 var expanded = toggle.getAttribute("aria-expanded") === "true";
@@ -375,12 +792,13 @@
         }
     }
 
-    // ── Init ──────────────────────────────────────────────────────────────────
-
     function init() {
         if (!document.querySelector('[data-page="packs"]')) return;
 
         bindNotesToggle();
+        updateAddButton();
+        updateReorderButton();
+        updateSelectionSummary();
 
         var newBtn = document.getElementById("packs-new-btn");
         if (newBtn) newBtn.addEventListener("click", createPack);
@@ -388,7 +806,54 @@
         var renameBtn = document.getElementById("packs-rename-btn");
         if (renameBtn) renameBtn.addEventListener("click", renamePack);
 
-        // Export buttons
+        var addBtn = document.getElementById("packs-add-btn");
+        if (addBtn) addBtn.addEventListener("click", openAddModal);
+
+        var reorderBtn = document.getElementById("packs-reorder-btn");
+        if (reorderBtn) reorderBtn.addEventListener("click", toggleReorder);
+
+        var addCloseBtn = document.getElementById("packs-add-close");
+        if (addCloseBtn) addCloseBtn.addEventListener("click", closeAddModal);
+
+        var addSubmitBtn = document.getElementById("packs-add-submit");
+        if (addSubmitBtn) addSubmitBtn.addEventListener("click", addSelectedDocuments);
+
+        var addSearch = document.getElementById("packs-add-search");
+        if (addSearch) {
+            addSearch.addEventListener("input", function () {
+                addBrowserState.query = addSearch.value || "";
+                renderAddBrowser();
+            });
+        }
+
+        var addBack = document.getElementById("packs-add-back");
+        if (addBack) {
+            addBack.addEventListener("click", function () {
+                addBrowserState.propertyKey = null;
+                renderAddBrowser();
+            });
+        }
+
+        var addBody = document.getElementById("packs-add-body");
+        if (addBody) {
+            addBody.addEventListener("click", handleAddBodyClick);
+            addBody.addEventListener("change", handleAddBodyChange);
+        }
+
+        var addModal = document.getElementById("packs-add-modal");
+        if (addModal) {
+            addModal.addEventListener("click", function (e) {
+                if (e.target === addModal) closeAddModal();
+            });
+        }
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                var modal = document.getElementById("packs-add-modal");
+                if (modal && !modal.hidden) closeAddModal();
+            }
+        });
+
         document.querySelectorAll(".packs-export-btn").forEach(function (btn) {
             btn.addEventListener("click", function () {
                 if (!selectedPackId) return;

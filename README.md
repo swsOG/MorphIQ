@@ -21,9 +21,9 @@ Morph IQ is a local-first document scanning and compliance platform built for UK
 │   auto_ocr_watch.py polls Clients/*/raw/ every 2s                   │
 │                                                                     │
 │   ImageMagick (pre-process) → OCRmyPDF + Tesseract (searchable PDF) │
-│            → ai_prefill.py (Claude API)                             │
+│            → ai_prefill.py (Gemini default, Anthropic optional)     │
 │                                                                     │
-│   Claude classifies document type, extracts structured fields,      │
+│   The AI layer classifies document type, extracts structured fields,│
 │   scores completeness (0–100%), flags missing required fields        │
 │   Output: review.json + searchable PDF in Batches/date/DOC-XXXXX/   │
 └──────────────────────────────┬──────────────────────────────────────┘
@@ -59,7 +59,7 @@ Morph IQ is a local-first document scanning and compliance platform built for UK
 | Layer | Technology |
 |-------|-----------|
 | OCR pipeline | Tesseract, OCRmyPDF, ImageMagick |
-| AI classification & extraction | Claude API (Anthropic) — `claude-opus-4-6` |
+| AI classification & extraction | Gemini 2.5 Flash by default, Anthropic optional |
 | Backend / API | Python 3, Flask, Flask-Login |
 | Database | SQLite (`portal.db`) |
 | Document processing | pypdf, ReportLab, pdfminer |
@@ -75,7 +75,7 @@ Morph IQ is a local-first document scanning and compliance platform built for UK
 
 **AI Document Pipeline**
 - 6 document types: Gas Safety Certificate, EICR, EPC, Tenancy Agreement, Deposit Protection Certificate, Inventory
-- Per-type Claude prompts for field extraction with completeness scoring (0–100%)
+- Per-type AI prompts for field extraction with completeness scoring (0–100%)
 - `needs_attention` flag raised when required fields are missing or completeness < 70%
 - Batch re-processing via `scripts/rerun_prefill.py`
 
@@ -144,7 +144,7 @@ Python 3.11+
 Tesseract OCR        (tesseract --version)
 OCRmyPDF             (pip install ocrmypdf)
 ImageMagick          (magick --version)
-Anthropic API key    (set in .env — see .env.example)
+Gemini API key       (set in .env — see .env.example)
 ```
 
 **Quick start (Windows)**
@@ -153,9 +153,9 @@ Anthropic API key    (set in .env — see .env.example)
 REM 1. Clone and install dependencies
 pip install -r requirements.txt
 
-REM 2. Add your Anthropic API key
+REM 2. Add your AI provider key
 copy .env.example .env
-REM  Edit .env and add your ANTHROPIC_API_KEY
+REM  Edit .env and add your GEMINI_API_KEY
 
 REM 3. Start everything
 Start_System_v2.bat
@@ -180,7 +180,7 @@ MorphIQ/Product/
 │
 ├── server.py               # REST API (port 8765) — docs, review, PDF, export
 ├── auto_ocr_watch.py       # Pipeline watcher — ImageMagick → OCR → AI prefill
-├── ai_prefill.py           # Claude classification + field extraction
+├── ai_prefill.py           # AI classification + field extraction
 ├── sync_to_portal.py       # Syncs reviewed docs into portal.db
 ├── export_client.py        # Verified docs → delivery folder + Excel manifest
 │
@@ -219,7 +219,7 @@ MorphIQ/Product/
 This project is a deliberate experiment in AI-native product development.
 
 **In the product:**
-- The Claude API (`claude-opus-4-6`) handles document classification and structured field extraction. Each document type has a dedicated prompt with per-field extraction instructions and a completeness scoring system built on top.
+- Gemini is the active default provider for document classification and structured field extraction, with Anthropic still available as an optional provider. Each document type has a dedicated prompt with per-field extraction instructions and a completeness scoring system built on top.
 
 **In the build:**
 - **Cursor IDE + Claude** — every feature was built in pair-programming sessions. Architecture, database schema, Flask routes, and frontend logic were all co-designed rather than solo-coded.
@@ -238,6 +238,18 @@ The core pipeline (scan → OCR → AI prefill → verify → portal) is fully o
 
 See **[docs/VISION.md](docs/VISION.md)** for the full product roadmap, pricing model, and expansion plan.
 
+The portal now also has a first-class exception workflow: clients can report a specific document, MorphIQ routes it into rework, and corrected documents only return to the portal after re-verification.
+
+**Recent trust signals:**
+- tenant-scoped auth coverage across read, download, upload, and mutation routes
+- dedicated portal `Issues` workspace for admins
+- client-facing `Delivery assurance` and `Support` surfaces
+- browser smoke coverage for the manager-report -> admin-triage flow
+
+**Memory docs:**
+- [docs/CLAUDE_HANDOFF.md](docs/CLAUDE_HANDOFF.md)
+- [docs/PROJECT_BRAIN.md](docs/PROJECT_BRAIN.md)
+
 **What's working:**
 - Full pipeline end-to-end
 - All 6 document types with AI extraction
@@ -246,10 +258,21 @@ See **[docs/VISION.md](docs/VISION.md)** for the full product roadmap, pricing m
 - Pack builder with ZIP/PDF export
 
 **Coming next:**
+- Dedicated internal rework queues/workspaces
+- Wider browser smoke coverage
 - GDPR and commercial paperwork
 - First paying client onboarding
 - Deposit Protection and Inventory template completion
 - Scoped export (filter by status/type from UI)
+
+**Testing:**
+
+```bat
+python -m pytest tests -q
+npm install
+npm run playwright:install
+npm run test:smoke
+```
 
 ---
 

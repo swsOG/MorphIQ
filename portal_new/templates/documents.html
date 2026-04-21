@@ -54,51 +54,51 @@
             </nav>
 
             <div class="portal-main">
-                <main class="documents-library-main" id="documents-library-root">
-                    <div class="documents-library-search-wrap">
+                <main class="documents-library-main portal-workspace-shell portal-workspace-shell--dense" id="documents-library-root">
+                    <div class="documents-library-search-wrap portal-toolbar-search portal-surface-card">
                         <label class="documents-library-search-label" for="documents-library-search">Search documents</label>
                         <input type="search" id="documents-library-search" class="documents-library-search-input"
                                placeholder="Search by property, tenant, document type, field value..." autocomplete="off">
                     </div>
 
-                    <div class="documents-library-filters" role="group" aria-label="Filters">
+                    <div class="documents-library-filters portal-surface-card" role="group" aria-label="Filters">
                         <div class="documents-library-filter-row">
                             <span class="documents-library-filter-label">Type</span>
                             <div class="documents-library-pill-row" role="toolbar" aria-label="Document type">
-                                <button type="button" class="doc-lib-type-pill doc-lib-pill doc-lib-pill--active" data-doc-type="all">All</button>
-                                <button type="button" class="doc-lib-type-pill doc-lib-pill" data-doc-type="gas">Gas</button>
-                                <button type="button" class="doc-lib-type-pill doc-lib-pill" data-doc-type="eicr">EICR</button>
-                                <button type="button" class="doc-lib-type-pill doc-lib-pill" data-doc-type="epc">EPC</button>
-                                <button type="button" class="doc-lib-type-pill doc-lib-pill" data-doc-type="tenancy">Tenancy</button>
-                                <button type="button" class="doc-lib-type-pill doc-lib-pill" data-doc-type="deposit">Deposit</button>
-                                <button type="button" class="doc-lib-type-pill doc-lib-pill" data-doc-type="inventory">Inventory</button>
+                                <button type="button" class="doc-lib-type-pill doc-lib-pill portal-pill doc-lib-pill--active portal-pill--active" data-doc-type="all">All</button>
+                                <button type="button" class="doc-lib-type-pill doc-lib-pill portal-pill" data-doc-type="gas">Gas</button>
+                                <button type="button" class="doc-lib-type-pill doc-lib-pill portal-pill" data-doc-type="eicr">EICR</button>
+                                <button type="button" class="doc-lib-type-pill doc-lib-pill portal-pill" data-doc-type="epc">EPC</button>
+                                <button type="button" class="doc-lib-type-pill doc-lib-pill portal-pill" data-doc-type="tenancy">Tenancy</button>
+                                <button type="button" class="doc-lib-type-pill doc-lib-pill portal-pill" data-doc-type="deposit">Deposit</button>
+                                <button type="button" class="doc-lib-type-pill doc-lib-pill portal-pill" data-doc-type="inventory">Inventory</button>
                             </div>
                         </div>
                         <div class="documents-library-filter-row">
                             <span class="documents-library-filter-label">Status</span>
                             <div class="documents-library-pill-row" role="toolbar" aria-label="Status">
-                                <button type="button" class="doc-lib-status-pill doc-lib-pill doc-lib-pill--active" data-doc-status="all">All</button>
-                                <button type="button" class="doc-lib-status-pill doc-lib-pill" data-doc-status="valid">Valid</button>
-                                <button type="button" class="doc-lib-status-pill doc-lib-pill" data-doc-status="expiring">Expiring</button>
-                                <button type="button" class="doc-lib-status-pill doc-lib-pill" data-doc-status="expired">Expired</button>
-                                <button type="button" class="doc-lib-status-pill doc-lib-pill" data-doc-status="needs_review">Needs review</button>
+                                <button type="button" class="doc-lib-status-pill doc-lib-pill portal-pill doc-lib-pill--active portal-pill--active" data-doc-status="all">All</button>
+                                <button type="button" class="doc-lib-status-pill doc-lib-pill portal-pill" data-doc-status="valid">Valid</button>
+                                <button type="button" class="doc-lib-status-pill doc-lib-pill portal-pill" data-doc-status="expiring">Expiring</button>
+                                <button type="button" class="doc-lib-status-pill doc-lib-pill portal-pill" data-doc-status="expired">Expired</button>
+                                <button type="button" class="doc-lib-status-pill doc-lib-pill portal-pill" data-doc-status="needs_review">Needs review</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="documents-library-results-bar">
+                    <div class="documents-library-results-bar portal-results-shell">
                         <span class="documents-library-count-wrap"><span id="documents-library-count">0</span> documents</span>
-                        <div class="documents-library-results-right">
+                        <div class="documents-library-results-right portal-toolbar-controls">
                             <label class="documents-library-sort-label" for="documents-library-sort">Sort</label>
-                            <select id="documents-library-sort" class="documents-library-sort-select" aria-label="Sort documents">
+                            <select id="documents-library-sort" class="documents-library-sort-select portal-control" aria-label="Sort documents">
                                 <option value="newest">Newest first</option>
                                 <option value="oldest">Oldest first</option>
                                 <option value="property">Property A–Z</option>
                                 <option value="type">Type A–Z</option>
                             </select>
                             <div class="documents-library-view-toggle" role="group" aria-label="View mode">
-                                <button type="button" class="doc-lib-view-toggle doc-lib-view-toggle--active" data-view="grid" title="Grid view" aria-pressed="true">Grid</button>
-                                <button type="button" class="doc-lib-view-toggle" data-view="list" title="List view" aria-pressed="false">List</button>
+                                <button type="button" class="doc-lib-view-toggle portal-pill" data-view="grid" title="Grid view" aria-pressed="false">Grid</button>
+                                <button type="button" class="doc-lib-view-toggle doc-lib-view-toggle--active portal-pill portal-pill--active" data-view="list" title="List view" aria-pressed="true">List</button>
                             </div>
                         </div>
                     </div>

@@ -6,6 +6,7 @@
 {%- set _documents_url = url_for('documents_page') -%}
 {%- set _packs_url = url_for('packs_page') -%}
 {%- set _ask_ai_url = url_for('ask_ai_page') -%}
+{%- set _issues_url = url_for('issues_page') -%}
 {%- set _reports_url = url_for('reports_page') -%}
 {%- set _settings_url = url_for('settings_page') -%}
 {%- if _client_q -%}
@@ -15,6 +16,7 @@
     {%- set _documents_url = _documents_url + '?client=' + _client_q -%}
     {%- set _packs_url = _packs_url + '?client=' + _client_q -%}
     {%- set _ask_ai_url = _ask_ai_url + '?client=' + _client_q -%}
+    {%- set _issues_url = _issues_url + '?client=' + _client_q -%}
     {%- set _reports_url = _reports_url + '?client=' + _client_q -%}
     {%- set _settings_url = _settings_url + '?client=' + _client_q -%}
 {%- endif -%}
@@ -49,6 +51,12 @@
             <span>Ask AI</span>
         </a>
         <div class="portal-sidebar-divider" role="separator" aria-hidden="true"></div>
+        {% if current_user.role == 'admin' %}
+        <a href="{{ _issues_url }}" class="portal-sidebar-link {% if active_view == 'issues' %}active{% endif %}" aria-label="Issues">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Issues</span>
+        </a>
+        {% endif %}
         <a href="{{ _reports_url }}" class="portal-sidebar-link {% if active_view == 'reports' %}active{% endif %}" aria-label="Reports">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             <span>Reports</span>

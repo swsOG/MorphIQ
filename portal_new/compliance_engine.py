@@ -35,7 +35,7 @@ COMPLIANCE_RULES = {
         "name": "epc",
         "expiry_field_candidates": ["valid_until", "expiry_date"],
     },
-    "deposit-protection": {
+    "deposit-protection-certificate": {
         "name": "deposit",
         "expiry_field_candidates": ["expiry_date"],
     },

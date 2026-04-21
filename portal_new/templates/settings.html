@@ -42,17 +42,18 @@
             </nav>
 
             <div class="portal-main settings-page-main">
-                <div class="portal-page-inner">
+                <div class="portal-page-inner portal-workspace-shell">
                 <nav class="settings-subnav" aria-label="Settings sections" role="tablist">
-                    <button type="button" class="settings-subnav-btn settings-subnav-btn--active" data-settings-panel="team" role="tab" aria-selected="true">Team &amp; users</button>
-                    <button type="button" class="settings-subnav-btn" data-settings-panel="notifications" role="tab" aria-selected="false">Notifications</button>
-                    <button type="button" class="settings-subnav-btn" data-settings-panel="permissions" role="tab" aria-selected="false">Permissions</button>
+                    <button type="button" class="settings-subnav-btn settings-subnav-btn--active portal-pill portal-pill--active" data-settings-panel="team" role="tab" aria-selected="true">Team &amp; users</button>
+                    <button type="button" class="settings-subnav-btn portal-pill" data-settings-panel="notifications" role="tab" aria-selected="false">Notifications</button>
+                    <button type="button" class="settings-subnav-btn portal-pill" data-settings-panel="support" role="tab" aria-selected="false">Support</button>
+                    <button type="button" class="settings-subnav-btn portal-pill" data-settings-panel="permissions" role="tab" aria-selected="false">Permissions</button>
                 </nav>
 
                 <div class="settings-panels">
                     <!-- Team & users -->
                     <div id="settings-panel-team" class="settings-subpanel settings-subpanel--active" role="tabpanel">
-                        <section class="settings-card settings-card--dark">
+                        <section class="settings-card settings-card--dark portal-surface-card">
                             <h2 class="settings-card-title">Your account</h2>
                             <div class="settings-card-body">
                                 <p class="settings-account-email">{{ user_email }}</p>
@@ -84,7 +85,7 @@
                         </section>
 
                         {% if is_admin %}
-                        <section class="settings-card settings-card--dark" id="settings-team-section">
+                        <section class="settings-card settings-card--dark portal-surface-card" id="settings-team-section">
                             <h2 class="settings-card-title">Team members</h2>
                             <p class="settings-card-lead">Users with access to the MorphIQ portal.</p>
                             <div class="settings-table-wrap">
@@ -141,7 +142,7 @@
                         </section>
                         {% endif %}
 
-                        <section class="settings-card settings-card--dark">
+                        <section class="settings-card settings-card--dark portal-surface-card">
                             <h2 class="settings-card-title">Workspace</h2>
                             <div class="settings-card-body">
                                 {% if is_admin %}
@@ -165,7 +166,7 @@
                         </section>
 
                         {% if is_admin %}
-                        <section class="settings-card settings-card--dark" id="settings-manage-clients-section">
+                        <section class="settings-card settings-card--dark portal-surface-card" id="settings-manage-clients-section">
                             <h2 class="settings-card-title">Manage clients</h2>
                             <p class="settings-card-lead">Agencies with access to the MorphIQ portal.</p>
                             <div id="settings-client-msg" class="settings-inline-msg" role="status" aria-live="polite" hidden></div>
@@ -197,7 +198,7 @@
                                 </div>
                             </div>
                         </section>
-                        <section class="settings-card settings-card--dark settings-danger" id="settings-danger-clients-section">
+                        <section class="settings-card settings-card--dark settings-danger portal-surface-card" id="settings-danger-clients-section">
                             <h2 class="settings-card-title">Remove clients</h2>
                             <p class="settings-danger-desc">Data is retained for 30 days after removal, then permanently deleted.</p>
                             <div class="settings-table-wrap">
@@ -214,7 +215,7 @@
                                 </table>
                             </div>
                         </section>
-                        <section class="settings-card settings-card--dark settings-danger">
+                        <section class="settings-card settings-card--dark settings-danger portal-surface-card">
                             <h2 class="settings-card-title">Danger zone</h2>
                             <p class="settings-danger-desc">Clear all resolved compliance actions from the system. This cannot be undone.</p>
                             <button type="button" class="btn-secondary settings-btn-danger" id="settings-clear-resolved">Clear all resolved compliance actions</button>
@@ -224,7 +225,7 @@
 
                     <!-- Notifications -->
                     <div id="settings-panel-notifications" class="settings-subpanel" role="tabpanel" hidden>
-                        <section class="settings-card settings-card--dark">
+                        <section class="settings-card settings-card--dark portal-surface-card">
                             <h2 class="settings-card-title">Notification preferences</h2>
                             <p class="settings-card-lead">These options are stored in the UI only until the notification service is connected.</p>
                             <div class="settings-toggle-list">
@@ -248,9 +249,66 @@
                         </section>
                     </div>
 
+                    <div id="settings-panel-support" class="settings-subpanel" role="tabpanel" hidden>
+                        <section class="settings-support-overview portal-surface-card">
+                            <div class="settings-support-overview-main">
+                                <span class="settings-support-kicker">Client support</span>
+                                <h2 class="settings-card-title">Support and delivery follow-up</h2>
+                                <p class="settings-card-lead">Use support for general questions, delivery updates, and operational follow-up. If a specific document is wrong, report it from the document page first so MorphIQ can create a tracked issue ticket.</p>
+                            </div>
+                            <div class="settings-support-overview-points">
+                                <div class="settings-support-point">
+                                    <span class="settings-support-point-label">Best for</span>
+                                    <p>Status checks, general help, or linking staff to a document that already has an issue.</p>
+                                </div>
+                                <div class="settings-support-point">
+                                    <span class="settings-support-point-label">Not for</span>
+                                    <p>Submitting a fresh document complaint without opening the formal issue flow.</p>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="settings-card settings-card--dark portal-surface-card" id="settings-support-card">
+                            <div class="settings-support-header">
+                                <div>
+                                    <h2 class="settings-card-title">Support chat</h2>
+                                    <p class="settings-card-lead">General support lives here. Document-specific complaints should still be raised from the document view so MorphIQ can keep a formal issue ticket and audit trail.</p>
+                                </div>
+                                <span class="client-badge" id="settings-support-client">{{ client_name or 'Client context required' }}</span>
+                            </div>
+                            <div id="settings-support-empty" class="settings-muted-note" {% if client_name %}hidden{% endif %}>
+                                Select a client context to open the support thread.
+                            </div>
+                            <div id="settings-support-thread" class="settings-support-thread" {% if not client_name %}hidden{% endif %}>
+                                <div class="settings-support-note">
+                                    <strong>MorphIQ keeps this thread separate from issue tickets.</strong>
+                                    Mention a document ID if you want support to jump straight into the relevant admin view.
+                                </div>
+                                <div id="settings-support-messages" class="settings-support-messages">
+                                    <div class="settings-loading">Loading support thread…</div>
+                                </div>
+                                <form id="settings-support-form" class="settings-support-form">
+                                    <div class="settings-support-grid">
+                                        <label class="settings-form-row">
+                                            <span class="settings-label">Reference document (optional)</span>
+                                            <input type="number" id="settings-support-linked-document" class="settings-input" min="1" placeholder="Portal document ID">
+                                        </label>
+                                    </div>
+                                    <label class="settings-form-row">
+                                        <span class="settings-label">Message</span>
+                                        <textarea id="settings-support-message" class="settings-input" rows="4" placeholder="Hi MorphIQ, I need help with…"></textarea>
+                                    </label>
+                                    <div id="settings-support-feedback" class="settings-inline-msg" hidden></div>
+                                    <div class="settings-form-actions">
+                                        <button type="submit" class="btn-primary" id="settings-support-send">Send message</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </section>
+                    </div>
+
                     <!-- Permissions (static) -->
                     <div id="settings-panel-permissions" class="settings-subpanel" role="tabpanel" hidden>
-                        <section class="settings-card settings-card--dark">
+                        <section class="settings-card settings-card--dark portal-surface-card">
                             <h2 class="settings-card-title">Role permissions</h2>
                             <p class="settings-card-lead">Illustrative matrix — enforced in product policy.</p>
                             <div class="settings-table-wrap settings-permissions-wrap">
@@ -313,20 +371,29 @@
 <script src="{{ url_for('static', filename='portal.js') }}"></script>
 <script>
 (function() {
+    function activateSettingsPanel(panelId) {
+        document.querySelectorAll(".settings-subnav-btn").forEach(function (b) {
+            var show = b.getAttribute("data-settings-panel") === panelId;
+            b.classList.toggle("settings-subnav-btn--active", show);
+            b.classList.toggle("portal-pill--active", show);
+            b.setAttribute("aria-selected", show ? "true" : "false");
+        });
+        document.querySelectorAll(".settings-subpanel").forEach(function (p) {
+            var show = p.id === "settings-panel-" + panelId;
+            p.hidden = !show;
+            p.classList.toggle("settings-subpanel--active", show);
+        });
+    }
+
     document.querySelectorAll(".settings-subnav-btn").forEach(function (btn) {
         btn.addEventListener("click", function () {
-            var panelId = btn.getAttribute("data-settings-panel");
-            document.querySelectorAll(".settings-subnav-btn").forEach(function (b) {
-                b.classList.toggle("settings-subnav-btn--active", b === btn);
-                b.setAttribute("aria-selected", b === btn ? "true" : "false");
-            });
-            document.querySelectorAll(".settings-subpanel").forEach(function (p) {
-                var show = p.id === "settings-panel-" + panelId;
-                p.hidden = !show;
-                p.classList.toggle("settings-subpanel--active", show);
-            });
+            activateSettingsPanel(btn.getAttribute("data-settings-panel"));
         });
     });
+
+    if (window.location.hash === "#settings-support-card") {
+        activateSettingsPanel("support");
+    }
 
     var STORAGE_KEY_CLIENT = 'morphiq_default_client';
     var STORAGE_KEY_DOCS_PER_PAGE = 'morphiq_docs_per_page';
@@ -366,6 +433,25 @@
         var d = document.createElement('div');
         d.textContent = s;
         return d.innerHTML;
+    }
+    function supportApiUrl(url) {
+        var client = (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName) || '';
+        if (!client) return url;
+        return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'client=' + encodeURIComponent(client);
+    }
+    function fmtWhen(iso) {
+        if (!iso) return '—';
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return esc(String(iso));
+        return esc(
+            d.toLocaleString('en-GB', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+        );
     }
 
     // ── Users table ────────────────────────────────────────────────────────────
@@ -641,6 +727,106 @@
                 })
                 .catch(function() { alert('Request failed.'); })
                 .finally(function() { clearResolvedBtn.disabled = false; });
+        });
+    }
+
+    var supportThread = document.getElementById('settings-support-thread');
+    var supportMessages = document.getElementById('settings-support-messages');
+    var supportForm = document.getElementById('settings-support-form');
+    var supportFeedback = document.getElementById('settings-support-feedback');
+    var supportEmpty = document.getElementById('settings-support-empty');
+    function showSupportFeedback(text, tone) {
+        if (!supportFeedback) return;
+        if (!text) {
+            supportFeedback.hidden = true;
+            supportFeedback.textContent = '';
+            supportFeedback.className = 'settings-inline-msg';
+            return;
+        }
+        supportFeedback.hidden = false;
+        supportFeedback.textContent = text;
+        supportFeedback.className = 'settings-inline-msg document-issue-feedback document-issue-feedback--' + (tone || 'info');
+    }
+    function renderSupportMessages(messages) {
+        if (!supportMessages) return;
+        supportMessages.innerHTML = '';
+        if (!messages.length) {
+            supportMessages.innerHTML = '<div class="document-issue-empty">No support messages yet.</div>';
+            return;
+        }
+        messages.forEach(function(message) {
+            var item = document.createElement('div');
+            var linkedDocument = message.linked_document_id
+                ? '<a class="pex-doc-link" href="/document/by-id/' + encodeURIComponent(message.linked_document_id) + (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName ? ('?client=' + encodeURIComponent(window.MORPHIQ_PORTAL.clientName)) : '') + '">Open linked document</a>'
+                : '';
+            item.className = 'document-issue-message' + (message.author_role === 'admin' ? ' document-issue-message--staff' : '');
+            item.innerHTML =
+                '<div class="document-issue-message-head"><strong>' + esc(message.author_name || 'MorphIQ') + '</strong><span>' + fmtWhen(message.created_at)
+                + (message.linked_document_id ? ' · Doc ' + esc(message.linked_document_id) : '') + '</span></div>'
+                + '<div class="document-issue-message-body">' + esc(message.body || '') + '</div>'
+                + linkedDocument;
+            supportMessages.appendChild(item);
+        });
+    }
+    function loadSupportThread() {
+        if (!supportThread || !supportMessages) return;
+        if (!((window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName) || '')) {
+            if (supportEmpty) supportEmpty.hidden = false;
+            supportThread.hidden = true;
+            return;
+        }
+        if (supportEmpty) supportEmpty.hidden = true;
+        supportThread.hidden = false;
+        fetch(supportApiUrl('/api/support/messages'), { credentials: 'same-origin' })
+            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(result) {
+                if (!result.ok) throw new Error(result.data.error || 'Failed to load support messages.');
+                renderSupportMessages(result.data.messages || []);
+            })
+            .catch(function(error) {
+                supportMessages.innerHTML = '<div class="settings-error">' + esc(error && error.message ? error.message : 'Failed to load support thread.') + '</div>';
+            });
+    }
+    loadSupportThread();
+    if (supportForm) {
+        supportForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            var sendBtn = document.getElementById('settings-support-send');
+            var messageEl = document.getElementById('settings-support-message');
+            var linkedDocEl = document.getElementById('settings-support-linked-document');
+            var body = ((messageEl && messageEl.value) || '').trim();
+            var linkedDocumentId = linkedDocEl && linkedDocEl.value ? parseInt(linkedDocEl.value, 10) : null;
+            if (!body) {
+                showSupportFeedback('Please write a message before sending it.', 'error');
+                return;
+            }
+            showSupportFeedback('', 'info');
+            if (sendBtn) sendBtn.disabled = true;
+            fetch(supportApiUrl('/api/support/messages'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    body: body,
+                    linked_document_id: linkedDocumentId
+                })
+            })
+                .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+                .then(function(result) {
+                    if (!result.ok || !result.data.message) {
+                        throw new Error(result.data.error || 'Failed to send support message.');
+                    }
+                    if (messageEl) messageEl.value = '';
+                    if (linkedDocEl) linkedDocEl.value = '';
+                    showSupportFeedback('Message sent to MorphIQ support.', 'success');
+                    loadSupportThread();
+                })
+                .catch(function(error) {
+                    showSupportFeedback(error && error.message ? error.message : 'Failed to send support message.', 'error');
+                })
+                .finally(function() {
+                    if (sendBtn) sendBtn.disabled = false;
+                });
         });
     }
 })();

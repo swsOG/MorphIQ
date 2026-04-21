@@ -2,7 +2,28 @@
 
 cd /d "%~dp0"
 
-for /f "tokens=1,* delims==" %%a in ('findstr /i "ANTHROPIC_API_KEY" .env') do set ANTHROPIC_API_KEY=%%b
+set "PYTHON_CMD="
+if exist "%LOCALAPPDATA%\Programs\Python\Python314\python.exe" set "PYTHON_CMD=%LOCALAPPDATA%\Programs\Python\Python314\python.exe"
+if not defined PYTHON_CMD if exist "%LOCALAPPDATA%\Programs\Python\Python313\python.exe" set "PYTHON_CMD=%LOCALAPPDATA%\Programs\Python\Python313\python.exe"
+if not defined PYTHON_CMD if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" set "PYTHON_CMD=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+if not defined PYTHON_CMD (
+    where python >nul 2>&1
+    if %ERRORLEVEL% == 0 set "PYTHON_CMD=python"
+)
+if not defined PYTHON_CMD (
+    where py >nul 2>&1
+    if %ERRORLEVEL% == 0 set "PYTHON_CMD=py -3"
+)
+
+if not defined PYTHON_CMD (
+    echo ERROR: Python not found. Run setup_check.bat and install/configure Python first.
+    pause
+    exit /b 1
+)
+
+if exist ".env" (
+    for /f "tokens=1,* delims==" %%a in ('findstr /i "ANTHROPIC_API_KEY" .env') do set ANTHROPIC_API_KEY=%%b
+)
 
 echo ============================================
 
@@ -16,19 +37,19 @@ echo.
 
 echo Starting document watcher...
 
-start "ScanStation Watcher" /min python auto_ocr_watch.py
+start "ScanStation Watcher" /min cmd /c ""%PYTHON_CMD%" auto_ocr_watch.py"
 
 :: Start the API server in a minimized window
 
 echo Starting API server on http://127.0.0.1:8765 ...
 
-start "ScanStation API" /min python server.py
+start "ScanStation API" /min cmd /c ""%PYTHON_CMD%" server.py"
 
 :: Start the MorphIQ portal (portal_new) in a minimized window
 
 echo Starting MorphIQ portal on http://127.0.0.1:5000 ...
 
-start "MorphIQ Portal" /min python portal_new\app.py
+start "MorphIQ Portal" /min cmd /c ""%PYTHON_CMD%" portal_new\app.py"
 
 :: Wait for background services to start
 

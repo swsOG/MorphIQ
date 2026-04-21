@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphIQ - Issues</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+</head>
+<body class="reports-body">
+
+<div class="portal-shell morphiq-reports-shell" data-page="issues">
+    {%- set _client_q = (client_name or '')|urlencode -%}
+    {%- set _overview_url = url_for('overview_page') -%}
+    {%- if _client_q -%}
+        {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
+    {%- endif -%}
+    <div class="portal-app-layout">
+        {% include 'partials/portal_sidebar_nav.html' %}
+        <div class="portal-app-main">
+            <header class="portal-header">
+                <div class="header-logo">
+                    <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
+                    <span class="logo-text">Morph<span class="iq">IQ</span></span>
+                    <span class="logo-divider">Issues</span>
+                    {% if client_name %}
+                        <a href="{{ _overview_url }}" class="client-badge" title="Switch client"><span>{{ client_name }}</span></a>
+                    {% endif %}
+                </div>
+                <div class="header-user-group">
+                    <div class="user-avatar">{{ (user_full_name or current_user.full_name or 'U')[0] }}</div>
+                    <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+                </div>
+            </header>
+
+            <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+                <a href="{{ _overview_url }}">Portfolio</a>
+                <span class="portal-breadcrumb-sep">&rsaquo;</span>
+                <span class="portal-breadcrumb-current">Issues</span>
+            </nav>
+
+            <div class="portal-main reports-page-main">
+                <div class="portal-page-inner portal-workspace-shell">
+                    <section class="issues-workspace-header portal-surface-card">
+                        <div class="issues-workspace-header-main">
+                            <span class="issues-workspace-kicker">Admin issue operations</span>
+                            <h1 class="issues-workspace-title">Issues workspace</h1>
+                            <p class="issues-workspace-copy">Keep rework visible from intake to re-verification. Assign ownership, reroute to review or re-scan, and jump straight into the linked document or support context.</p>
+                        </div>
+                        <div class="issues-workspace-metrics">
+                            <div class="issues-metric-card">
+                                <span class="issues-metric-label">Open issues</span>
+                                <strong id="issues-metric-open">0</strong>
+                            </div>
+                            <div class="issues-metric-card">
+                                <span class="issues-metric-label">Review queue</span>
+                                <strong id="issues-metric-review">0</strong>
+                            </div>
+                            <div class="issues-metric-card">
+                                <span class="issues-metric-label">Re-scan queue</span>
+                                <strong id="issues-metric-rescan">0</strong>
+                            </div>
+                            <div class="issues-metric-card">
+                                <span class="issues-metric-label">Awaiting re-verification</span>
+                                <strong id="issues-metric-awaiting">0</strong>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="reports-section portal-surface-card" id="issues-queue-section">
+                        <div class="reports-section-header">
+                            <div>
+                                <h2 class="reports-section-title">Rework queue</h2>
+                                <p class="reports-section-lead">Triage, assign, reroute, and move document issues toward re-verification without losing queue ownership or audit context.</p>
+                            </div>
+                            <div class="reports-issue-filters">
+                                <button type="button" class="portal-pill portal-pill--active" data-issue-filter="all">All</button>
+                                <button type="button" class="portal-pill" data-issue-filter="review_queue">Review</button>
+                                <button type="button" class="portal-pill" data-issue-filter="rescan_queue">Re-scan</button>
+                                <button type="button" class="portal-pill" data-issue-status="awaiting_reverification">Awaiting re-verification</button>
+                            </div>
+                        </div>
+                        <div id="issues-queue-feedback" class="settings-inline-msg" hidden></div>
+                        <div class="reports-table-wrap">
+                            <table class="reports-data-table reports-issues-table">
+                                <thead>
+                                    <tr>
+                                        <th>Issue</th>
+                                        <th>Status</th>
+                                        <th>Queue</th>
+                                        <th>Priority</th>
+                                        <th>Client</th>
+                                        <th>Owner</th>
+                                        <th>Reported</th>
+                                        <th style="text-align:right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="issues-queue-tbody">
+                                    <tr><td colspan="8" class="reports-audit-loading">Loading issues...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.MORPHIQ_PORTAL = { clientName: {{ (client_name or '')|tojson|safe }} };
+    window.MORPHIQ_ISSUES = {
+        currentUserId: {{ current_user.id|tojson|safe }}
+    };
+</script>
+<script src="{{ url_for('static', filename='portal.js') }}"></script>
+<script>
+(function () {
+    function withClientQuery(url) {
+        var clientParam = (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName) || "";
+        if (!String(clientParam).trim()) {
+            clientParam = new URLSearchParams(window.location.search).get("client") || "";
+        }
+        if (!String(clientParam).trim()) return url;
+        var sep = url.indexOf("?") >= 0 ? "&" : "?";
+        return url + sep + "client=" + encodeURIComponent(String(clientParam).trim());
+    }
+
+    function esc(s) {
+        if (s == null || s === "") return "—";
+        var d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function fmtWhen(iso) {
+        if (!iso) return "—";
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return esc(String(iso).slice(0, 19));
+        return esc(
+            d.toLocaleString("en-GB", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            })
+        );
+    }
+
+    function statusTone(status) {
+        var normalized = String(status || "").toLowerCase();
+        if (normalized === "resolved" || normalized === "closed") return "status-verified";
+        if (normalized === "awaiting_reverification") return "status-expiring";
+        return "status-needs-review";
+    }
+
+    function queueLabel(value) {
+        return {
+            review_queue: "Review queue",
+            rescan_queue: "Re-scan queue"
+        }[String(value || "")] || "—";
+    }
+
+    var queueBody = document.getElementById("issues-queue-tbody");
+    var queueFeedback = document.getElementById("issues-queue-feedback");
+    var openMetric = document.getElementById("issues-metric-open");
+    var reviewMetric = document.getElementById("issues-metric-review");
+    var rescanMetric = document.getElementById("issues-metric-rescan");
+    var awaitingMetric = document.getElementById("issues-metric-awaiting");
+    var currentQueueFilter = "all";
+    var currentStatusFilter = "";
+
+    function showQueueFeedback(text, tone) {
+        if (!queueFeedback) return;
+        if (!text) {
+            queueFeedback.hidden = true;
+            queueFeedback.textContent = "";
+            queueFeedback.className = "settings-inline-msg";
+            return;
+        }
+        queueFeedback.hidden = false;
+        queueFeedback.textContent = text;
+        queueFeedback.className = "settings-inline-msg document-issue-feedback document-issue-feedback--" + (tone || "info");
+    }
+
+    function buildSupportUrl(issue) {
+        var base = "/settings";
+        var params = [];
+        if (issue.client_name) {
+            params.push("client=" + encodeURIComponent(issue.client_name));
+        }
+        var qs = params.length ? ("?" + params.join("&")) : "";
+        return base + qs + "#settings-support-card";
+    }
+
+    function buildActions(issue) {
+        var docUrl = issue.admin_document_url ? withClientQuery(issue.admin_document_url) : "#";
+        var html = '<div class="reports-row-actions portal-row-actions">';
+        html += '<a class="reports-row-btn portal-action-btn" href="' + docUrl + '">Open doc</a>';
+        html += '<a class="reports-row-btn portal-action-btn" href="' + esc(buildSupportUrl(issue)) + '">Support thread</a>';
+        html += '<button type="button" class="reports-row-btn portal-action-btn" data-assign-issue="' + issue.id + '">Assign to me</button>';
+        html += '<button type="button" class="reports-row-btn portal-action-btn" data-route-issue="' + issue.id + '" data-target-queue="' + (issue.target_queue === "rescan_queue" ? "review_queue" : "rescan_queue") + '">';
+        html += issue.target_queue === "rescan_queue" ? "Send to review" : "Send to re-scan";
+        html += "</button>";
+        if (issue.status !== "awaiting_reverification") {
+            html += '<button type="button" class="reports-row-btn portal-action-btn" data-status-issue="' + issue.id + '" data-status="awaiting_reverification">Awaiting re-verification</button>';
+        }
+        html += "</div>";
+        return html;
+    }
+
+    function renderIssues(issues) {
+        if (!queueBody) return;
+        queueBody.innerHTML = "";
+        if (!issues.length) {
+            queueBody.innerHTML = '<tr><td colspan="8" class="reports-audit-empty">No issues match this view right now. Change the filter or wait for the next reported document.</td></tr>';
+            return;
+        }
+        issues.forEach(function (issue) {
+            var tr = document.createElement("tr");
+            tr.innerHTML =
+                "<td><strong>#"+ esc(issue.id) +"</strong><div class=\"reports-issue-subtitle\">" + esc(issue.doc_type || issue.doc_name || "Document") + "</div></td>" +
+                "<td><span class=\"status-badge " + statusTone(issue.status) + "\"><span class=\"dot\"></span>" + esc(String(issue.status || "reported").replace(/_/g, " ")) + "</span></td>" +
+                "<td>" + esc(queueLabel(issue.target_queue)) + "</td>" +
+                "<td>" + esc(issue.priority || "normal") + "</td>" +
+                "<td>" + esc(issue.client_name || "—") + "</td>" +
+                "<td>" + esc(issue.assigned_user_name || "Unassigned") + "</td>" +
+                "<td>" + fmtWhen(issue.reported_at) + "</td>" +
+                "<td style=\"text-align:right;\">" + buildActions(issue) + "</td>";
+            queueBody.appendChild(tr);
+        });
+    }
+
+    function renderMetrics(issues) {
+        var list = Array.isArray(issues) ? issues : [];
+        var openCount = list.filter(function (issue) {
+            var status = String(issue.status || "").toLowerCase();
+            return status !== "resolved" && status !== "closed";
+        }).length;
+        var reviewCount = list.filter(function (issue) { return issue.target_queue === "review_queue"; }).length;
+        var rescanCount = list.filter(function (issue) { return issue.target_queue === "rescan_queue"; }).length;
+        var awaitingCount = list.filter(function (issue) { return issue.status === "awaiting_reverification"; }).length;
+        if (openMetric) openMetric.textContent = String(openCount);
+        if (reviewMetric) reviewMetric.textContent = String(reviewCount);
+        if (rescanMetric) rescanMetric.textContent = String(rescanCount);
+        if (awaitingMetric) awaitingMetric.textContent = String(awaitingCount);
+    }
+
+    function loadIssues() {
+        if (!queueBody) return;
+        var url = "/api/issues";
+        var params = [];
+        if (currentQueueFilter && currentQueueFilter !== "all") {
+            params.push("queue=" + encodeURIComponent(currentQueueFilter));
+        }
+        if (currentStatusFilter) {
+            params.push("status=" + encodeURIComponent(currentStatusFilter));
+        }
+        if (params.length) {
+            url += "?" + params.join("&");
+        }
+        fetch(withClientQuery(url), { credentials: "same-origin" })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+            .then(function (result) {
+                if (!result.ok) throw new Error(result.data.error || "Failed to load issues.");
+                renderIssues(result.data.issues || []);
+            })
+            .catch(function (error) {
+                queueBody.innerHTML = '<tr><td colspan="8" class="reports-audit-error">' + esc(error && error.message ? error.message : "Unable to load issues.") + "</td></tr>";
+            });
+
+        fetch(withClientQuery("/api/issues"), { credentials: "same-origin" })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+            .then(function (result) {
+                if (!result.ok) throw new Error(result.data.error || "Failed to load issues.");
+                renderMetrics(result.data.issues || []);
+            })
+            .catch(function () {
+                renderMetrics([]);
+            });
+    }
+
+    document.querySelectorAll("[data-issue-filter]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            currentQueueFilter = btn.getAttribute("data-issue-filter") || "all";
+            currentStatusFilter = "";
+            document.querySelectorAll("[data-issue-filter]").forEach(function (node) {
+                node.classList.toggle("portal-pill--active", node === btn);
+            });
+            document.querySelectorAll("[data-issue-status]").forEach(function (node) {
+                node.classList.remove("portal-pill--active");
+            });
+            loadIssues();
+        });
+    });
+
+    document.querySelectorAll("[data-issue-status]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            currentQueueFilter = "all";
+            currentStatusFilter = btn.getAttribute("data-issue-status") || "";
+            document.querySelectorAll("[data-issue-filter]").forEach(function (node) {
+                node.classList.remove("portal-pill--active");
+            });
+            document.querySelectorAll("[data-issue-status]").forEach(function (node) {
+                node.classList.toggle("portal-pill--active", node === btn);
+            });
+            loadIssues();
+        });
+    });
+
+    if (queueBody) {
+        queueBody.addEventListener("click", function (event) {
+            var button = event.target.closest("button");
+            if (!button) return;
+            var issueId = button.getAttribute("data-assign-issue") || button.getAttribute("data-route-issue") || button.getAttribute("data-status-issue");
+            if (!issueId) return;
+            var endpoint = null;
+            var body = null;
+            if (button.hasAttribute("data-assign-issue")) {
+                endpoint = "/api/issues/" + encodeURIComponent(issueId) + "/assign";
+                body = { assigned_user_id: Number(window.MORPHIQ_ISSUES.currentUserId) };
+            } else if (button.hasAttribute("data-route-issue")) {
+                endpoint = "/api/issues/" + encodeURIComponent(issueId) + "/route";
+                body = { target_queue: button.getAttribute("data-target-queue") };
+            } else if (button.hasAttribute("data-status-issue")) {
+                endpoint = "/api/issues/" + encodeURIComponent(issueId) + "/status";
+                body = { status: button.getAttribute("data-status") };
+            }
+            if (!endpoint || !body) return;
+            showQueueFeedback("", "info");
+            button.disabled = true;
+            fetch(withClientQuery(endpoint), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+                .then(function (result) {
+                    if (!result.ok || !result.data.issue) {
+                        throw new Error(result.data.error || "Issue update failed.");
+                    }
+                    showQueueFeedback("Issue #" + issueId + " updated.", "success");
+                    loadIssues();
+                })
+                .catch(function (error) {
+                    showQueueFeedback(error && error.message ? error.message : "Issue update failed.", "error");
+                })
+                .finally(function () {
+                    button.disabled = false;
+                });
+        });
+    }
+
+    loadIssues();
+})();
+</script>
+</body>
+</html>

@@ -4,11 +4,26 @@ echo  ScanStation - System Check
 echo ============================================
 echo.
 set ERRORS=0
+set "PYTHON_CMD="
+
+if exist "%LOCALAPPDATA%\Programs\Python\Python314\python.exe" set "PYTHON_CMD=%LOCALAPPDATA%\Programs\Python\Python314\python.exe"
+if not defined PYTHON_CMD if exist "%LOCALAPPDATA%\Programs\Python\Python313\python.exe" set "PYTHON_CMD=%LOCALAPPDATA%\Programs\Python\Python313\python.exe"
+if not defined PYTHON_CMD if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" set "PYTHON_CMD=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+if not defined PYTHON_CMD (
+    where python >nul 2>&1
+    if %ERRORLEVEL% == 0 set "PYTHON_CMD=python"
+)
+if not defined PYTHON_CMD (
+    where py >nul 2>&1
+    if %ERRORLEVEL% == 0 set "PYTHON_CMD=py -3"
+)
 
 echo Checking Python...
-python --version >nul 2>&1
-if %ERRORLEVEL% == 0 (
-    for /f "tokens=*" %%i in ('python --version 2^>^&1') do echo   OK: %%i
+if defined PYTHON_CMD (
+    call %PYTHON_CMD% --version >nul 2>&1
+)
+if defined PYTHON_CMD if %ERRORLEVEL% == 0 (
+    for /f "tokens=*" %%i in ('call %PYTHON_CMD% --version 2^>^&1') do echo   OK: %%i
 ) else (
     echo   FAIL: Python not found. Install from https://www.python.org/downloads/
     echo         Make sure to tick "Add Python to PATH" during install.
@@ -53,8 +68,11 @@ if %ERRORLEVEL% == 0 (
 
 echo.
 echo Checking openpyxl...
-python -c "import openpyxl; print('  OK: openpyxl', openpyxl.__version__)" 2>nul
-if %ERRORLEVEL% NEQ 0 (
+if defined PYTHON_CMD call %PYTHON_CMD% -c "import openpyxl; print('  OK: openpyxl', openpyxl.__version__)" 2>nul
+if not defined PYTHON_CMD (
+    echo   FAIL: Python not found. Cannot check openpyxl.
+    set /a ERRORS+=1
+) else if %ERRORLEVEL% NEQ 0 (
     echo   FAIL: openpyxl not found. Run: pip install openpyxl
     set /a ERRORS+=1
 )
@@ -80,24 +98,33 @@ if exist "%~dp0Templates\tenancy_agreement.json" (
 
 echo.
 echo Checking Flask (API server)...
-python -c "import flask; print('  OK: Flask', flask.__version__)" 2>nul
-if %ERRORLEVEL% NEQ 0 (
+if defined PYTHON_CMD call %PYTHON_CMD% -c "import flask; print('  OK: Flask', flask.__version__)" 2>nul
+if not defined PYTHON_CMD (
+    echo   FAIL: Python not found. Cannot check Flask.
+    set /a ERRORS+=1
+) else if %ERRORLEVEL% NEQ 0 (
     echo   FAIL: Flask not found. Run: pip install flask
     set /a ERRORS+=1
 )
 
 echo.
 echo Checking flask-cors...
-python -c "import flask_cors; print('  OK: flask-cors')" 2>nul
-if %ERRORLEVEL% NEQ 0 (
+if defined PYTHON_CMD call %PYTHON_CMD% -c "import flask_cors; print('  OK: flask-cors')" 2>nul
+if not defined PYTHON_CMD (
+    echo   FAIL: Python not found. Cannot check flask-cors.
+    set /a ERRORS+=1
+) else if %ERRORLEVEL% NEQ 0 (
     echo   FAIL: flask-cors not found. Run: pip install flask-cors
     set /a ERRORS+=1
 )
 
 echo.
 echo Checking pdfminer.six...
-python -c "import pdfminer; print('  OK: pdfminer.six')" 2>nul
-if %ERRORLEVEL% NEQ 0 (
+if defined PYTHON_CMD call %PYTHON_CMD% -c "import pdfminer; print('  OK: pdfminer.six')" 2>nul
+if not defined PYTHON_CMD (
+    echo   FAIL: Python not found. Cannot check pdfminer.six.
+    set /a ERRORS+=1
+) else if %ERRORLEVEL% NEQ 0 (
     echo   FAIL: pdfminer.six not found. Run: pip install pdfminer.six
     set /a ERRORS+=1
 )

@@ -75,8 +75,84 @@
                     <div class="field-group" id="document-view-summary-fields">
                         <div class="empty-state">Loading…</div>
                     </div>
+                    <section class="document-issue-panel portal-surface-card" id="document-issue-panel">
+                        <div class="document-issue-panel-header">
+                            <div class="document-issue-panel-heading">
+                                <span class="document-issue-panel-kicker">Client delivery workflow</span>
+                                <h2 class="document-issue-panel-title">Delivery assurance</h2>
+                                <p class="document-issue-panel-copy" id="document-issue-helper">Verified documents stay visible here. If something looks wrong, you can send it back into the MorphIQ rework flow.</p>
+                            </div>
+                            <span class="status-badge status-active" id="document-issue-delivery-pill">
+                                <span class="dot"></span>Verified
+                            </span>
+                        </div>
+                        <div class="document-issue-guidance">
+                            <div class="document-issue-guidance-card">
+                                <span class="document-issue-guidance-label">Use this when</span>
+                                <p>Something on this document looks wrong and needs re-checking, correction, or a fresh scan.</p>
+                            </div>
+                            <div class="document-issue-guidance-card">
+                                <span class="document-issue-guidance-label">What happens next</span>
+                                <p>MorphIQ opens a tracked issue, routes it to the right queue, and only republishes the fix after re-verification.</p>
+                            </div>
+                        </div>
+                        <div id="document-issue-latest" class="document-issue-latest"></div>
+                        <div class="document-issue-actions">
+                            <button type="button" class="btn-secondary" id="document-issue-toggle" hidden>Report a problem</button>
+                            <a href="{{ url_for('settings_page') }}{% if client_name %}?client={{ client_name|urlencode }}{% endif %}#settings-support-card" class="btn-secondary" id="document-issue-support-link">Open support chat</a>
+                        </div>
+                        <form id="document-issue-form" class="document-issue-form" hidden enctype="multipart/form-data">
+                            <div class="document-issue-grid">
+                                <label class="document-issue-field">
+                                    <span>Reason</span>
+                                    <select id="document-issue-reason" name="reason_code" required>
+                                        <option value="incorrect_field">Incorrect field</option>
+                                        <option value="image_quality">Image quality / needs re-scan</option>
+                                        <option value="wrong_document_type">Wrong document type</option>
+                                        <option value="missing_pages">Missing pages</option>
+                                        <option value="duplicate_document">Duplicate document</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </label>
+                                <label class="document-issue-field">
+                                    <span>Attachment (optional)</span>
+                                    <input type="file" id="document-issue-attachment" name="attachment">
+                                </label>
+                            </div>
+                            <label class="document-issue-field">
+                                <span>What should we fix?</span>
+                                <textarea id="document-issue-note" name="note" rows="4" placeholder="Tell MorphIQ exactly what looks wrong on this document."></textarea>
+                            </label>
+                            <label class="document-issue-checkbox">
+                                <input type="checkbox" id="document-issue-open-support" name="open_support" value="1">
+                                <span>Open a linked support thread for this document</span>
+                            </label>
+                            <div id="document-issue-feedback" class="document-issue-feedback" hidden></div>
+                            <div class="document-issue-form-actions">
+                                <button type="submit" class="btn-primary" id="document-issue-submit">Send to MorphIQ</button>
+                                <button type="button" class="btn-secondary" id="document-issue-cancel">Cancel</button>
+                            </div>
+                        </form>
+                        <section id="document-issue-thread" class="document-issue-thread" hidden>
+                            <div class="document-issue-thread-header">
+                                <div>
+                                    <h3>Issue timeline</h3>
+                                    <p class="document-issue-thread-copy">Track queue movement, audit snapshots, and follow-up messages about this document.</p>
+                                </div>
+                                <span id="document-issue-thread-meta" class="document-issue-thread-meta"></span>
+                            </div>
+                            <div id="document-issue-thread-body" class="document-issue-thread-body"></div>
+                            <form id="document-issue-message-form" class="document-issue-message-form" hidden>
+                                <textarea id="document-issue-message-input" rows="3" placeholder="Add more context for the MorphIQ team."></textarea>
+                                <div class="document-issue-form-actions">
+                                    <button type="submit" class="btn-secondary" id="document-issue-message-send">Send update</button>
+                                </div>
+                            </form>
+                        </section>
+                    </section>
                 </div>
                 <div class="document-view-actions">
+                    <button type="button" class="btn-primary" id="document-view-verify" hidden>Mark Verified</button>
                     <button type="button" class="btn-primary" id="document-view-open-pdf">Open PDF</button>
                     <button type="button" class="btn-secondary" id="document-view-download">Download</button>
                 </div>
@@ -144,6 +220,8 @@
     window.MORPHIQ_DOCUMENT_VIEW = {
         sourceDocId: {{ source_doc_id|tojson|safe }},
         docId: {{ document_db_id|tojson|safe }},
+        canReportIssue: {{ (current_user.role != 'admin')|tojson|safe }},
+        userRole: {{ current_user.role|tojson|safe }},
     };
     window.MORPHIQ_PORTAL = {
         clientName: {{ client_name|tojson|safe }},

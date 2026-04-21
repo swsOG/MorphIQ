@@ -1,0 +1,13 @@
+{
+  "name": "morphiq-portal-smoke",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Browser smoke coverage for the MorphIQ portal",
+  "scripts": {
+    "test:smoke": "playwright test tests/smoke/portal.smoke.spec.js",
+    "playwright:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}

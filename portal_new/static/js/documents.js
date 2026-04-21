@@ -20,7 +20,7 @@
     let activeTypeKey = "all";
     let activeStatusKey = "all";
     let activeSort = "newest";
-    let viewMode = "grid";
+    let viewMode = "list";
 
     function withClientQuery(url) {
         let clientParam = new URLSearchParams(window.location.search).get("client");
@@ -180,6 +180,8 @@
         const typeDisplay = unknown ? "Unclassified" : esc(doc.doc_type || "Document");
         const title = doc.doc_name || (unknown ? "Unclassified Document" : doc.doc_type || "Document");
         const pdfHref = withClientQuery("/api/documents/by-id/" + id + "/pdf");
+        const detailHref = withClientQuery("/document/by-id/" + id);
+        const reviewLabel = isNeedsReviewWorkflow(doc) ? "Review" : "View";
         const addr = doc.property_address || "—";
         const scanned = formatDate(scanDate(doc));
 
@@ -189,14 +191,17 @@
                 <span class="props-doc-type-label ${typeClass}">${typeDisplay}</span>
                 <div class="props-doc-card-controls">
                     ${docStatusBadgeHtml(doc)}
-                    <button type="button" class="props-btn-icon atp-trigger" data-document-id="${id}" title="Add to Pack">${ICON_PACK}</button>
-                    <a class="props-btn-icon" href="${pdfHref}" target="_blank" rel="noopener" title="Download PDF">${ICON_DL}</a>
+                    <button type="button" class="props-btn-icon portal-action-btn portal-action-btn--icon atp-trigger" data-document-id="${id}" title="Add to Pack">${ICON_PACK}</button>
+                    <a class="props-btn-icon portal-action-btn portal-action-btn--icon" href="${pdfHref}" target="_blank" rel="noopener" title="Download PDF">${ICON_DL}</a>
                 </div>
             </div>
             <h3 class="props-doc-title">${esc(title)}</h3>
             <p class="doc-lib-property-line">${esc(addr)}</p>
             ${renderKeyFields(doc, unknown)}
             <p class="doc-lib-scan-meta">Scan date · ${esc(scanned)}</p>
+            <div class="doc-lib-card-actions">
+                <a class="props-btn props-btn-review portal-action-btn portal-action-btn--primary" href="${detailHref}">${reviewLabel}</a>
+            </div>
         </article>`;
     }
 
@@ -206,6 +211,8 @@
         const typeClass = docTypeLabelClass(slug);
         const title = doc.doc_name || doc.doc_type || "Document";
         const pdfHref = withClientQuery("/api/documents/by-id/" + id + "/pdf");
+        const detailHref = withClientQuery("/document/by-id/" + id);
+        const reviewLabel = isNeedsReviewWorkflow(doc) ? "Review" : "View";
         const verified = String(doc.status || "").toLowerCase() === "verified";
         const addr = doc.property_address || "—";
         const scanned = formatDate(scanDate(doc));
@@ -217,8 +224,9 @@
             <td class="doc-lib-list-cell doc-lib-list-meta">${verified ? "Verified" : esc((doc.status || "—").replace(/_/g, " "))}</td>
             <td class="doc-lib-list-cell doc-lib-list-date">${esc(scanned)}</td>
             <td class="doc-lib-list-cell doc-lib-list-actions">
-                <button type="button" class="props-btn props-btn-pack atp-trigger" data-document-id="${id}">Add to Pack</button>
-                <a class="props-btn props-btn-pdf" href="${pdfHref}" target="_blank" rel="noopener">Download</a>
+                <a class="props-btn props-btn-review portal-action-btn portal-action-btn--primary" href="${detailHref}">${reviewLabel}</a>
+                <button type="button" class="props-btn props-btn-pack portal-action-btn portal-action-btn--quiet atp-trigger" data-document-id="${id}">Add to Pack</button>
+                <a class="props-btn props-btn-pdf portal-action-btn portal-action-btn--quiet" href="${pdfHref}" target="_blank" rel="noopener">Download</a>
             </td>
         </tr>`;
     }

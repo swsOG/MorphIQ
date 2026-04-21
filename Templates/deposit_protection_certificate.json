@@ -1,0 +1,12 @@
+{
+  "doc_type": "Deposit Protection Certificate",
+  "display_name": "Deposit Protection Certificate",
+  "fields": [
+    { "key": "property_address", "label": "Property Address", "type": "text" },
+    { "key": "tenant_full_name", "label": "Tenant Full Name(s)", "type": "text" },
+    { "key": "deposit_amount", "label": "Deposit Amount (GBP)", "type": "text" },
+    { "key": "scheme_name", "label": "Protection Scheme Name", "type": "text" },
+    { "key": "certificate_number", "label": "Certificate Number", "type": "text" },
+    { "key": "protection_date", "label": "Protection Date", "type": "text" }
+  ]
+}

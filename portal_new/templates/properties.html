@@ -3,641 +3,884 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MorphIQ — Properties</title>
+    <title>MorphIQ - Properties</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
     <style>
-        /* ── Properties redesign — scoped to .pr-* ─────────────────────────── */
         :root {
-            --pr-bg:      #061617;
-            --pr-surface: #0a1f21;
-            --pr-surface2:#0d2426;
-            --pr-accent:  #7AAFA6;
-            --pr-green:   #1D9E75;
-            --pr-red:     #E24B4A;
-            --pr-amber:   #EF9F27;
-            --pr-purple:  #7F77DD;
-            --pr-text:    #f0f4f3;
-            --pr-muted:   #8a9e9b;
-            --pr-border:  rgba(255,255,255,0.08);
+            --pex-bg: #061617;
+            --pex-surface: #081e1e;
+            --pex-surface-alt: #0a2525;
+            --pex-surface-soft: #0d2b2b;
+            --pex-border: #1a3535;
+            --pex-border-strong: #245050;
+            --pex-text: #e2e8f0;
+            --pex-muted: #8fa4b7;
+            --pex-muted-soft: #6f8797;
+            --pex-blue: #7AAFA6;
+            --pex-blue-soft: rgba(122, 175, 166, 0.12);
+            --pex-green: #34d399;
+            --pex-green-soft: rgba(52, 211, 153, 0.12);
+            --pex-amber: #fbbf24;
+            --pex-amber-soft: rgba(251, 191, 36, 0.12);
+            --pex-red: #f87171;
+            --pex-red-soft: rgba(248, 113, 113, 0.12);
+            --pex-shadow: 0 24px 50px rgba(0, 0, 0, 0.28);
         }
 
-        /* ── Page layout ─────────────────────────────────────────────────── */
-        .pr-page {
-            display: flex;
-            height: calc(100vh - 48px - 36px); /* minus header + breadcrumb */
-            overflow: hidden;
-            background: var(--pr-bg);
+        * {
+            box-sizing: border-box;
         }
 
-        /* ── LEFT PANEL ──────────────────────────────────────────────────── */
-        .pr-left {
-            width: 320px;
-            flex-shrink: 0;
+        body.properties-explorer-body {
+            margin: 0;
+            background:
+                radial-gradient(circle at top left, rgba(122, 175, 166, 0.08), transparent 26%),
+                linear-gradient(180deg, #071416 0%, #061617 100%);
+            color: var(--pex-text);
+            font-family: Inter, "Segoe UI", sans-serif;
+        }
+
+        .morphiq-properties-shell {
+            min-height: 100vh;
+        }
+
+        .morphiq-properties-shell .portal-app-layout {
+            min-height: 100vh;
+        }
+
+        .morphiq-properties-shell .portal-sidebar {
+            background: #0a1214;
+            border-right: 1px solid var(--pex-border);
+        }
+
+        .morphiq-properties-shell .portal-sidebar-brand,
+        .morphiq-properties-shell .portal-sidebar-link {
+            color: var(--pex-text);
+        }
+
+        .morphiq-properties-shell .portal-sidebar-link {
+            border-radius: 12px;
+            margin: 2px 12px;
+        }
+
+        .morphiq-properties-shell .portal-sidebar-link.active {
+            background: var(--pex-blue-soft);
+            color: var(--pex-blue);
+        }
+
+        .morphiq-properties-shell .portal-sidebar-divider {
+            background: var(--pex-border);
+        }
+
+        .pex-main {
             display: flex;
             flex-direction: column;
-            background: var(--pr-surface);
-            border-right: 0.5px solid var(--pr-border);
-            overflow: hidden;
+            min-height: 100vh;
+            background: transparent;
         }
-        .pr-left-header {
-            padding: 16px 14px 10px;
-            border-bottom: 0.5px solid var(--pr-border);
-            background: var(--pr-surface);
+
+        .pex-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 18px 26px 14px;
+            background: rgba(8, 30, 30, 0.92);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--pex-border);
         }
-        .pr-left-title-row {
+
+        .pex-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 180px;
+        }
+
+        .pex-brand img {
+            width: 28px;
+            height: 28px;
+        }
+
+        .pex-brand-name {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .pex-client-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            padding: 5px 10px;
+            border: 1px solid var(--pex-border);
+            border-radius: 999px;
+            font-size: 11px;
+            color: var(--pex-muted);
+            background: rgba(122, 175, 166, 0.08);
+        }
+
+        .pex-global-search {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 52px;
+            padding: 0 16px;
+            border: 1px solid var(--pex-border);
+            border-radius: 18px;
+            background: rgba(10, 37, 37, 0.95);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+        }
+
+        .pex-global-search svg {
+            color: var(--pex-muted);
+            flex-shrink: 0;
+        }
+
+        .pex-global-search input {
+            width: 100%;
+            border: none;
+            outline: none;
+            font: inherit;
+            color: var(--pex-text);
+            background: transparent;
+        }
+
+        .pex-global-search input::placeholder {
+            color: var(--pex-muted-soft);
+        }
+
+        .pex-header-side {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-left: auto;
+        }
+
+        .pex-header-note {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(122, 175, 166, 0.08);
+            border: 1px solid var(--pex-border);
+            color: var(--pex-muted);
+            font-size: 12px;
+        }
+
+        .pex-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #0c2e2d;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pex-signout {
+            color: var(--pex-muted);
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .pex-signout:hover {
+            color: var(--pex-blue);
+        }
+
+        .pex-breadcrumb {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 10px;
-        }
-        .pr-left-title-row h2 {
-            margin: 0;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--pr-text);
-            letter-spacing: -0.01em;
-        }
-        .pr-count-badge {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--pr-accent);
-            background: rgba(122,175,166,0.12);
-            border-radius: 10px;
-            padding: 1px 7px;
-        }
-        .pr-search-input {
-            width: 100%;
-            box-sizing: border-box;
-            background: rgba(255,255,255,0.05);
-            border: 0.5px solid rgba(255,255,255,0.12);
-            border-radius: 6px;
-            color: var(--pr-text);
-            font-size: 12px;
-            font-family: inherit;
-            padding: 7px 10px;
-            outline: none;
-            margin-bottom: 10px;
-        }
-        .pr-search-input::placeholder { color: var(--pr-muted); }
-        .pr-search-input:focus { border-color: var(--pr-accent); }
-        .pr-filter-chips {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .pr-chip {
-            font-size: 11px;
-            font-weight: 500;
-            padding: 3px 10px;
-            border-radius: 12px;
-            border: 0.5px solid var(--pr-border);
-            background: transparent;
-            color: var(--pr-muted);
-            cursor: pointer;
-            transition: all 0.15s;
-            font-family: inherit;
-        }
-        .pr-chip:hover { background: rgba(255,255,255,0.05); color: var(--pr-text); }
-        .pr-chip--active {
-            background: rgba(122,175,166,0.15);
-            border-color: var(--pr-accent);
-            color: var(--pr-accent);
-        }
-
-        /* ── Property list ───────────────────────────────────────────────── */
-        .pr-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px 0;
-        }
-        .pr-list::-webkit-scrollbar { width: 4px; }
-        .pr-list::-webkit-scrollbar-thumb { background: rgba(122,175,166,0.2); border-radius: 2px; }
-        .pr-list-loading, .pr-list-empty {
-            padding: 20px 16px;
-            font-size: 12px;
-            color: var(--pr-muted);
-            text-align: center;
-        }
-        .pr-group-label {
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--pr-muted);
-            padding: 10px 14px 4px;
-        }
-        .pr-row {
-            position: relative;
-            padding: 10px 14px;
-            border-left: 3px solid transparent;
-            cursor: pointer;
-            transition: background 0.12s;
-            border-bottom: 0.5px solid var(--pr-border);
-        }
-        .pr-row:hover { background: rgba(255,255,255,0.03); }
-        .pr-row--selected { background: rgba(122,175,166,0.08) !important; border-left-width: 3px !important; }
-        .pr-row--urgent  { border-left-color: var(--pr-red); }
-        .pr-row--at-risk { border-left-color: var(--pr-amber); }
-        .pr-row--compliant { border-left-color: var(--pr-green); }
-        .pr-row-dot {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-        }
-        .pr-row-dot--urgent   { background: var(--pr-red); }
-        .pr-row-dot--at-risk  { background: var(--pr-amber); }
-        .pr-row-dot--compliant { background: var(--pr-green); }
-        .pr-row-address {
+            padding: 14px 28px 0;
+            color: var(--pex-muted);
             font-size: 13px;
-            font-weight: 600;
-            color: var(--pr-text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding-right: 16px;
         }
-        .pr-row-meta {
-            font-size: 11px;
-            color: var(--pr-muted);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .pr-row-pills {
-            display: flex;
-            gap: 4px;
-            margin-top: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .pr-pill {
-            font-size: 10px;
-            font-weight: 500;
-            padding: 2px 6px;
-            border-radius: 3px;
-            border: 0.5px solid transparent;
-            white-space: nowrap;
-        }
-        .pr-pill--valid    { background: rgba(29,158,117,0.18); color: #1D9E75; border-color: rgba(29,158,117,0.3); }
-        .pr-pill--expiring { background: rgba(239,159,39,0.18); color: #EF9F27; border-color: rgba(239,159,39,0.3); }
-        .pr-pill--expired  { background: rgba(226,75,74,0.18); color: #E24B4A; border-color: rgba(226,75,74,0.3); }
-        .pr-pill--missing  { background: transparent; color: var(--pr-muted); border: 0.5px dashed rgba(255,255,255,0.2); }
-        .pr-pill--ai       { background: rgba(127,119,221,0.18); color: #7F77DD; border-color: rgba(127,119,221,0.3); }
 
-        /* ── RIGHT PANEL ─────────────────────────────────────────────────── */
-        .pr-right {
-            flex: 1;
+        .pex-breadcrumb a {
+            color: var(--pex-blue);
+            text-decoration: none;
+        }
+
+        .pex-breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .pex-page {
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            background: var(--pr-bg);
-        }
-        .pr-empty {
+            gap: 18px;
+            padding: 18px 28px 28px;
+            min-height: 0;
             flex: 1;
+        }
+
+        .pex-toolbar {
             display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .pex-title-wrap h1 {
+            margin: 0;
+            font-size: 30px;
+            letter-spacing: -0.04em;
+        }
+
+        .pex-title-wrap p {
+            margin: 6px 0 0;
+            color: var(--pex-muted);
+            font-size: 14px;
+        }
+
+        .pex-toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .pex-select,
+        .pex-button {
+            min-height: 38px;
+            border-radius: 12px;
+            border: 1px solid var(--pex-border);
+            background: rgba(8, 30, 30, 0.95);
+            color: var(--pex-text);
+            font: inherit;
+        }
+
+        .pex-select {
+            min-width: 150px;
+            padding: 0 12px;
+        }
+
+        .pex-button {
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: var(--pr-muted);
-            font-size: 13px;
-        }
-        .pr-detail {
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            gap: 8px;
+            padding: 0 14px;
+            cursor: pointer;
+            transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
         }
 
-        /* ── Detail header ───────────────────────────────────────────────── */
-        .pr-detail-header {
+        .pex-button:hover {
+            border-color: var(--pex-border-strong);
+        }
+
+        .pex-button[aria-pressed="true"] {
+            background: var(--pex-blue-soft);
+            border-color: rgba(47, 111, 237, 0.25);
+            color: var(--pex-blue);
+        }
+
+        .pex-chip-row {
             display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 16px;
-            padding: 16px 20px 12px;
-            border-bottom: 0.5px solid var(--pr-border);
-            background: var(--pr-surface);
-            flex-shrink: 0;
-        }
-        .pr-detail-title-area { min-width: 0; flex: 1; }
-        .pr-detail-address {
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--pr-text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .pr-detail-subtitle {
-            font-size: 12px;
-            color: var(--pr-muted);
-            margin-top: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .pr-detail-actions {
-            display: flex;
-            gap: 6px;
-            flex-shrink: 0;
             align-items: center;
-        }
-        .pr-action-btn {
-            font-size: 12px;
-            font-weight: 500;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 0.5px solid var(--pr-border);
-            background: rgba(255,255,255,0.04);
-            color: var(--pr-text);
-            cursor: pointer;
-            font-family: inherit;
-            white-space: nowrap;
-            transition: background 0.12s;
-        }
-        .pr-action-btn:hover { background: rgba(255,255,255,0.08); }
-        .pr-action-btn--primary {
-            background: rgba(29,158,117,0.15);
-            border-color: rgba(29,158,117,0.3);
-            color: #1D9E75;
-        }
-        .pr-action-btn--primary:hover { background: rgba(29,158,117,0.25); }
-
-        /* ── Compliance strip ────────────────────────────────────────────── */
-        .pr-compliance-strip {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            flex-shrink: 0;
-            background: var(--pr-surface);
-            border-bottom: 0.5px solid var(--pr-border);
-        }
-        .pr-cert-block {
-            min-width: 0;
-            padding: 10px 14px;
-            border-right: 0.5px solid var(--pr-border);
-            min-width: 0;
-        }
-        .pr-cert-block:last-child { border-right: none; }
-        .pr-cert-label {
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 0.07em;
-            text-transform: uppercase;
-            color: var(--pr-muted);
-            margin-bottom: 3px;
-        }
-        .pr-cert-value {
-            font-size: 13px;
-            font-weight: 600;
-        }
-        .pr-cert-sub {
-            font-size: 10px;
-            color: var(--pr-muted);
-            margin-top: 2px;
-        }
-        .pr-cert-block--valid   .pr-cert-value { color: var(--pr-green); }
-        .pr-cert-block--expiring .pr-cert-value { color: var(--pr-amber); }
-        .pr-cert-block--expired  .pr-cert-value { color: var(--pr-red); }
-        .pr-cert-block--missing  .pr-cert-value { color: var(--pr-muted); }
-        .pr-cert-block--valid   { border-top: 2px solid var(--pr-green); }
-        .pr-cert-block--expiring { border-top: 2px solid var(--pr-amber); }
-        .pr-cert-block--expired  { border-top: 2px solid var(--pr-red); }
-        .pr-cert-block--missing  { border-top: 2px solid rgba(255,255,255,0.1); }
-
-        /* ── Tabs ────────────────────────────────────────────────────────── */
-        .pr-tabs {
-            display: flex;
-            gap: 0;
-            background: var(--pr-surface);
-            border-bottom: 0.5px solid var(--pr-border);
-            padding: 0 20px;
-            flex-shrink: 0;
-        }
-        .pr-tab {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--pr-muted);
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid transparent;
-            padding: 10px 16px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: color 0.12s;
-            margin-bottom: -1px;
-        }
-        .pr-tab:hover { color: var(--pr-text); }
-        .pr-tab--active {
-            color: var(--pr-accent);
-            border-bottom-color: var(--pr-accent);
-        }
-
-        /* ── Tab panels ──────────────────────────────────────────────────── */
-        .pr-tab-panel {
-            flex: 1;
-            min-height: 0;
-            overflow-y: auto;
-            padding: 16px 20px;
-        }
-        .pr-tab-panel::-webkit-scrollbar { width: 4px; }
-        .pr-tab-panel::-webkit-scrollbar-thumb { background: rgba(122,175,166,0.2); border-radius: 2px; }
-
-        /* ── Alert banner ────────────────────────────────────────────────── */
-        .pr-doc-alert {
-            border-radius: 6px;
-            padding: 10px 14px;
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 14px;
-            border-left: 3px solid;
-        }
-        .pr-doc-alert--red   { background: rgba(226,75,74,0.1); color: #f28b8a; border-color: var(--pr-red); }
-        .pr-doc-alert--amber { background: rgba(239,159,39,0.1); color: #f5c06a; border-color: var(--pr-amber); }
-
-        /* ── Document cards ──────────────────────────────────────────────── */
-        .pr-doc-cards { display: flex; flex-direction: column; gap: 10px; }
-        .pr-doc-group-label {
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 0.07em;
-            text-transform: uppercase;
-            color: var(--pr-muted);
-            margin: 10px 0 4px;
-        }
-        .pr-doc-card {
-            background: var(--pr-surface);
-            border-radius: 8px;
-            border: 0.5px solid var(--pr-border);
-            border-left: 3px solid var(--pr-border);
-            padding: 12px 14px;
-            position: relative;
-        }
-        .pr-doc-card--expired  { border-left-color: var(--pr-red); }
-        .pr-doc-card--expiring { border-left-color: var(--pr-amber); }
-        .pr-doc-card--ai       { border-left-color: var(--pr-purple); }
-        .pr-doc-card--valid    { border-left-color: rgba(29,158,117,0.4); }
-        .pr-doc-card-top {
-            display: flex;
-            align-items: flex-start;
             justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-        .pr-doc-card-left { display: flex; align-items: center; gap: 8px; }
-        .pr-doc-type-tag {
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 7px;
-            border-radius: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .pr-doc-tag--gas      { background: rgba(122,175,166,0.18); color: #7AAFA6; }
-        .pr-doc-tag--eicr     { background: rgba(79,140,220,0.18); color: #6baede; }
-        .pr-doc-tag--epc      { background: rgba(127,119,221,0.18); color: #9891e0; }
-        .pr-doc-tag--ast      { background: rgba(220,100,160,0.18); color: #dc64a0; }
-        .pr-doc-tag--deposit  { background: rgba(29,158,117,0.18); color: #1D9E75; }
-        .pr-doc-tag--inventory { background: rgba(100,120,140,0.18); color: #7a8fa0; }
-        .pr-doc-tag--other    { background: rgba(138,158,155,0.15); color: var(--pr-muted); }
-        .pr-trust-badge {
-            font-size: 10px;
-            font-weight: 500;
-            padding: 2px 7px;
-            border-radius: 4px;
-        }
-        .pr-trust--verified  { background: rgba(29,158,117,0.15); color: #1D9E75; }
-        .pr-trust--ai        { background: rgba(127,119,221,0.15); color: #7F77DD; }
-        .pr-trust--attention { background: rgba(239,159,39,0.15); color: #EF9F27; }
-        .pr-doc-scan-date {
-            font-size: 10px;
-            color: var(--pr-muted);
-            white-space: nowrap;
-        }
-        .pr-doc-fields {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px 12px;
-            margin-bottom: 10px;
-        }
-        .pr-doc-field-label {
-            font-size: 10px !important;
-            color: var(--pr-muted) !important;
-            margin-bottom: 1px;
-            font-weight: 400;
-            line-height: 1.3;
-        }
-        .pr-doc-field-value {
-            font-size: 12px !important;
-            font-weight: 600 !important;
-            color: var(--pr-text);
-            line-height: 1.3;
-        }
-        .pr-doc-field-value--expired  { color: var(--pr-red); }
-        .pr-doc-field-value--expiring { color: var(--pr-amber); }
-        .pr-doc-field-value--ai       { color: var(--pr-purple); }
-        .pr-doc-actions {
-            display: flex;
-            gap: 6px;
+            gap: 14px;
             flex-wrap: wrap;
-            border-top: 0.5px solid var(--pr-border);
-            padding-top: 8px;
-            margin-top: 8px;
-        }
-        .pr-doc-action-btn {
-            font-size: 11px;
-            font-weight: 500;
-            padding: 4px 10px;
-            border-radius: 5px;
-            border: 0.5px solid var(--pr-border);
-            background: rgba(255,255,255,0.03);
-            color: var(--pr-muted);
-            cursor: pointer;
-            font-family: inherit;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.12s;
-        }
-        .pr-doc-action-btn:hover { background: rgba(255,255,255,0.07); color: var(--pr-text); }
-        .pr-doc-action-btn--accent {
-            background: rgba(122,175,166,0.1);
-            border-color: rgba(122,175,166,0.25);
-            color: var(--pr-accent);
-        }
-        .pr-doc-action-btn--accent:hover { background: rgba(122,175,166,0.18); }
-        .pr-doc-action-btn--red {
-            background: rgba(226,75,74,0.1);
-            border-color: rgba(226,75,74,0.25);
-            color: #f28b8a;
-        }
-        .pr-doc-action-btn--red:hover { background: rgba(226,75,74,0.18); }
-        .pr-doc-action-btn--purple {
-            background: rgba(127,119,221,0.1);
-            border-color: rgba(127,119,221,0.25);
-            color: var(--pr-purple);
-        }
-        .pr-doc-action-btn--purple:hover { background: rgba(127,119,221,0.18); }
-        /* Placeholder card for missing doc types */
-        .pr-doc-card--placeholder {
-            border: 0.5px dashed rgba(255,255,255,0.14);
-            border-left: 0.5px dashed rgba(255,255,255,0.14);
-            background: rgba(255,255,255,0.015);
-        }
-        .pr-placeholder-label {
-            font-size: 12px;
-            color: var(--pr-muted);
-            margin-bottom: 8px;
         }
 
-        /* ── Compliance timeline tab ──────────────────────────────────────── */
-        .pr-timeline-inner {
+        .pex-chip-group {
             display: flex;
-            gap: 24px;
-            align-items: flex-start;
+            gap: 8px;
+            flex-wrap: wrap;
         }
-        .pr-score-ring-wrap {
-            position: relative;
-            width: 100px;
-            flex-shrink: 0;
+
+        .pex-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--pex-border);
+            background: rgba(8, 30, 30, 0.95);
+            color: var(--pex-muted);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+        }
+
+        .pex-chip:hover {
+            border-color: var(--pex-border-strong);
+            color: var(--pex-text);
+        }
+
+        .pex-chip.active {
+            background: var(--pex-blue-soft);
+            border-color: rgba(122, 175, 166, 0.28);
+            color: var(--pex-blue);
+        }
+
+        .pex-chip-note {
+            color: var(--pex-muted);
+            font-size: 12px;
+        }
+
+        .pex-workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 18px;
+            min-height: 0;
+            flex: 1;
+        }
+
+        .pex-explorer,
+        .pex-preview {
+            min-height: 0;
+            border: 1px solid var(--pex-border);
+            border-radius: 22px;
+            background: rgba(8, 30, 30, 0.96);
+            box-shadow: var(--pex-shadow);
+        }
+
+        .pex-explorer {
             display: flex;
             flex-direction: column;
-            align-items: center;
-        }
-        .pr-score-ring {
-            width: 100px;
-            height: 100px;
-            transform: rotate(-90deg);
-        }
-        .pr-score-ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
-        .pr-score-ring-fg { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
-        .pr-score-pct {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--pr-text);
-            margin-top: 8px;
-        }
-        .pr-score-desc {
-            font-size: 10px;
-            color: var(--pr-muted);
-            text-align: center;
-        }
-        .pr-timeline-table {
-            flex: 1;
-            border: 0.5px solid var(--pr-border);
-            border-radius: 8px;
             overflow: hidden;
         }
-        .pr-tl-row {
+
+        .pex-table-head,
+        .pex-row {
+            display: grid;
+            grid-template-columns: minmax(320px, 2.2fr) minmax(110px, 0.9fr) minmax(130px, 1fr) minmax(110px, 0.8fr) minmax(110px, 0.8fr);
+            gap: 16px;
+            align-items: center;
+        }
+
+        .pex-table-head {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--pex-border);
+            background: var(--pex-surface-alt);
+            color: var(--pex-muted);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .pex-table-body {
+            overflow: auto;
+            min-height: 0;
+        }
+
+        .pex-group-label {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 18px;
+            background: rgba(10, 37, 37, 0.98);
+            border-top: 1px solid var(--pex-border);
+            border-bottom: 1px solid var(--pex-border);
+            color: var(--pex-muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .pex-row {
+            padding: 12px 18px;
+            border-bottom: 1px solid rgba(26, 53, 53, 0.9);
+            cursor: pointer;
+            transition: background 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .pex-row:hover {
+            background: rgba(122, 175, 166, 0.04);
+        }
+
+        .pex-row.is-selected {
+            background: rgba(122, 175, 166, 0.08);
+            box-shadow: inset 3px 0 0 var(--pex-blue);
+        }
+
+        .pex-density-comfortable .pex-row {
+            padding-top: 16px;
+            padding-bottom: 16px;
+        }
+
+        .pex-property-cell {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 10px 14px;
-            border-bottom: 0.5px solid var(--pr-border);
+            min-width: 0;
         }
-        .pr-tl-row:last-child { border-bottom: none; }
-        .pr-tl-dot {
-            width: 8px; height: 8px;
+
+        .pex-status-dot {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             flex-shrink: 0;
         }
-        .pr-tl-name {
-            flex: 1;
-            font-size: 12px;
-            color: var(--pr-text);
-        }
-        .pr-tl-date {
-            font-size: 11px;
-            color: var(--pr-muted);
-        }
-        .pr-tl-badge {
-            font-size: 10px;
-            font-weight: 500;
-            padding: 2px 7px;
-            border-radius: 3px;
-        }
-        .pr-tl-badge--valid    { background: rgba(29,158,117,0.15); color: #1D9E75; }
-        .pr-tl-badge--expiring { background: rgba(239,159,39,0.15); color: #EF9F27; }
-        .pr-tl-badge--expired  { background: rgba(226,75,74,0.15); color: #E24B4A; }
-        .pr-tl-badge--missing  { background: rgba(138,158,155,0.1); color: var(--pr-muted); }
 
-        /* ── Property info tab ───────────────────────────────────────────── */
-        .pr-info-sections { display: flex; flex-direction: column; gap: 20px; }
-        .pr-info-section {
-            background: var(--pr-surface);
-            border-radius: 8px;
-            border: 0.5px solid var(--pr-border);
-            overflow: hidden;
+        .pex-status-dot--compliant {
+            background: var(--pex-green);
+            box-shadow: 0 0 0 4px var(--pex-green-soft);
         }
-        .pr-info-section-title {
-            font-size: 10px;
+
+        .pex-status-dot--at_risk {
+            background: var(--pex-amber);
+            box-shadow: 0 0 0 4px var(--pex-amber-soft);
+        }
+
+        .pex-status-dot--non_compliant {
+            background: var(--pex-red);
+            box-shadow: 0 0 0 4px var(--pex-red-soft);
+        }
+
+        .pex-property-text {
+            min-width: 0;
+        }
+
+        .pex-property-title {
+            margin: 0;
+            font-size: 14px;
             font-weight: 700;
-            letter-spacing: 0.07em;
-            text-transform: uppercase;
-            color: var(--pr-muted);
-            padding: 10px 14px;
-            border-bottom: 0.5px solid var(--pr-border);
-        }
-        .pr-info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-        }
-        .pr-info-cell {
-            padding: 10px 14px;
-            border-bottom: 0.5px solid var(--pr-border);
-            border-right: 0.5px solid var(--pr-border);
-        }
-        .pr-info-cell:nth-child(2n) { border-right: none; }
-        .pr-info-cell:last-child, .pr-info-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
-        .pr-info-cell-label {
-            font-size: 10px;
-            color: var(--pr-muted);
-            margin-bottom: 3px;
-        }
-        .pr-info-cell-value {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--pr-text);
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* ── Breadcrumb in pr-page ───────────────────────────────────────── */
-        .pr-breadcrumb {
-            padding: 8px 20px;
-            font-size: 12px;
-            color: var(--pr-muted);
-            background: var(--pr-bg);
-            border-bottom: 0.5px solid var(--pr-border);
+        .pex-property-meta {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+            color: var(--pex-muted);
+            font-size: 12px;
         }
-        .pr-breadcrumb a { color: var(--pr-accent); text-decoration: none; }
-        .pr-breadcrumb a:hover { text-decoration: underline; }
-        .pr-breadcrumb-sep { opacity: 0.5; }
 
-        /* hide default base stub */
-        .stub-page { display: none !important; }
+        .pex-mini-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .pex-pill--green {
+            background: var(--pex-green-soft);
+            color: var(--pex-green);
+        }
+
+        .pex-pill--amber {
+            background: var(--pex-amber-soft);
+            color: var(--pex-amber);
+        }
+
+        .pex-pill--red {
+            background: var(--pex-red-soft);
+            color: var(--pex-red);
+        }
+
+        .pex-pill--neutral {
+            background: rgba(96, 114, 132, 0.12);
+            color: var(--pex-muted);
+        }
+
+        .pex-cell-muted {
+            color: var(--pex-muted);
+            font-size: 13px;
+        }
+
+        .pex-preview {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .pex-preview-empty,
+        .pex-loading,
+        .pex-empty-results {
+            padding: 30px;
+            color: var(--pex-muted);
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .pex-preview-content {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            height: 100%;
+        }
+
+        .pex-preview-scroll {
+            padding: 18px;
+            overflow: auto;
+            min-height: 0;
+        }
+
+        .pex-preview-header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px 16px 10px;
+            border-bottom: 1px solid var(--pex-border);
+        }
+
+        .pex-preview-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .pex-preview-title h2 {
+            margin: 0;
+            font-size: 20px;
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+        }
+
+        .pex-preview-title p {
+            margin: 6px 0 0;
+            color: var(--pex-muted);
+            font-size: 13px;
+        }
+
+        .pex-score-badge {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 62px;
+            height: 62px;
+            border-radius: 20px;
+            border: 1px solid rgba(122, 175, 166, 0.14);
+            background: linear-gradient(180deg, rgba(12, 41, 41, 0.88) 0%, rgba(8, 27, 28, 0.92) 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        .pex-score-number {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            line-height: 1;
+        }
+
+        .pex-score-label {
+            margin-top: 3px;
+            font-size: 10px;
+            color: var(--pex-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .pex-preview-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pex-preview-action {
+            flex: 1 1 92px;
+            min-height: 36px;
+            border-radius: 12px;
+            border: 1px solid rgba(122, 175, 166, 0.16);
+            background: rgba(8, 30, 30, 0.95);
+            font: inherit;
+            cursor: pointer;
+            color: var(--pex-text);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .pex-preview-action--primary {
+            background: linear-gradient(180deg, rgba(122, 175, 166, 0.92) 0%, rgba(104, 155, 146, 0.92) 100%);
+            border-color: rgba(122, 175, 166, 0.34);
+            color: #062022;
+            font-weight: 700;
+        }
+
+        .pex-preview-summary {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pex-summary-chip {
+            min-width: 0;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            padding: 9px 11px;
+            border-radius: 14px;
+            border: 1px solid rgba(122, 175, 166, 0.14);
+            background: rgba(12, 41, 41, 0.78);
+        }
+
+        .pex-summary-label {
+            color: var(--pex-muted);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .pex-summary-value {
+            color: var(--pex-text);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pex-preview-section + .pex-preview-section {
+            margin-top: 14px;
+        }
+
+        .pex-preview-section h3 {
+            margin: 0 0 12px;
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--pex-muted);
+        }
+
+        .pex-cert-list,
+        .pex-action-list,
+        .pex-doc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .pex-cert-card,
+        .pex-doc-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 11px 12px;
+            border: 1px solid rgba(122, 175, 166, 0.14);
+            border-radius: 14px;
+            background: rgba(12, 41, 41, 0.78);
+        }
+
+        .pex-cert-info strong,
+        .pex-doc-card strong {
+            display: block;
+            font-size: 13px;
+        }
+
+        .pex-cert-info span,
+        .pex-doc-card span {
+            display: block;
+            margin-top: 2px;
+            color: var(--pex-muted);
+            font-size: 12px;
+        }
+
+        .pex-action-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--pex-border);
+            background: rgba(10, 37, 37, 0.84);
+            font-size: 13px;
+        }
+
+        .pex-action-index {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--pex-blue-soft);
+            color: var(--pex-blue);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .pex-doc-card {
+            align-items: flex-start;
+        }
+
+        .pex-doc-meta {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .pex-doc-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .pex-doc-link,
+        .pex-doc-pack {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 72px;
+            min-height: 32px;
+            padding: 0 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(122, 175, 166, 0.16);
+            background: rgba(8, 30, 30, 0.96);
+            color: var(--pex-text);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .pex-doc-pack {
+            background: rgba(12, 41, 41, 0.84);
+            border-color: rgba(122, 175, 166, 0.2);
+            color: #d8ebe8;
+        }
+
+        .client-picker-shell {
+            padding: 32px;
+        }
+
+        .client-picker-card {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 24px;
+            border-radius: 24px;
+            border: 1px solid var(--pex-border);
+            background: rgba(8, 30, 30, 0.96);
+            box-shadow: var(--pex-shadow);
+        }
+
+        .client-picker-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .client-picker-title-wrap h1 {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: -0.04em;
+        }
+
+        .client-picker-title-wrap p,
+        .client-picker-footer,
+        .client-picker-status {
+            color: var(--pex-muted);
+        }
+
+        .client-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+        }
+
+        .client-picker-footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 18px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 1360px) {
+            .pex-workspace {
+                grid-template-columns: minmax(0, 1fr) 320px;
+            }
+        }
+
+        @media (max-width: 1180px) {
+            .pex-workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .pex-preview {
+                min-height: 420px;
+            }
+        }
+
+        @media (max-width: 980px) {
+            .pex-header {
+                flex-wrap: wrap;
+            }
+
+            .pex-brand {
+                min-width: auto;
+            }
+
+            .pex-header-side {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .pex-table-head,
+            .pex-row {
+                grid-template-columns: minmax(240px, 2fr) minmax(100px, 0.8fr) minmax(120px, 0.9fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr);
+            }
+        }
+
+        @media (max-width: 760px) {
+            .pex-page {
+                padding: 16px;
+            }
+
+            .pex-toolbar,
+            .pex-chip-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .pex-toolbar-actions {
+                justify-content: stretch;
+            }
+
+            .pex-select,
+            .pex-button {
+                width: 100%;
+            }
+
+            .pex-table-head {
+                display: none;
+            }
+
+            .pex-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+        }
     </style>
 </head>
-<body class="properties-body">
-
-<div class="portal-shell morphiq-properties-shell" data-page="properties">
-
+<body class="properties-explorer-body">
+<div class="portal-shell morphiq-properties-shell" data-page="properties-explorer">
     {% if show_client_picker %}
-    <!-- ── Client picker (admin, no client selected) ──────────────────── -->
-    <header class="portal-header">
-        <div class="header-logo">
-            <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
-            <span class="logo-text">Morph<span class="iq">IQ</span></span>
-            <span class="logo-divider">Select client</span>
+    <header class="pex-header">
+        <div class="pex-brand">
+            <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ">
+            <div>
+                <div class="pex-brand-name">MorphIQ</div>
+                <div class="pex-client-badge">Choose a client to open the explorer</div>
+            </div>
         </div>
-        <div class="header-user-group">
-            <div class="user-avatar">{{ (current_user.full_name or 'U')[0] }}</div>
-            <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+        <div class="pex-header-side">
+            <div class="pex-avatar">{{ (current_user.full_name or 'U')[0] }}</div>
+            <a href="/logout" class="pex-signout" title="Sign out">Sign out</a>
         </div>
     </header>
     <div id="client-picker-root" class="client-picker-shell">
@@ -648,197 +891,153 @@
                 </div>
                 <div class="client-picker-title-wrap">
                     <h1>Select a client</h1>
-                    <p>Choose which client to view in the MorphIQ portal.</p>
+                    <p>Choose which client to view in the MorphIQ property explorer.</p>
                 </div>
             </div>
             <div id="client-grid" class="client-grid"></div>
             <div class="client-picker-footer">
-                <span id="client-picker-status" class="client-picker-status">Loading clients…</span>
-                <span style="text-align:right">Only active clients from the portal database are shown.</span>
+                <span id="client-picker-status" class="client-picker-status">Loading clients...</span>
+                <span>Only active clients from the portal database are shown.</span>
             </div>
         </div>
     </div>
-
     {% else %}
     {%- set _client_q = (client_name or '')|urlencode -%}
     {%- set _overview_url = url_for('overview_page') -%}
     {%- if _client_q -%}{%- set _overview_url = _overview_url + '?client=' + _client_q -%}{%- endif -%}
-
     <div class="portal-app-layout">
         {% include 'partials/portal_sidebar_nav.html' %}
-        <div class="portal-app-main" style="display:flex;flex-direction:column;overflow:hidden;">
-
-            <!-- ── Portal header ─────────────────────────────────────────── -->
-            <header class="portal-header" style="flex-shrink:0;">
-                <div class="header-logo">
-                    <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ" class="logo-mark-img">
-                    <span class="logo-text">Morph<span class="iq">IQ</span></span>
-                    {% if current_user.role == 'admin' and client_name %}
-                        <a href="{{ url_for('overview_page') }}" class="client-badge" title="Switch client">
-                            <span>{{ client_name }}</span>
-                        </a>
-                    {% endif %}
-                </div>
-                <div class="search-container">
-                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                    </svg>
-                    <input type="text" class="search-input" placeholder="Search by property, tenant, document type…">
-                </div>
-                <div class="header-user-group">
-                    <div class="notification-bell-wrapper">
-                        <button type="button" class="notification-bell" id="notification-bell" title="Notifications">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                            </svg>
-                            <span class="notification-badge" id="notification-badge" style="display:none">0</span>
-                        </button>
-                        <div id="notification-dropdown" class="notification-dropdown hidden"></div>
+        <div class="portal-app-main pex-main">
+            <header class="pex-header">
+                <div class="pex-brand">
+                    <img src="{{ url_for('static', filename='morph_iq_icon.png') }}" alt="Morph IQ">
+                    <div>
+                        <div class="pex-brand-name">MorphIQ</div>
+                        {% if current_user.role == 'admin' and client_name %}
+                        <div class="pex-client-badge">{{ client_name }}</div>
+                        {% endif %}
                     </div>
-                    <div class="user-avatar">{{ (current_user.full_name or 'U')[0] }}</div>
-                    <a href="/logout" class="sign-out-link" title="Sign out">Sign out</a>
+                </div>
+                <label class="pex-global-search" aria-label="Search properties and documents">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input id="pex-global-search-input" type="search" autocomplete="off" placeholder="Search by property, tenant, borough, document type, document ID, or status like expired">
+                </label>
+                <div class="pex-header-side">
+                    <div class="pex-header-note" id="pex-match-note">Explorer view</div>
+                    <div class="pex-avatar">{{ (current_user.full_name or 'U')[0] }}</div>
+                    <a href="/logout" class="pex-signout" title="Sign out">Sign out</a>
                 </div>
             </header>
 
-            <!-- ── Breadcrumb ─────────────────────────────────────────────── -->
-            <nav class="pr-breadcrumb" aria-label="Breadcrumb" style="flex-shrink:0;">
+            <nav class="pex-breadcrumb" aria-label="Breadcrumb">
                 <a href="{{ _overview_url }}">Portfolio</a>
-                <span class="pr-breadcrumb-sep">›</span>
+                <span>&rsaquo;</span>
                 <span>Properties</span>
             </nav>
 
-            <!-- ── Split layout ───────────────────────────────────────────── -->
-            <div class="pr-page" style="flex:1;min-height:0;">
-
-                <!-- LEFT PANEL -->
-                <aside class="pr-left" aria-label="Property list">
-                    <div class="pr-left-header">
-                        <div class="pr-left-title-row">
-                            <h2>Properties</h2>
-                            <span class="pr-count-badge" id="pr-count-badge">—</span>
-                        </div>
-                        <input type="search" id="pr-search" class="pr-search-input"
-                               placeholder="Address, postcode, tenant, certificate type…"
-                               autocomplete="off">
-                        <div class="pr-filter-chips" role="toolbar" aria-label="Filter by status">
-                            <button type="button" class="pr-chip pr-chip--active" data-filter="all">All</button>
-                            <button type="button" class="pr-chip" data-filter="non_compliant">Urgent</button>
-                            <button type="button" class="pr-chip" data-filter="at_risk">At risk</button>
-                            <button type="button" class="pr-chip" data-filter="compliant">Compliant</button>
-                        </div>
+            <section class="pex-page">
+                <div class="pex-toolbar">
+                    <div class="pex-title-wrap">
+                        <h1>Properties</h1>
+                        <p>Scan the portfolio quickly, open a property instantly, and find the right document from one search box.</p>
                     </div>
-                    <div class="pr-list" id="pr-list" role="listbox" aria-label="Properties">
-                        <div class="pr-list-loading">Loading properties…</div>
+                    <div class="pex-toolbar-actions">
+                        <select id="pex-sort-select" class="pex-select" aria-label="Sort properties">
+                            <option value="most_compliant">Most compliant</option>
+                            <option value="least_compliant">Least compliant</option>
+                            <option value="last_updated">Last updated</option>
+                            <option value="borough">Borough</option>
+                        </select>
+                        <select id="pex-area-select" class="pex-select" aria-label="Filter by borough">
+                            <option value="all">All boroughs</option>
+                        </select>
+                        <select id="pex-risk-select" class="pex-select" aria-label="Filter by risk">
+                            <option value="all">All risk levels</option>
+                            <option value="non_compliant">Urgent</option>
+                            <option value="at_risk">At risk</option>
+                            <option value="compliant">Compliant</option>
+                        </select>
+                        <select id="pex-missing-select" class="pex-select" aria-label="Filter by missing documents">
+                            <option value="all">All document states</option>
+                            <option value="missing_only">Missing docs only</option>
+                            <option value="attention_only">Missing or expired</option>
+                        </select>
+                        <button type="button" id="pex-density-toggle" class="pex-button" aria-pressed="true">Compact view</button>
+                        <button type="button" id="pex-group-toggle" class="pex-button" aria-pressed="true">Group by borough</button>
                     </div>
-                </aside>
+                </div>
 
-                <!-- RIGHT PANEL -->
-                <main class="pr-right" aria-label="Property detail">
-                    <div class="pr-empty" id="pr-empty">
-                        <div style="text-align:center">
-                            <div style="font-size:32px;opacity:0.2;margin-bottom:12px">🏠</div>
-                            <div>Select a property to view details</div>
-                        </div>
+                <div class="pex-chip-row">
+                    <div class="pex-chip-group" aria-label="Quick filters">
+                        <button type="button" class="pex-chip active" data-risk-chip="all">All</button>
+                        <button type="button" class="pex-chip" data-risk-chip="non_compliant">Urgent</button>
+                        <button type="button" class="pex-chip" data-risk-chip="at_risk">At risk</button>
+                        <button type="button" class="pex-chip" data-risk-chip="compliant">Compliant</button>
                     </div>
+                    <div class="pex-chip-note" id="pex-results-note">Loading properties...</div>
+                </div>
 
-                    <div class="pr-detail" id="pr-detail" style="display:none;">
-                        <!-- Detail header -->
-                        <div class="pr-detail-header">
-                            <div class="pr-detail-title-area">
-                                <div class="pr-detail-address" id="pr-detail-address">—</div>
-                                <div class="pr-detail-subtitle" id="pr-detail-subtitle">—</div>
-                            </div>
-                            <div class="pr-detail-actions">
-                                <button type="button" class="pr-action-btn" id="pr-btn-export">Export pack</button>
-                                <button type="button" class="pr-action-btn" id="pr-btn-report">Report</button>
-                                <button type="button" class="pr-action-btn pr-action-btn--primary" id="pr-btn-add-doc">Add document</button>
-                            </div>
+                <div class="pex-workspace">
+                    <section class="pex-explorer" id="pex-explorer">
+                        <div class="pex-table-head">
+                            <div>Property</div>
+                            <div>Borough</div>
+                            <div>Compliance</div>
+                            <div>Missing</div>
+                            <div>Updated</div>
                         </div>
-
-                        <!-- Compliance strip -->
-                        <div class="pr-compliance-strip" id="pr-compliance-strip">
-                            <div class="pr-cert-block pr-cert-block--missing">
-                                <div class="pr-cert-label">Gas Safety</div>
-                                <div class="pr-cert-value">—</div>
-                                <div class="pr-cert-sub">Loading…</div>
-                            </div>
-                            <div class="pr-cert-block pr-cert-block--missing">
-                                <div class="pr-cert-label">EICR</div>
-                                <div class="pr-cert-value">—</div>
-                                <div class="pr-cert-sub">Loading…</div>
-                            </div>
-                            <div class="pr-cert-block pr-cert-block--missing">
-                                <div class="pr-cert-label">EPC</div>
-                                <div class="pr-cert-value">—</div>
-                                <div class="pr-cert-sub">Loading…</div>
-                            </div>
-                            <div class="pr-cert-block pr-cert-block--missing">
-                                <div class="pr-cert-label">Deposit</div>
-                                <div class="pr-cert-value">—</div>
-                                <div class="pr-cert-sub">Loading…</div>
-                            </div>
+                        <div id="pex-table-body" class="pex-table-body">
+                            <div class="pex-loading">Loading properties...</div>
                         </div>
+                    </section>
 
-                        <!-- Tabs -->
-                        <div class="pr-tabs" role="tablist">
-                            <button type="button" class="pr-tab pr-tab--active" role="tab" data-tab="documents"
-                                    aria-selected="true">Documents</button>
-                            <button type="button" class="pr-tab" role="tab" data-tab="timeline"
-                                    aria-selected="false">Compliance timeline</button>
-                            <button type="button" class="pr-tab" role="tab" data-tab="info"
-                                    aria-selected="false">Property info</button>
-                        </div>
-
-                        <!-- Documents tab -->
-                        <div class="pr-tab-panel" id="pr-tab-documents" role="tabpanel">
-                            <div class="pr-doc-alert" id="pr-doc-alert" style="display:none;"></div>
-                            <div class="pr-doc-cards" id="pr-doc-cards">
-                                <div style="color:var(--pr-muted);font-size:12px;text-align:center;padding:20px">
-                                    Loading documents…
+                    <aside class="pex-preview">
+                        <div id="pex-preview-empty" class="pex-preview-empty">Select a property to open its compliance preview.</div>
+                        <div id="pex-preview-content" class="pex-preview-content" hidden>
+                            <div class="pex-preview-header">
+                                <div class="pex-preview-top">
+                                    <div class="pex-preview-title">
+                                        <h2 id="pex-preview-title">Property</h2>
+                                        <p id="pex-preview-subtitle">Client and tenancy details</p>
+                                    </div>
+                                    <div class="pex-score-badge portal-score-badge">
+                                        <div id="pex-score-number" class="pex-score-number">0</div>
+                                        <div class="pex-score-label">Score</div>
+                                    </div>
+                                </div>
+                                <div class="pex-preview-actions">
+                                    <button type="button" id="pex-action-add-doc" class="pex-preview-action pex-preview-action--primary">Add document</button>
+                                    <button type="button" id="pex-action-export" class="pex-preview-action">Export pack</button>
+                                    <button type="button" id="pex-action-report" class="pex-preview-action">Export report</button>
+                                </div>
+                                <div id="pex-preview-summary" class="pex-preview-summary portal-summary-strip"></div>
+                            </div>
+                            <div class="pex-preview-scroll">
+                                <div class="pex-preview-section">
+                                    <h3>Key certificates</h3>
+                                    <div id="pex-cert-list" class="pex-cert-list"></div>
+                                </div>
+                                <div class="pex-preview-section">
+                                    <h3>Next actions</h3>
+                                    <div id="pex-action-list" class="pex-action-list"></div>
+                                </div>
+                                <div class="pex-preview-section">
+                                    <h3>Recent documents</h3>
+                                    <div id="pex-doc-list" class="pex-doc-list"></div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Compliance timeline tab -->
-                        <div class="pr-tab-panel" id="pr-tab-timeline" role="tabpanel" style="display:none;">
-                            <div class="pr-timeline-inner">
-                                <div class="pr-score-ring-wrap">
-                                    <svg class="pr-score-ring" viewBox="0 0 80 80">
-                                        <circle class="pr-score-ring-bg" cx="40" cy="40" r="32"/>
-                                        <circle class="pr-score-ring-fg" id="pr-score-ring-fg"
-                                                cx="40" cy="40" r="32"
-                                                stroke="#1D9E75"
-                                                stroke-dasharray="201.06"
-                                                stroke-dashoffset="201.06"/>
-                                    </svg>
-                                    <div class="pr-score-pct" id="pr-score-pct">—%</div>
-                                    <div class="pr-score-desc" id="pr-score-desc">—</div>
-                                </div>
-                                <div class="pr-timeline-table" id="pr-timeline-table">
-                                    <div class="pr-tl-row" style="color:var(--pr-muted);font-size:12px;">Loading…</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Property info tab -->
-                        <div class="pr-tab-panel" id="pr-tab-info" role="tabpanel" style="display:none;">
-                            <div class="pr-info-sections" id="pr-info-content">
-                                <div style="color:var(--pr-muted);font-size:12px;">Loading…</div>
-                            </div>
-                        </div>
-                    </div>
-                </main>
-            </div><!-- /.pr-page -->
-
-        </div><!-- /.portal-app-main -->
-    </div><!-- /.portal-app-layout -->
+                    </aside>
+                </div>
+            </section>
+        </div>
+    </div>
     {% endif %}
+</div>
 
-</div><!-- /.portal-shell -->
-
-<!-- Global modal + toast (from portal.js) -->
 <div id="atp-backdrop" class="atp-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="atp-title" tabindex="-1">
     <div class="atp-modal">
         <div class="atp-modal-header">
@@ -862,683 +1061,477 @@
     };
 </script>
 <script src="{{ url_for('static', filename='portal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/properties_explorer_utils.js') }}"></script>
 
 {% if not show_client_picker %}
 <script>
 (function () {
-    'use strict';
+    "use strict";
 
-    /* ── Helpers ──────────────────────────────────────────────────────── */
-    function esc(s) {
-        if (s == null) return '';
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+    const utils = window.PropertiesExplorerUtils || {};
+    const CERT_ORDER = [
+        ["gas_safety", "Gas Safety"],
+        ["eicr", "EICR"],
+        ["epc", "EPC"],
+        ["deposit", "Deposit"],
+    ];
+
+    const state = {
+        properties: [],
+        selectedId: null,
+        query: "",
+        sort: "most_compliant",
+        area: "all",
+        risk: "all",
+        missing: "all",
+        compact: true,
+        groupByArea: true,
+        detailCache: new Map(),
+    };
+
+    const el = {
+        body: document.getElementById("pex-table-body"),
+        search: document.getElementById("pex-global-search-input"),
+        sort: document.getElementById("pex-sort-select"),
+        area: document.getElementById("pex-area-select"),
+        risk: document.getElementById("pex-risk-select"),
+        missing: document.getElementById("pex-missing-select"),
+        densityToggle: document.getElementById("pex-density-toggle"),
+        groupToggle: document.getElementById("pex-group-toggle"),
+        explorer: document.getElementById("pex-explorer"),
+        resultsNote: document.getElementById("pex-results-note"),
+        matchNote: document.getElementById("pex-match-note"),
+        previewEmpty: document.getElementById("pex-preview-empty"),
+        previewContent: document.getElementById("pex-preview-content"),
+        previewTitle: document.getElementById("pex-preview-title"),
+        previewSubtitle: document.getElementById("pex-preview-subtitle"),
+        previewSummary: document.getElementById("pex-preview-summary"),
+        scoreNumber: document.getElementById("pex-score-number"),
+        certList: document.getElementById("pex-cert-list"),
+        actionList: document.getElementById("pex-action-list"),
+        docList: document.getElementById("pex-doc-list"),
+        addDoc: document.getElementById("pex-action-add-doc"),
+        exportPack: document.getElementById("pex-action-export"),
+        report: document.getElementById("pex-action-report"),
+        riskChips: Array.from(document.querySelectorAll("[data-risk-chip]")),
+    };
+
+    function withClientQuery(url) {
+        const client = (window.MORPHIQ_PORTAL && window.MORPHIQ_PORTAL.clientName) || "";
+        if (!client) return url;
+        return url + (url.indexOf("?") >= 0 ? "&" : "?") + "client=" + encodeURIComponent(client);
     }
 
-    function fmtDate(iso) {
-        if (!iso) return '—';
-        try {
-            const d = new Date(iso.substring(0, 10));
-            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        } catch (e) { return iso; }
+    function escapeHtml(value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
     }
 
-    function extractPostcode(address) {
-        if (!address) return '';
-        const m = address.match(/[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}/i);
-        return m ? m[0].toUpperCase() : '';
+    function formatDate(value) {
+        if (!value) return "-";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+        return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     }
 
-    /* cert status → pill class */
-    function pillClass(status) {
-        if (status === 'valid' || status === 'no_expiry') return 'pr-pill--valid';
-        if (status === 'expiring' || status === 'expiring_soon') return 'pr-pill--expiring';
-        if (status === 'expired')        return 'pr-pill--expired';
-        return 'pr-pill--missing'; /* missing, null, unknown */
+    function statusTone(status) {
+        const normalized = String(status || "missing").toLowerCase();
+        if (normalized === "valid" || normalized === "no_expiry") return "green";
+        if (normalized === "expiring" || normalized === "expiring_soon") return "amber";
+        if (normalized === "expired") return "red";
+        return "neutral";
     }
 
-    function overallClass(status) {
-        if (status === 'non_compliant') return 'pr-row--urgent';
-        if (status === 'at_risk')       return 'pr-row--at-risk';
-        return 'pr-row--compliant';
+    function statusLabel(status) {
+        const normalized = String(status || "missing").toLowerCase();
+        if (normalized === "valid" || normalized === "no_expiry") return "Compliant";
+        if (normalized === "expiring" || normalized === "expiring_soon") return "Expiring";
+        if (normalized === "expired") return "Expired";
+        return "Missing";
     }
 
-    function dotClass(status) {
-        if (status === 'non_compliant') return 'pr-row-dot--urgent';
-        if (status === 'at_risk')       return 'pr-row-dot--at-risk';
-        return 'pr-row-dot--compliant';
+    function scoreTone(score) {
+        if (score >= 80) return "green";
+        if (score >= 50) return "amber";
+        return "red";
     }
 
-    function certBlockClass(status) {
-        if (status === 'expired')   return 'pr-cert-block--expired';
-        if (status === 'expiring' || status === 'expiring_soon') return 'pr-cert-block--expiring';
-        if (status === 'valid' || status === 'no_expiry') return 'pr-cert-block--valid';
-        return 'pr-cert-block--missing'; /* missing, unknown */
+    function overallLabel(status) {
+        if (status === "non_compliant") return "Urgent";
+        if (status === "at_risk") return "At risk";
+        return "Compliant";
     }
 
-    function certValueText(status) {
-        if (status === 'valid' || status === 'no_expiry') return 'Compliant';
-        if (status === 'expiring' || status === 'expiring_soon') return 'Expiring';
-        if (status === 'expired')   return 'Expired';
-        if (status === 'missing')   return 'Not on file';
-        return '—';
+    function propertyArea(property) {
+        return property.area || property.borough || (property.search_meta || {}).area || utils.extractArea(property.property_address) || "Unknown";
     }
 
-    function docTypeTagClass(slug) {
-        if (!slug) return 'pr-doc-tag--other';
-        const s = slug.toLowerCase();
-        if (s.includes('gas'))      return 'pr-doc-tag--gas';
-        if (s.includes('eicr'))     return 'pr-doc-tag--eicr';
-        if (s.includes('epc'))      return 'pr-doc-tag--epc';
-        if (s.includes('tenancy') || s.includes('ast')) return 'pr-doc-tag--ast';
-        if (s.includes('deposit'))  return 'pr-doc-tag--deposit';
-        if (s.includes('inventory'))return 'pr-doc-tag--inventory';
-        return 'pr-doc-tag--other';
+    function visibleProperties() {
+        const filtered = utils.filterProperties(state.properties, {
+            query: state.query,
+            area: state.area,
+            risk: state.risk,
+            missing: state.missing,
+        });
+        return utils.sortProperties(filtered, state.sort);
     }
 
-    function trustBadge(doc) {
-        const st = (doc.status || '').toLowerCase();
-        const qs = doc.quality_score;
-        if (st === 'reviewed') return { cls: 'pr-trust--verified', label: 'Verified' };
-        if (qs && parseFloat(qs) > 0) return { cls: 'pr-trust--ai', label: 'AI prefilled · unverified' };
-        return { cls: 'pr-trust--attention', label: 'Needs attention' };
-    }
-
-    function docCardBorderClass(doc) {
-        const cs = (doc.compliance_status || '').toLowerCase();
-        const tb = trustBadge(doc);
-        if (cs === 'expired')   return 'pr-doc-card--expired';
-        if (cs === 'expiring' || cs === 'expiring_soon') return 'pr-doc-card--expiring';
-        if (tb.cls === 'pr-trust--ai') return 'pr-doc-card--ai';
-        return 'pr-doc-card--valid';
-    }
-
-    function scoreColour(pct) {
-        if (pct >= 80) return '#1D9E75';
-        if (pct >= 50) return '#EF9F27';
-        return '#E24B4A';
-    }
-
-    /**
-     * Workaround for app.py key mismatch:
-     * The API looks for doc_type key 'deposit-protection' but the DB stores
-     * 'deposit-protection-certificate'.  When the API compliance object shows
-     * status=missing, scan the documents array for any deposit cert and derive
-     * real status from that document's per-doc compliance_status field.
-     */
-    function deriveDepositFromDocs(apiDeposit, documents) {
-        if ((apiDeposit || {}).status !== 'missing') return apiDeposit || {};
-        const depositDoc = (documents || []).find(doc =>
-            (doc.doc_type_slug || '').toLowerCase().includes('deposit'));
-        if (!depositDoc) return apiDeposit || {};
-        const cs = (depositDoc.compliance_status || 'no_expiry').toLowerCase();
-        const mappedStatus = (cs === 'no_expiry' || cs === '') ? 'no_expiry' : cs;
-        return {
-            status:           mappedStatus,
-            expiry_date:      depositDoc.expiry_date || null,
-            days_until_expiry: depositDoc.days_until_expiry || null,
-            display_text:     depositDoc.expiry_date
-                                ? `Expires ${fmtDate(depositDoc.expiry_date)}`
-                                : 'Certificate on file',
-        };
-    }
-
-    /* ── State ────────────────────────────────────────────────────────── */
-    let allProperties = [];
-    let activeFilter  = 'all';
-    let searchQuery   = '';
-    let selectedId    = null;
-
-    /* ── DOM refs ─────────────────────────────────────────────────────── */
-    const elList      = document.getElementById('pr-list');
-    const elSearch    = document.getElementById('pr-search');
-    const elCount     = document.getElementById('pr-count-badge');
-    const elEmpty     = document.getElementById('pr-empty');
-    const elDetail    = document.getElementById('pr-detail');
-    const elAddress   = document.getElementById('pr-detail-address');
-    const elSubtitle  = document.getElementById('pr-detail-subtitle');
-    const elStrip     = document.getElementById('pr-compliance-strip');
-    const elDocAlert  = document.getElementById('pr-doc-alert');
-    const elDocCards  = document.getElementById('pr-doc-cards');
-    const elTimeline  = document.getElementById('pr-timeline-table');
-    const elScoreFg   = document.getElementById('pr-score-ring-fg');
-    const elScorePct  = document.getElementById('pr-score-pct');
-    const elScoreDesc = document.getElementById('pr-score-desc');
-    const elInfoContent = document.getElementById('pr-info-content');
-
-    /* ── Fetch property list ──────────────────────────────────────────── */
-    function loadProperties() {
-        const client = (window.MORPHIQ_PORTAL || {}).clientName || '';
-        const url = '/api/properties' + (client ? '?client=' + encodeURIComponent(client) : '');
-        fetch(url, { credentials: 'same-origin' })
-            .then(r => r.json())
-            .then(data => {
-                allProperties = data.properties || [];
-                renderList();
+    function updateAreaOptions() {
+        const areas = Array.from(
+            new Set(
+                state.properties
+                    .map(propertyArea)
+                    .filter(Boolean)
+                    .sort((left, right) => left.localeCompare(right))
+            )
+        );
+        el.area.innerHTML = '<option value="all">All boroughs</option>' + areas
+            .map(function (area) {
+                return '<option value="' + escapeHtml(area.toLowerCase()) + '">' + escapeHtml(area) + "</option>";
             })
-            .catch(() => {
-                elList.innerHTML = '<div class="pr-list-empty">Failed to load properties.</div>';
-            });
+            .join("");
     }
 
-    /* ── Render left panel list ───────────────────────────────────────── */
-    function renderList() {
-        const q = searchQuery.toLowerCase();
-
-        const filtered = allProperties.filter(p => {
-            if (activeFilter !== 'all' && p.overall_status !== activeFilter) return false;
-            if (q) {
-                const addr   = (p.property_address || '').toLowerCase();
-                const tenant = (p.tenant_name || '').toLowerCase();
-                const client = (p.client_name || '').toLowerCase();
-                if (!addr.includes(q) && !tenant.includes(q) && !client.includes(q)) return false;
-            }
-            return true;
+    function updateQuickFilterChips() {
+        el.riskChips.forEach(function (chip) {
+            chip.classList.toggle("active", chip.getAttribute("data-risk-chip") === state.risk);
         });
+    }
 
-        elCount.textContent = filtered.length;
-
-        if (!filtered.length) {
-            elList.innerHTML = '<div class="pr-list-empty">No properties match.</div>';
-            return;
+    function renderRows(rows) {
+        if (!rows.length) {
+            el.body.innerHTML = '<div class="pex-empty-results">No properties match your current search and filters.</div>';
+            return { nextSelectedId: null, selectionChanged: false };
         }
 
-        /* Group */
-        const groups = [
-            { key: 'non_compliant', label: 'Needs immediate action',  items: [] },
-            { key: 'at_risk',       label: 'At risk',                 items: [] },
-            { key: 'compliant',     label: 'Compliant',               items: [] },
-        ];
-        filtered.forEach(p => {
-            const g = groups.find(g => g.key === p.overall_status) || groups[2];
-            g.items.push(p);
+        const selectedVisible = rows.some(function (property) {
+            return property.property_id === state.selectedId;
         });
-
-        let html = '';
-        groups.forEach(g => {
-            if (!g.items.length) return;
-            html += `<div class="pr-group-label">${esc(g.label)}</div>`;
-            g.items.forEach(p => {
-                const comp = p.compliance || {};
-                const gs   = comp.gas_safety  || {};
-                const ei   = comp.eicr         || {};
-                const ep   = comp.epc           || {};
-                const dp   = comp.deposit       || {};
-                const rowClass  = overallClass(p.overall_status);
-                const dotC      = dotClass(p.overall_status);
-                const postcode  = extractPostcode(p.property_address);
-                const meta = [
-                    p.tenant_name ? esc(p.tenant_name) : null,
-                    p.doc_count != null ? `${p.doc_count} docs` : null,
-                    postcode ? esc(postcode) : null,
-                ].filter(Boolean).join(' · ');
-
-                html += `
-<div class="pr-row ${rowClass}${selectedId === p.property_id ? ' pr-row--selected' : ''}"
-     role="option"
-     data-id="${p.property_id}"
-     aria-selected="${selectedId === p.property_id ? 'true' : 'false'}">
-  <div class="pr-row-dot ${dotC}"></div>
-  <div class="pr-row-address">${esc(p.property_address)}</div>
-  <div class="pr-row-meta">${meta || '—'}</div>
-  <div class="pr-row-pills">
-    <span class="pr-pill ${pillClass(gs.status)}">GAS</span>
-    <span class="pr-pill ${pillClass(ei.status)}">EICR</span>
-    <span class="pr-pill ${pillClass(ep.status)}">EPC</span>
-    <span class="pr-pill ${pillClass(dp.status)}">DEP</span>
-  </div>
-</div>`;
-            });
-        });
-
-        elList.innerHTML = html;
-
-        /* Bind click */
-        elList.querySelectorAll('.pr-row').forEach(row => {
-            row.addEventListener('click', () => {
-                const id = parseInt(row.dataset.id, 10);
-                selectProperty(id);
-            });
-        });
-    }
-
-    /* ── Select a property ────────────────────────────────────────────── */
-    function selectProperty(id) {
-        selectedId = id;
-        renderList(); /* re-render to show selection highlight */
-
-        /* Show detail panel immediately with skeleton */
-        const p = allProperties.find(x => x.property_id === id);
-        if (p) {
-            showDetailSkeleton(p);
+        let selectionChanged = false;
+        if (!selectedVisible) {
+            state.selectedId = rows[0].property_id;
+            selectionChanged = true;
         }
 
-        /* Fetch full detail */
-        fetch(`/api/properties/${id}`, { credentials: 'same-origin' })
-            .then(r => r.json())
-            .then(data => renderDetail(data.property))
-            .catch(() => {
-                elDocCards.innerHTML = '<div style="color:var(--pr-muted);font-size:12px;padding:12px">Failed to load property detail.</div>';
-            });
-    }
-
-    function showDetailSkeleton(p) {
-        elEmpty.style.display  = 'none';
-        elDetail.style.display = 'flex';
-
-        elAddress.textContent  = p.property_address || '—';
-        elSubtitle.textContent = p.client_name || '—';
-
-        /* Compliance strip from list data */
-        const comp = p.compliance || {};
-        renderComplianceStrip({
-            gas_safety: comp.gas_safety || {},
-            eicr:       comp.eicr       || {},
-            epc:        comp.epc         || {},
-            deposit:    comp.deposit     || {},
-        });
-
-        elDocCards.innerHTML = '<div style="color:var(--pr-muted);font-size:12px;text-align:center;padding:24px">Loading documents…</div>';
-        elDocAlert.style.display = 'none';
-    }
-
-    /* ── Render full detail ───────────────────────────────────────────── */
-    function renderDetail(d) {
-        /* --- Header --- */
-        elAddress.textContent = d.property_address || '—';
-
-        const tenant = d.tenant || {};
-        const tenantName = tenant.name || '—';
-        const since = tenant.tenancy_start ? fmtDate(tenant.tenancy_start) : '—';
-        const rent  = tenant.rent ? `£${tenant.rent}/mo` : '';
-        const subtitleParts = [d.client_name, tenantName, since && since !== '—' ? `since ${since}` : null, rent]
-            .filter(Boolean);
-        elSubtitle.textContent = subtitleParts.join(' · ');
-
-        /* Patch deposit compliance — API key mismatch workaround */
-        const depositComp = deriveDepositFromDocs(d.deposit, d.documents);
-        const comp = {
-            gas_safety: d.gas_safety || {},
-            eicr:       d.eicr       || {},
-            epc:        d.epc         || {},
-            deposit:    depositComp,
-        };
-
-        /* --- Compliance strip (from detail) --- */
-        renderComplianceStrip(comp);
-
-        /* --- Documents tab --- */
-        renderDocuments(d);
-
-        /* --- Compliance timeline tab --- */
-        renderTimeline(comp);
-
-        /* --- Property info tab --- */
-        renderInfo(d, comp);
-
-        /* --- Patch DEP pill in left panel for selected row --- */
-        const selectedRow = elList.querySelector(`.pr-row[data-id="${d.property_id}"]`);
-        if (selectedRow && depositComp.status !== 'missing') {
-            const pills = selectedRow.querySelectorAll('.pr-pill');
-            /* pills are ordered: GAS EICR EPC DEP — index 3 */
-            if (pills[3]) {
-                pills[3].className = `pr-pill ${pillClass(depositComp.status)}`;
-            }
-        }
-
-        /* --- Action buttons --- */
-        document.getElementById('pr-btn-export').onclick = () => {
-            fetch(`/api/properties/${d.property_id}/download-pack`, {
-                method: 'POST',
-                credentials: 'same-origin',
-            })
-            .then(r => {
-                if (!r.ok) return r.json().then(j => { throw new Error(j.error || 'No documents'); });
-                return r.blob().then(blob => {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `MorphIQ_Pack_${(d.property_address || 'property').replace(/[^a-zA-Z0-9]/g, '_')}.zip`;
-                    a.click();
-                    URL.revokeObjectURL(url);
+        let html = "";
+        if (state.groupByArea) {
+            utils.groupPropertiesByArea(rows).forEach(function (group) {
+                html += '<div class="pex-group-label"><span>' + escapeHtml(group.area) + '</span><span>' + group.items.length + " properties</span></div>";
+                group.items.forEach(function (property) {
+                    html += rowHtml(property);
                 });
-            })
-            .catch(err => alert(err.message || 'Could not export pack.'));
-        };
-
-        document.getElementById('pr-btn-report').onclick = () => {
-            window.open(`/api/properties/${d.property_id}/report?format=pdf`, '_blank');
-        };
-    }
-
-    /* ── Compliance strip ─────────────────────────────────────────────── */
-    function renderComplianceStrip(comp) {
-        const certs = [
-            { key: 'gas_safety', label: 'Gas Safety' },
-            { key: 'eicr',       label: 'EICR' },
-            { key: 'epc',        label: 'EPC' },
-            { key: 'deposit',    label: 'Deposit' },
-        ];
-        elStrip.innerHTML = certs.map(c => {
-            const info   = comp[c.key] || {};
-            const status = info.status || 'missing';
-            const cls    = certBlockClass(status);
-            const value  = certValueText(status);
-            /* Use display_text from detail API when available, else derive */
-            let sub;
-            if (info.display_text) {
-                sub = info.display_text;
-            } else if (info.expiry_date) {
-                sub = `Expires ${fmtDate(info.expiry_date)}`;
-            } else if (status === 'missing') {
-                sub = 'Not on file';
-            } else if (status === 'no_expiry') {
-                sub = 'No expiry date';
-            } else {
-                sub = '—';
-            }
-            return `
-<div class="pr-cert-block ${cls}">
-  <div class="pr-cert-label">${esc(c.label)}</div>
-  <div class="pr-cert-value">${value}</div>
-  <div class="pr-cert-sub">${esc(sub)}</div>
-</div>`;
-        }).join('');
-    }
-
-    /* ── Documents tab ────────────────────────────────────────────────── */
-    function renderDocuments(d) {
-        const docs = d.documents || [];
-        const byType = d.documents_by_type || {};
-
-        /* Alert banner — only show for cert-type docs with a real issue */
-        /* Note: DB uses 'deposit-protection-certificate', not 'deposit-protection' */
-        const CERT_SLUGS = ['gas-safety-certificate', 'eicr', 'epc', 'deposit-protection', 'deposit-protection-certificate'];
-        const certDocs = docs.filter(doc => CERT_SLUGS.includes((doc.doc_type_slug || '').toLowerCase()));
-        const expiredDocs  = certDocs.filter(doc => doc.compliance_status === 'expired');
-        const expiringDocs = certDocs.filter(doc =>
-            doc.compliance_status === 'expiring' || doc.compliance_status === 'expiring_soon');
-
-        if (expiredDocs.length) {
-            const names = [...new Set(expiredDocs.map(doc => doc.doc_type || doc.doc_name).filter(Boolean))];
-            elDocAlert.className = 'pr-doc-alert pr-doc-alert--red';
-            elDocAlert.innerHTML = `<strong>Action required:</strong> ${esc(names.join(', '))} ${names.length === 1 ? 'has' : 'have'} expired. Upload renewals immediately.`;
-            elDocAlert.style.display = '';
-        } else if (expiringDocs.length) {
-            const names = [...new Set(expiringDocs.map(doc => doc.doc_type || doc.doc_name).filter(Boolean))];
-            elDocAlert.className = 'pr-doc-alert pr-doc-alert--amber';
-            elDocAlert.innerHTML = `<strong>Expiring soon:</strong> ${esc(names.join(', '))} will expire within 30 days.`;
-            elDocAlert.style.display = '';
+            });
         } else {
-            elDocAlert.style.display = 'none';
+            rows.forEach(function (property) {
+                html += rowHtml(property);
+            });
         }
+        el.body.innerHTML = html;
 
+        Array.from(el.body.querySelectorAll(".pex-row")).forEach(function (row) {
+            row.addEventListener("click", function () {
+                const propertyId = parseInt(row.getAttribute("data-property-id"), 10);
+                if (Number.isFinite(propertyId)) {
+                    selectProperty(propertyId);
+                }
+            });
+        });
+        return { nextSelectedId: state.selectedId, selectionChanged: selectionChanged };
+    }
+
+    function rowHtml(property) {
+        const score = utils.calculateComplianceScore(property);
+        const tone = scoreTone(score);
+        const missingCount = utils.countMissingDocuments(property);
+        const attentionCount = utils.countAttentionDocuments(property);
+        const selectedClass = property.property_id === state.selectedId ? " is-selected" : "";
+        const updatedText = formatDate(property.latest_activity_date);
+        const tenantName = property.tenant_name ? escapeHtml(property.tenant_name) : "No tenant extracted";
+        const docCount = property.doc_count || 0;
+
+        return (
+            '<div class="pex-row' + selectedClass + '" data-property-id="' + property.property_id + '">' +
+                '<div class="pex-property-cell">' +
+                    '<span class="pex-status-dot pex-status-dot--' + escapeHtml(property.overall_status || "compliant") + '"></span>' +
+                    '<div class="pex-property-text">' +
+                        '<p class="pex-property-title">' + escapeHtml(property.property_address || "Property") + "</p>" +
+                        '<div class="pex-property-meta">' +
+                            '<span>' + tenantName + "</span>" +
+                            '<span>&bull;</span>' +
+                            '<span>' + docCount + " docs</span>" +
+                        "</div>" +
+                    "</div>" +
+                "</div>" +
+                '<div class="pex-cell-muted">' + escapeHtml(propertyArea(property)) + "</div>" +
+                '<div><span class="pex-mini-pill pex-pill--' + tone + '">' + score + "% " + escapeHtml(overallLabel(property.overall_status)) + "</span></div>" +
+                '<div class="pex-cell-muted">' + (missingCount > 0 ? missingCount + " missing" : attentionCount > 0 ? attentionCount + " urgent" : "None") + "</div>" +
+                '<div class="pex-cell-muted">' + escapeHtml(updatedText) + "</div>" +
+            "</div>"
+        );
+    }
+
+    function renderExplorer() {
+        const rows = visibleProperties();
+        el.resultsNote.textContent = rows.length + " properties shown";
+        el.matchNote.textContent = state.query ? 'Search: "' + state.query + '"' : "Explorer view";
+        el.explorer.classList.toggle("pex-density-comfortable", !state.compact);
+        const renderState = renderRows(rows);
+        updateQuickFilterChips();
+        if (!rows.length) {
+            el.previewEmpty.hidden = false;
+            el.previewContent.hidden = true;
+            el.previewEmpty.textContent = "No property matches the current filters.";
+            return;
+        }
+        if (renderState.selectionChanged && renderState.nextSelectedId != null) {
+            selectProperty(renderState.nextSelectedId);
+        }
+    }
+
+    function certificateCards(detail) {
+        const compliance = {
+            gas_safety: detail.gas_safety || {},
+            eicr: detail.eicr || {},
+            epc: detail.epc || {},
+            deposit: detail.deposit || {},
+        };
+        el.certList.innerHTML = CERT_ORDER.map(function (entry) {
+            const key = entry[0];
+            const label = entry[1];
+            const cert = compliance[key] || {};
+            const tone = statusTone(cert.status);
+            const subtext = cert.expiry_date ? "Expiry " + formatDate(cert.expiry_date) : "No expiry on file";
+            return (
+                '<div class="pex-cert-card">' +
+                    '<div class="pex-cert-info">' +
+                        "<strong>" + escapeHtml(label) + "</strong>" +
+                        "<span>" + escapeHtml(subtext) + "</span>" +
+                    "</div>" +
+                    '<span class="pex-mini-pill pex-pill--' + tone + '">' + escapeHtml(statusLabel(cert.status)) + "</span>" +
+                "</div>"
+            );
+        }).join("");
+        return compliance;
+    }
+
+    function buildNextActions(detail, compliance) {
+        const actions = utils.buildNextActions({
+            gas_safety: compliance.gas_safety || {},
+            eicr: compliance.eicr || {},
+            epc: compliance.epc || {},
+            deposit: compliance.deposit || {},
+        }, 3);
+        el.actionList.innerHTML = actions.map(function (action, index) {
+            return '<div class="pex-action-item"><span class="pex-action-index">' + (index + 1) + '</span><span>' + escapeHtml(action) + "</span></div>";
+        }).join("");
+    }
+
+    function renderRecentDocs(detail) {
+        const docs = (detail.documents || []).slice().sort(function (left, right) {
+            const leftDate = left.batch_date || left.scanned_at || left.reviewed_at || "";
+            const rightDate = right.batch_date || right.scanned_at || right.reviewed_at || "";
+            return String(rightDate).localeCompare(String(leftDate));
+        });
         if (!docs.length) {
-            elDocCards.innerHTML = '<div style="color:var(--pr-muted);font-size:12px;text-align:center;padding:24px;">No documents on file for this property.</div>';
+            el.docList.innerHTML = '<div class="pex-empty-results">No documents for this property yet.</div>';
+            return;
+        }
+        el.docList.innerHTML = docs.slice(0, 5).map(function (doc) {
+            const docStatus = doc.compliance_status || doc.status || "missing";
+            const tone = statusTone(docStatus);
+            const dateText = formatDate(doc.batch_date || doc.scanned_at || doc.reviewed_at);
+            const pdfHref = doc.pdf_url || (doc.id ? withClientQuery("/api/documents/by-id/" + doc.id + "/pdf") : "#");
+            const documentHref = doc.id
+                ? withClientQuery("/document/by-id/" + doc.id)
+                : doc.source_doc_id
+                    ? withClientQuery("/document/" + encodeURIComponent(doc.source_doc_id))
+                    : "#";
+            return (
+                '<div class="pex-doc-card">' +
+                    '<div class="pex-doc-meta">' +
+                        '<strong>' + escapeHtml(doc.doc_type || doc.doc_name || "Document") + "</strong>" +
+                        '<span>' + escapeHtml(doc.doc_name || "Untitled document") + "</span>" +
+                        '<span>' + escapeHtml(dateText) + "</span>" +
+                    "</div>" +
+                    '<div class="pex-doc-actions">' +
+                        '<span class="pex-mini-pill pex-pill--' + tone + '">' + escapeHtml(statusLabel(docStatus)) + "</span>" +
+                        '<a class="pex-doc-link" href="' + escapeHtml(documentHref) + '">View</a>' +
+                        '<a class="pex-doc-link" href="' + escapeHtml(pdfHref) + '" target="_blank" rel="noopener">PDF</a>' +
+                        '<button type="button" class="pex-doc-pack atp-trigger" data-document-id="' + escapeHtml(doc.id || "") + '">Pack</button>' +
+                    "</div>" +
+                "</div>"
+            );
+        }).join("");
+    }
+
+    function renderPreview(detail) {
+        const tenant = detail.tenant || {};
+        const score = utils.calculateComplianceScore(detail);
+        const missingCount = utils.countMissingDocuments(detail);
+        const subtitleBits = [
+            detail.client_name,
+            tenant.name,
+            tenant.tenancy_start ? "Since " + formatDate(tenant.tenancy_start) : "",
+            propertyArea(detail),
+        ].filter(Boolean);
+
+        el.previewEmpty.hidden = true;
+        el.previewContent.hidden = false;
+        el.previewTitle.textContent = detail.property_address || "Property";
+        el.previewSubtitle.textContent = subtitleBits.join(" · ") || "Property overview";
+        el.scoreNumber.textContent = String(score);
+        el.scoreNumber.style.color = scoreTone(score) === "green" ? "var(--pex-green)" : scoreTone(score) === "amber" ? "var(--pex-amber)" : "var(--pex-red)";
+        el.previewSummary.innerHTML = utils.buildPreviewSummaryItems({
+            documents: detail.documents || [],
+            compliance: detail.compliance || {
+                gas_safety: detail.gas_safety || {},
+                eicr: detail.eicr || {},
+                epc: detail.epc || {},
+                deposit: detail.deposit || {},
+            },
+            latest_activity_date: detail.latest_activity_date || "",
+        }).map(function (item) {
+            const value = item.label === "Updated" ? formatDate(item.value) : item.value;
+            return '<div class="pex-summary-chip portal-summary-chip"><span class="pex-summary-label">' + escapeHtml(item.label) + '</span><span class="pex-summary-value">' + escapeHtml(value || "-") + "</span></div>";
+        }).join("");
+
+        const compliance = certificateCards(detail);
+        buildNextActions(detail, compliance);
+        renderRecentDocs(detail);
+
+        el.addDoc.onclick = function () {
+            window.location.href = withClientQuery("/documents");
+        };
+        el.exportPack.onclick = function () {
+            fetch(withClientQuery("/api/properties/" + detail.property_id + "/download-pack"), {
+                method: "POST",
+                credentials: "same-origin",
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        return response.json().then(function (payload) {
+                            throw new Error(payload.error || "Could not export pack.");
+                        });
+                    }
+                    return response.blob();
+                })
+                .then(function (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = "MorphIQ_Pack_" + String(detail.property_address || "property").replace(/[^a-zA-Z0-9]+/g, "_") + ".zip";
+                    link.click();
+                    URL.revokeObjectURL(url);
+                })
+                .catch(function (error) {
+                    window.alert(error.message || "Could not export pack.");
+                });
+        };
+        el.report.onclick = function () {
+            window.open(withClientQuery("/api/properties/" + detail.property_id + "/report?format=pdf"), "_blank");
+        };
+    }
+
+    function selectProperty(propertyId) {
+        state.selectedId = propertyId;
+        renderExplorer();
+        if (state.detailCache.has(propertyId)) {
+            renderPreview(state.detailCache.get(propertyId));
             return;
         }
 
-        /* Render cards grouped by type */
-        let html = '';
-        const typeOrder = Object.keys(byType);
-        typeOrder.forEach(typeName => {
-            const typeDocs = byType[typeName] || [];
-            if (!typeDocs.length) return;
-            html += `<div class="pr-doc-group-label">${esc(typeName)}</div>`;
-            typeDocs.forEach(doc => {
-                html += renderDocCard(doc, d.property_id);
-            });
-        });
+        el.previewEmpty.hidden = false;
+        el.previewEmpty.textContent = "Loading property preview...";
+        el.previewContent.hidden = true;
 
-        /* Missing required cert types — show placeholder only when genuinely absent */
-        /* deposit uses 'deposit-protection-certificate' in DB, match both slugs */
-        const requiredTypes = [
-            { slugs: ['gas-safety-certificate'],                         label: 'Gas Safety Certificate' },
-            { slugs: ['eicr'],                                           label: 'EICR' },
-            { slugs: ['epc'],                                            label: 'EPC' },
-            { slugs: ['deposit-protection', 'deposit-protection-certificate'], label: 'Deposit Protection' },
-        ];
-        requiredTypes.forEach(rt => {
-            const present = docs.some(doc => rt.slugs.includes((doc.doc_type_slug || '').toLowerCase()));
-            if (!present) {
-                html += `
-<div class="pr-doc-card pr-doc-card--placeholder">
-  <div class="pr-placeholder-label">${esc(rt.label)} — not on file</div>
-  <button type="button" class="pr-doc-action-btn pr-doc-action-btn--accent"
-          onclick="alert('Upload / scan: ${esc(rt.label)}')">Upload / scan</button>
-</div>`;
-            }
-        });
-
-        elDocCards.innerHTML = html;
-    }
-
-    function renderDocCard(doc, propertyId) {
-        const slug      = (doc.doc_type_slug || '').toLowerCase();
-        const tagClass  = docTypeTagClass(slug);
-        const trust     = trustBadge(doc);
-        const borderCls = docCardBorderClass(doc);
-        const scanDate  = doc.batch_date || doc.scanned_at || doc.reviewed_at || '';
-        const typeName  = doc.doc_type || slug || 'Document';
-        const fields    = doc.fields || {};
-        const cs        = doc.compliance_status || '';
-
-        /* Build field grid rows — show up to 6 fields */
-        const fieldEntries = Object.entries(fields).slice(0, 6);
-        let fieldsHtml = '';
-        if (fieldEntries.length) {
-            fieldsHtml = `<div class="pr-doc-fields">`;
-            fieldEntries.forEach(([key, info]) => {
-                const label = (info.label || key).replace(/_/g, ' ');
-                const val   = info.value || '—';
-                /* Colour value if it's an expiry field */
-                let valClass = 'pr-doc-field-value';
-                const lkey = key.toLowerCase();
-                if (lkey.includes('expir') || lkey.includes('valid_until') || lkey.includes('next_insp')) {
-                    if (cs === 'expired') valClass += ' pr-doc-field-value--expired';
-                    else if (cs === 'expiring' || cs === 'expiring_soon') valClass += ' pr-doc-field-value--expiring';
+        fetch(withClientQuery("/api/properties/" + propertyId), { credentials: "same-origin" })
+            .then(function (response) {
+                if (!response.ok) throw new Error("Failed to load property");
+                return response.json();
+            })
+            .then(function (payload) {
+                const detail = payload.property || payload;
+                state.detailCache.set(propertyId, detail);
+                if (state.selectedId === propertyId) {
+                    renderPreview(detail);
                 }
-                if (trust.cls === 'pr-trust--ai') valClass += ' pr-doc-field-value--ai';
-                fieldsHtml += `
-<div>
-  <div class="pr-doc-field-label">${esc(label)}</div>
-  <div class="${valClass}">${esc(val)}</div>
-</div>`;
+            })
+            .catch(function () {
+                el.previewEmpty.hidden = false;
+                el.previewEmpty.textContent = "Could not load property preview.";
+                el.previewContent.hidden = true;
             });
-            fieldsHtml += `</div>`;
-        }
-
-        /* Action buttons */
-        const pdfUrl = doc.pdf_url || '';
-        let actionsHtml = `<div class="pr-doc-actions">`;
-        if (pdfUrl) {
-            actionsHtml += `<a class="pr-doc-action-btn pr-doc-action-btn--accent" href="${esc(pdfUrl)}" target="_blank" rel="noopener">View PDF</a>`;
-        }
-        if (pdfUrl) {
-            actionsHtml += `<a class="pr-doc-action-btn" href="${esc(pdfUrl)}" download>Download</a>`;
-        }
-        actionsHtml += `<button type="button" class="pr-doc-action-btn" onclick="window.atpOpen && window.atpOpen(${doc.id}, ${propertyId})">Add to pack</button>`;
-
-        /* Contextual 4th action */
-        if (cs === 'expired') {
-            actionsHtml += `<button type="button" class="pr-doc-action-btn pr-doc-action-btn--red" onclick="alert('Upload renewal for: ${esc(typeName)}')">Upload renewal</button>`;
-        } else if (trust.cls === 'pr-trust--ai') {
-            actionsHtml += `<a class="pr-doc-action-btn pr-doc-action-btn--purple" href="/review?doc_id=${esc(doc.source_doc_id || '')}">Verify in ReviewStation</a>`;
-        }
-        actionsHtml += `</div>`;
-
-        return `
-<div class="pr-doc-card ${borderCls}">
-  <div class="pr-doc-card-top">
-    <div class="pr-doc-card-left">
-      <span class="pr-doc-type-tag ${tagClass}">${esc(typeName)}</span>
-      <span class="pr-trust-badge ${trust.cls}">${esc(trust.label)}</span>
-    </div>
-    <div class="pr-doc-scan-date">${scanDate ? fmtDate(scanDate) : ''}</div>
-  </div>
-  ${fieldsHtml}
-  ${actionsHtml}
-</div>`;
     }
 
-    /* ── Compliance timeline tab ──────────────────────────────────────── */
-    /* comp = {gas_safety, eicr, epc, deposit} — already patched for deposit */
-    function renderTimeline(comp) {
-        const certs = [
-            { key: 'gas_safety', name: 'Gas Safety Certificate' },
-            { key: 'eicr',       name: 'EICR' },
-            { key: 'epc',        name: 'EPC' },
-            { key: 'deposit',    name: 'Deposit Protection' },
-        ];
-
-        /* Compute score: valid/no_expiry=100, expiring=60, expired/missing=0 */
-        let total = 0, points = 0;
-        certs.forEach(c => {
-            const s = (comp[c.key] || {}).status || 'missing';
-            total += 100;
-            if (s === 'valid' || s === 'no_expiry') points += 100;
-            else if (s === 'expiring' || s === 'expiring_soon') points += 60;
+    function bindControls() {
+        el.search.addEventListener("input", function () {
+            state.query = el.search.value.trim();
+            renderExplorer();
         });
-        const pct    = total ? Math.round(points / total * 100) : 0;
-        const colour = scoreColour(pct);
-        const circ   = 2 * Math.PI * 32; /* r=32 */
-        const offset = circ * (1 - pct / 100);
-
-        elScoreFg.style.stroke = colour;
-        elScoreFg.setAttribute('stroke-dasharray', circ.toFixed(2));
-        elScoreFg.setAttribute('stroke-dashoffset', offset.toFixed(2));
-        elScorePct.textContent = `${pct}%`;
-        elScorePct.style.color = colour;
-
-        const issues = certs.filter(c => {
-            const s = (comp[c.key] || {}).status || 'missing';
-            return s !== 'valid' && s !== 'no_expiry';
+        el.sort.addEventListener("change", function () {
+            state.sort = el.sort.value;
+            renderExplorer();
         });
-        elScoreDesc.textContent = issues.length
-            ? `${issues.length} issue${issues.length > 1 ? 's' : ''} require attention`
-            : 'All certificates compliant';
-
-        /* Table rows */
-        let html = '';
-        certs.forEach(c => {
-            const info   = comp[c.key] || {};
-            const status = info.status || 'missing';
-            const dotColour = (status === 'valid' || status === 'no_expiry') ? '#1D9E75'
-                            : (status === 'expiring' || status === 'expiring_soon') ? '#EF9F27'
-                            : status === 'expired' ? '#E24B4A'
-                            : '#8a9e9b';
-            const badgeCls = (status === 'valid' || status === 'no_expiry') ? 'pr-tl-badge--valid'
-                           : (status === 'expiring' || status === 'expiring_soon') ? 'pr-tl-badge--expiring'
-                           : status === 'expired'   ? 'pr-tl-badge--expired'
-                           : 'pr-tl-badge--missing';
-            const badgeLabel = (status === 'valid' || status === 'no_expiry') ? 'Compliant'
-                             : (status === 'expiring' || status === 'expiring_soon') ? 'Expiring soon'
-                             : status === 'expired'   ? 'Expired'
-                             : 'Not on file';
-            const dueDate = info.expiry_date ? fmtDate(info.expiry_date) : '—';
-            html += `
-<div class="pr-tl-row">
-  <div class="pr-tl-dot" style="background:${dotColour}"></div>
-  <div class="pr-tl-name">${esc(c.name)}</div>
-  <div class="pr-tl-date">${esc(dueDate)}</div>
-  <span class="pr-tl-badge ${badgeCls}">${badgeLabel}</span>
-</div>`;
+        el.area.addEventListener("change", function () {
+            state.area = el.area.value;
+            renderExplorer();
         });
-        elTimeline.innerHTML = html || '<div class="pr-tl-row" style="color:var(--pr-muted)">No compliance data.</div>';
-    }
-
-    /* ── Property info tab ────────────────────────────────────────────── */
-    function renderInfo(d, comp) {
-        comp = comp || {};
-        const tenant  = d.tenant  || {};
-        const docCount = (d.documents || []).length;
-
-        function cell(label, value) {
-            return `
-<div class="pr-info-cell">
-  <div class="pr-info-cell-label">${esc(label)}</div>
-  <div class="pr-info-cell-value">${esc(value || '—')}</div>
-</div>`;
-        }
-
-        const html = `
-<div class="pr-info-sections">
-  <div class="pr-info-section">
-    <div class="pr-info-section-title">Property details</div>
-    <div class="pr-info-grid">
-      ${cell('Address', d.property_address)}
-      ${cell('Client', d.client_name)}
-      ${cell('Postcode', extractPostcode(d.property_address))}
-      ${cell('Last activity', fmtDate(d.latest_activity_date))}
-    </div>
-  </div>
-  <div class="pr-info-section">
-    <div class="pr-info-section-title">Current tenancy</div>
-    <div class="pr-info-grid">
-      ${cell('Tenant', tenant.name)}
-      ${cell('Status', tenant.status_text)}
-      ${cell('Start date', fmtDate(tenant.tenancy_start))}
-      ${cell('End date', fmtDate(tenant.tenancy_end))}
-      ${cell('Monthly rent', tenant.rent ? '£' + tenant.rent : null)}
-      ${cell('Deposit', tenant.deposit ? '£' + tenant.deposit : null)}
-    </div>
-  </div>
-  <div class="pr-info-section">
-    <div class="pr-info-section-title">Document summary</div>
-    <div class="pr-info-grid">
-      ${cell('Total documents', docCount)}
-      ${cell('Gas Safety', certValueText((comp.gas_safety || d.gas_safety || {}).status))}
-      ${cell('EICR', certValueText((comp.eicr || d.eicr || {}).status))}
-      ${cell('EPC', certValueText((comp.epc || d.epc || {}).status))}
-      ${cell('Deposit Protection', certValueText((comp.deposit || {}).status))}
-    </div>
-  </div>
-</div>`;
-        elInfoContent.innerHTML = html;
-    }
-
-    /* ── Tab switching ────────────────────────────────────────────────── */
-    document.querySelectorAll('.pr-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            const target = tab.dataset.tab;
-            document.querySelectorAll('.pr-tab').forEach(t => {
-                t.classList.remove('pr-tab--active');
-                t.setAttribute('aria-selected', 'false');
-            });
-            tab.classList.add('pr-tab--active');
-            tab.setAttribute('aria-selected', 'true');
-
-            ['documents', 'timeline', 'info'].forEach(name => {
-                const panel = document.getElementById(`pr-tab-${name}`);
-                if (panel) panel.style.display = name === target ? '' : 'none';
+        el.risk.addEventListener("change", function () {
+            state.risk = el.risk.value;
+            renderExplorer();
+        });
+        el.missing.addEventListener("change", function () {
+            state.missing = el.missing.value;
+            renderExplorer();
+        });
+        el.densityToggle.addEventListener("click", function () {
+            state.compact = !state.compact;
+            el.densityToggle.setAttribute("aria-pressed", state.compact ? "true" : "false");
+            el.densityToggle.textContent = state.compact ? "Compact view" : "Comfortable view";
+            renderExplorer();
+        });
+        el.groupToggle.addEventListener("click", function () {
+            state.groupByArea = !state.groupByArea;
+            el.groupToggle.setAttribute("aria-pressed", state.groupByArea ? "true" : "false");
+            renderExplorer();
+        });
+        el.riskChips.forEach(function (chip) {
+            chip.addEventListener("click", function () {
+                state.risk = chip.getAttribute("data-risk-chip") || "all";
+                el.risk.value = state.risk;
+                renderExplorer();
             });
         });
-    });
-
-    /* ── Filter chips ─────────────────────────────────────────────────── */
-    document.querySelectorAll('.pr-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            document.querySelectorAll('.pr-chip').forEach(c => c.classList.remove('pr-chip--active'));
-            chip.classList.add('pr-chip--active');
-            activeFilter = chip.dataset.filter;
-            renderList();
-        });
-    });
-
-    /* ── Search ───────────────────────────────────────────────────────── */
-    if (elSearch) {
-        elSearch.addEventListener('input', () => {
-            searchQuery = elSearch.value;
-            renderList();
-        });
     }
 
-    /* ── Boot ─────────────────────────────────────────────────────────── */
+    function loadProperties() {
+        fetch(withClientQuery("/api/properties"), { credentials: "same-origin" })
+            .then(function (response) {
+                if (!response.ok) throw new Error("Failed to load properties");
+                return response.json();
+            })
+            .then(function (payload) {
+                state.properties = payload.properties || [];
+                updateAreaOptions();
+                renderExplorer();
+                const rows = visibleProperties();
+                if (!rows.length) {
+                    el.previewEmpty.hidden = false;
+                    el.previewContent.hidden = true;
+                    el.previewEmpty.textContent = "No properties found for this client.";
+                }
+            })
+            .catch(function () {
+                el.body.innerHTML = '<div class="pex-empty-results">Failed to load properties.</div>';
+                el.resultsNote.textContent = "Could not load properties.";
+            });
+    }
+
+    bindControls();
     loadProperties();
-
 })();
 </script>
 {% endif %}

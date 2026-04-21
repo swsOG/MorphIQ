@@ -359,6 +359,7 @@ def get_next_doc_id(batch_folder: Path) -> str:
 def write_review_json(doc_folder: Path, doc_id: str, pdf_name: str, image_name: str, template: dict,
                      doc_name: str | None = None, initial_fields: dict | None = None):
     scanned_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    fields = dict(initial_fields or {})
     review = {
         "doc_id": doc_id,
         # Initial doc_type is neutral/unknown; AI prefill will classify it.
@@ -369,8 +370,8 @@ def write_review_json(doc_folder: Path, doc_id: str, pdf_name: str, image_name: 
         "status": "New",
         "quality_score": "",
         "files": {"pdf": pdf_name, "raw_image": image_name},
-        # Fields start empty; AI prefill populates them based on detected type.
-        "fields": {},
+        # Preserve any metadata captured at scan time before AI prefill augments it.
+        "fields": fields,
         "review": {
             "reviewed_by": "",
             "reviewed_at": "",

@@ -1,0 +1,10 @@
+{
+  "doc_type": "Inventory",
+  "display_name": "Inventory / Check-in Report",
+  "fields": [
+    { "key": "property_address", "label": "Property Address", "type": "text" },
+    { "key": "clerk_name", "label": "Clerk / Inspector Name", "type": "text" },
+    { "key": "inspection_date", "label": "Inspection Date", "type": "text" },
+    { "key": "property_condition_summary", "label": "Property Condition Summary", "type": "text" }
+  ]
+}

@@ -7,13 +7,14 @@ Connects to SQLite at DATABASE_URL (default: portal.db in project root).
 import io
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Optional
 import sqlite3
 import zipfile
 import json
 import anthropic
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -44,6 +45,9 @@ except ImportError:
 
 # ── Config ───────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.normpath(os.path.join(BASE_DIR, ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 DATABASE_URL = os.environ.get("DATABASE_URL", os.path.normpath(os.path.join(BASE_DIR, "..", "portal.db")))
 
 
@@ -69,13 +73,19 @@ def _find_doc_folder_portal(client_name: str, doc_id: str) -> Optional[Path]:
     """Find the DOC-XXXXX folder under Clients/<client>/Batches/ (same layout as ScanStation server)."""
     if not (client_name or "").strip() or not (doc_id or "").strip():
         return None
+    requested = (doc_id or "").strip()
+    requested_batch = requested[:10] if len(requested) >= 16 and requested[10:16] == "__DOC-" else None
+    raw_doc_id = requested[12:] if requested_batch else requested
     batches_path = Path(get_clients_dir()) / client_name.strip() / "Batches"
     if not batches_path.exists():
         return None
-    for date_folder in batches_path.iterdir():
+    batch_folders = [p for p in batches_path.iterdir() if p.is_dir()]
+    if requested_batch:
+        batch_folders.sort(key=lambda p: (0 if p.name == requested_batch else 1, p.name), reverse=False)
+    for date_folder in batch_folders:
         if not date_folder.is_dir():
             continue
-        doc_folder = date_folder / doc_id
+        doc_folder = date_folder / raw_doc_id
         if doc_folder.is_dir() and (doc_folder / "review.json").exists():
             return doc_folder
     return None
@@ -105,6 +115,13 @@ def _resolve_pdf_path_for_document(doc: dict) -> Optional[str]:
             if pdf and pdf.is_file():
                 return str(pdf.resolve())
     return None
+
+
+def _write_review_json(review_path: Path, payload: dict) -> None:
+    """Persist review.json as UTF-8 without BOM so sync_to_portal.py can read it safely."""
+    with open(review_path, "w", encoding="utf-8", newline="\n") as handle:
+        json.dump(payload, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
 
 
 app = Flask(
@@ -220,10 +237,18 @@ def _norm_client_name(name: str | None) -> str:
     return " ".join((name or "").split()).casefold()
 
 
+def raw_scanstation_doc_id(source_doc_id: str | None) -> str:
+    """Map a stored portal source_doc_id back to the actual DOC folder name when batch-prefixed."""
+    value = (source_doc_id or "").strip()
+    if len(value) >= 16 and value[10:16] == "__DOC-":
+        return value[12:]
+    return value
+
+
 def scanstation_pdf_url(client_name: str | None, source_doc_id: str | None) -> str | None:
     """URL to open the document PDF via ScanStation API (same as property detail `pdf_url`)."""
     c = (client_name or "").strip()
-    s = (source_doc_id or "").strip()
+    s = raw_scanstation_doc_id(source_doc_id)
     if not c or not s:
         return None
     # page-width: scale to viewer width (minimizes side grey on wide panels). page-fit shrinks portrait pages.
@@ -378,6 +403,610 @@ def ensure_packs_tables():
         conn.commit()
     finally:
         conn.close()
+
+
+ISSUE_REASON_TO_QUEUE = {
+    "image_quality": "rescan_queue",
+    "incorrect_field": "review_queue",
+    "wrong_document_type": "review_queue",
+    "missing_pages": "review_queue",
+    "duplicate_document": "review_queue",
+    "other": "review_queue",
+}
+VALID_ISSUE_REASONS = set(ISSUE_REASON_TO_QUEUE.keys())
+VALID_ISSUE_QUEUES = {"review_queue", "rescan_queue"}
+VALID_ISSUE_STATUSES = {
+    "reported",
+    "triaged",
+    "assigned",
+    "in_rescan",
+    "in_review",
+    "awaiting_reverification",
+    "resolved",
+    "closed",
+}
+OPEN_ISSUE_STATUSES = {
+    "reported",
+    "triaged",
+    "assigned",
+    "in_rescan",
+    "in_review",
+    "awaiting_reverification",
+}
+TERMINAL_ISSUE_STATUSES = {"resolved", "closed"}
+VALID_SUPPORT_THREAD_TYPES = {"general_support", "issue_support"}
+
+
+def ensure_issue_tables():
+    """Create exception workflow tables if they do not exist."""
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS document_issues (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id INTEGER NOT NULL,
+                property_id INTEGER NOT NULL,
+                document_id INTEGER NOT NULL,
+                source_doc_id TEXT NOT NULL,
+                issue_category TEXT NOT NULL DEFAULT 'document_problem',
+                reason_code TEXT NOT NULL,
+                note TEXT,
+                status TEXT NOT NULL,
+                target_queue TEXT,
+                priority TEXT NOT NULL DEFAULT 'normal',
+                attachment_count INTEGER NOT NULL DEFAULT 0,
+                reported_by_user_id INTEGER,
+                reported_by_name TEXT,
+                reported_at TEXT NOT NULL,
+                assigned_user_id INTEGER,
+                triage_notes TEXT,
+                resolution_notes TEXT,
+                initial_reviewed_at TEXT,
+                corrected_document_version_id INTEGER,
+                resolved_at TEXT,
+                closed_at TEXT,
+                reopened_count INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS document_issue_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id INTEGER NOT NULL,
+                issue_id INTEGER,
+                thread_type TEXT NOT NULL,
+                author_user_id INTEGER,
+                author_name TEXT,
+                author_role TEXT,
+                body TEXT NOT NULL,
+                linked_document_id INTEGER,
+                is_internal INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS document_issue_attachments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                issue_id INTEGER NOT NULL,
+                client_id INTEGER NOT NULL,
+                original_name TEXT NOT NULL,
+                stored_name TEXT NOT NULL,
+                relative_path TEXT NOT NULL,
+                content_type TEXT,
+                size_bytes INTEGER NOT NULL DEFAULT 0,
+                uploaded_by_user_id INTEGER,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS document_versions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                issue_id INTEGER,
+                document_id INTEGER NOT NULL,
+                source_doc_id TEXT,
+                kind TEXT NOT NULL,
+                reviewed_at_snapshot TEXT,
+                snapshot_json TEXT NOT NULL,
+                created_by_user_id INTEGER,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS notification_outbox (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id INTEGER,
+                issue_id INTEGER,
+                event_type TEXT NOT NULL,
+                channel TEXT NOT NULL,
+                recipient_group TEXT NOT NULL,
+                subject TEXT NOT NULL,
+                body TEXT,
+                status TEXT NOT NULL DEFAULT 'queued',
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_document_issues_document_id
+                ON document_issues(document_id, reported_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_document_issues_client_status
+                ON document_issues(client_id, status, target_queue);
+            CREATE INDEX IF NOT EXISTS idx_document_issue_messages_issue_id
+                ON document_issue_messages(issue_id, created_at ASC);
+            CREATE INDEX IF NOT EXISTS idx_document_issue_messages_client_thread
+                ON document_issue_messages(client_id, thread_type, created_at ASC);
+            CREATE INDEX IF NOT EXISTS idx_document_versions_issue_id
+                ON document_versions(issue_id, created_at ASC);
+            """
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _truthy(value) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _sanitize_filename(value: str) -> str:
+    cleaned = re.sub(r'[<>:"/\\|?*]+', "_", (value or "").strip())
+    return cleaned or "attachment"
+
+
+def _current_user_int_id() -> int | None:
+    try:
+        if current_user.is_authenticated:
+            user_id = getattr(current_user, "id", None)
+            return int(user_id) if user_id is not None else None
+    except Exception:
+        return None
+    return None
+
+
+def _current_user_name() -> str:
+    return (
+        getattr(current_user, "full_name", None)
+        or getattr(current_user, "email", None)
+        or "MorphIQ User"
+    )
+
+
+def _default_issue_priority(reason_code: str, doc_type_slug: str | None = None) -> str:
+    reason = (reason_code or "").strip().lower()
+    slug = (doc_type_slug or "").strip().lower()
+    if reason == "duplicate_document":
+        return "low"
+    if reason == "image_quality":
+        return "high"
+    if slug in {
+        "gas-safety-certificate",
+        "gas_safety_certificate",
+        "eicr",
+        "epc",
+        "deposit-protection-certificate",
+        "deposit_protection_certificate",
+    }:
+        return "high"
+    return "normal"
+
+
+def _append_issue_client_scope(sql: str, args: list, client_name: str | None) -> tuple[str, list]:
+    if client_name:
+        sql += " AND cu.name = ?"
+        args.append(client_name)
+    return sql, args
+
+
+def _serialize_issue_row(row: dict | None) -> dict | None:
+    if not row:
+        return None
+    issue = dict(row)
+    issue["attachment_count"] = int(issue.get("attachment_count") or 0)
+    issue["reopened_count"] = int(issue.get("reopened_count") or 0)
+    issue["has_open_issue"] = issue.get("status") in OPEN_ISSUE_STATUSES
+    issue["admin_document_url"] = (
+        url_for("document_view_by_id", doc_id=issue["document_id"])
+        if issue.get("document_id")
+        else None
+    )
+    return issue
+
+
+def _get_issue_row(issue_id: int, *, client_name: str | None = None) -> dict | None:
+    sql = """
+        SELECT
+            di.*,
+            cu.name AS client_name,
+            p.address AS property_address,
+            d.doc_name,
+            d.status AS document_status,
+            d.reviewed_at AS document_reviewed_at,
+            dt.label AS doc_type,
+            dt.key AS doc_type_slug,
+            au.full_name AS assigned_user_name,
+            ru.full_name AS reported_by_user_name
+        FROM document_issues di
+        JOIN clients cu ON di.client_id = cu.id
+        LEFT JOIN properties p ON di.property_id = p.id
+        LEFT JOIN documents d ON di.document_id = d.id
+        LEFT JOIN document_types dt ON d.document_type_id = dt.id
+        LEFT JOIN users au ON di.assigned_user_id = au.id
+        LEFT JOIN users ru ON di.reported_by_user_id = ru.id
+        WHERE di.id = ?
+    """
+    args: list = [issue_id]
+    sql, args = _append_issue_client_scope(sql, args, client_name)
+    return query_db(sql, args, one=True)
+
+
+def _get_issue_for_current_user(issue_id: int) -> dict | None:
+    role = getattr(current_user, "role", None)
+    client_name = None if role == "admin" else (get_current_client() or "")
+    return _get_issue_row(issue_id, client_name=client_name)
+
+
+def _get_document_row_for_issue(doc_id: int, *, client_name: str | None = None) -> dict | None:
+    sql = """
+        SELECT
+            d.id,
+            d.property_id,
+            d.client_id,
+            d.source_doc_id,
+            d.doc_name,
+            d.status,
+            d.reviewed_at,
+            d.batch_date,
+            d.scanned_at,
+            d.pdf_path,
+            c.name AS client_name,
+            p.address AS property_address,
+            dt.key AS doc_type_slug,
+            dt.label AS doc_type
+        FROM documents d
+        JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        LEFT JOIN properties p ON d.property_id = p.id AND p.deleted_at IS NULL
+        LEFT JOIN document_types dt ON d.document_type_id = dt.id
+        WHERE d.id = ? AND d.deleted_at IS NULL
+    """
+    args: list = [doc_id]
+    if client_name:
+        sql += " AND c.name = ?"
+        args.append(client_name)
+    return query_db(sql, args, one=True)
+
+
+def _document_fields_for_snapshot(doc_id: int) -> dict:
+    fields = query_db(
+        "SELECT field_key, field_label, field_value FROM document_fields WHERE document_id = ? AND deleted_at IS NULL",
+        (doc_id,),
+    )
+    return {
+        row["field_key"]: {
+            "label": row["field_label"] or row["field_key"].replace("_", " ").title(),
+            "value": row["field_value"] or "",
+        }
+        for row in fields
+    }
+
+
+def _snapshot_document_version(
+    document_id: int,
+    *,
+    issue_id: int | None,
+    kind: str,
+    created_by_user_id: int | None = None,
+) -> int | None:
+    doc = query_db(
+        """
+        SELECT
+            d.id,
+            d.property_id,
+            d.client_id,
+            d.source_doc_id,
+            d.doc_name,
+            d.status,
+            d.pdf_path,
+            d.quality_score,
+            d.reviewed_by,
+            d.reviewed_at,
+            d.scanned_at,
+            d.batch_date,
+            c.name AS client_name,
+            p.address AS property_address,
+            dt.key AS doc_type_slug,
+            dt.label AS doc_type
+        FROM documents d
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        LEFT JOIN properties p ON d.property_id = p.id AND p.deleted_at IS NULL
+        LEFT JOIN document_types dt ON d.document_type_id = dt.id
+        WHERE d.id = ? AND d.deleted_at IS NULL
+        """,
+        (document_id,),
+        one=True,
+    )
+    if not doc:
+        return None
+    snapshot = dict(doc)
+    snapshot["fields"] = _document_fields_for_snapshot(document_id)
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO document_versions
+                (issue_id, document_id, source_doc_id, kind, reviewed_at_snapshot, snapshot_json, created_by_user_id, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                issue_id,
+                document_id,
+                doc.get("source_doc_id"),
+                kind,
+                doc.get("reviewed_at"),
+                json.dumps(snapshot),
+                created_by_user_id,
+                _utc_now_iso(),
+            ),
+        )
+        conn.commit()
+        return int(cur.lastrowid)
+    finally:
+        conn.close()
+
+
+def _queue_issue_notification(issue: dict, event_type: str, body: str) -> None:
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT INTO notification_outbox
+                (client_id, issue_id, event_type, channel, recipient_group, subject, body, status, created_at)
+            VALUES (?, ?, ?, 'email', 'ops_team', ?, ?, 'queued', ?)
+            """,
+            (
+                issue.get("client_id"),
+                issue.get("id"),
+                event_type,
+                f"Issue #{issue.get('id')} — {event_type.replace('_', ' ').title()}",
+                body,
+                _utc_now_iso(),
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _issue_attachment_dir(client_name: str, issue_id: int) -> Path:
+    return Path(get_clients_dir()) / client_name / "support" / "issues" / str(issue_id)
+
+
+def _save_issue_attachment(issue: dict, file_storage) -> dict | None:
+    if not file_storage or not getattr(file_storage, "filename", ""):
+        return None
+    client_name = (issue.get("client_name") or "").strip()
+    if not client_name:
+        return None
+    issue_id = int(issue["id"])
+    attachment_dir = _issue_attachment_dir(client_name, issue_id)
+    attachment_dir.mkdir(parents=True, exist_ok=True)
+    original_name = file_storage.filename or "attachment"
+    safe_name = _sanitize_filename(original_name)
+    stored_name = f"{int(datetime.utcnow().timestamp())}_{safe_name}"
+    dest = attachment_dir / stored_name
+    file_storage.save(dest)
+    relative_path = str(dest.relative_to(Path(get_clients_dir())))
+    size_bytes = dest.stat().st_size if dest.exists() else 0
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO document_issue_attachments
+                (issue_id, client_id, original_name, stored_name, relative_path, content_type, size_bytes, uploaded_by_user_id, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                issue_id,
+                issue["client_id"],
+                original_name,
+                stored_name,
+                relative_path,
+                getattr(file_storage, "content_type", None),
+                size_bytes,
+                _current_user_int_id(),
+                _utc_now_iso(),
+            ),
+        )
+        conn.execute(
+            "UPDATE document_issues SET attachment_count = attachment_count + 1 WHERE id = ?",
+            (issue_id,),
+        )
+        conn.commit()
+        attachment_id = int(cur.lastrowid)
+    finally:
+        conn.close()
+    return {
+        "id": attachment_id,
+        "original_name": original_name,
+        "content_type": getattr(file_storage, "content_type", None),
+        "size_bytes": size_bytes,
+    }
+
+
+def _document_has_been_reverified_after_issue(issue: dict) -> bool:
+    doc = query_db(
+        "SELECT reviewed_at FROM documents WHERE id = ? AND deleted_at IS NULL",
+        (issue["document_id"],),
+        one=True,
+    )
+    if not doc:
+        return False
+    current_reviewed_at = (doc.get("reviewed_at") or "").strip()
+    initial_reviewed_at = (issue.get("initial_reviewed_at") or "").strip()
+    return bool(current_reviewed_at and current_reviewed_at != initial_reviewed_at)
+
+
+def _auto_resolve_issue_if_reverified(issue_id: int) -> dict | None:
+    issue = _get_issue_row(issue_id)
+    if not issue or issue.get("status") not in OPEN_ISSUE_STATUSES:
+        return issue
+    if not _document_has_been_reverified_after_issue(issue):
+        return issue
+    corrected_version_id = _snapshot_document_version(
+        int(issue["document_id"]),
+        issue_id=int(issue["id"]),
+        kind="corrected_snapshot",
+        created_by_user_id=_current_user_int_id(),
+    )
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            UPDATE document_issues
+            SET status = 'resolved',
+                target_queue = NULL,
+                corrected_document_version_id = ?,
+                resolved_at = ?,
+                resolution_notes = COALESCE(resolution_notes, 'Resolved after re-verification')
+            WHERE id = ?
+            """,
+            (corrected_version_id, _utc_now_iso(), issue_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    resolved_issue = _get_issue_row(issue_id)
+    if resolved_issue:
+        log_activity(
+            "document_issue_resolved",
+            entity_type="document_issue",
+            entity_id=issue_id,
+            description=f"Issue #{issue_id} resolved after re-verification",
+            client_id=resolved_issue.get("client_id"),
+            metadata={"document_id": resolved_issue.get("document_id")},
+        )
+        _queue_issue_notification(
+            resolved_issue,
+            "issue_resolved",
+            f"Issue #{issue_id} for {resolved_issue.get('source_doc_id')} is ready for client review.",
+        )
+    return resolved_issue
+
+
+def _load_issue_summary_map(document_ids: list[int]) -> dict[int, dict]:
+    if not document_ids:
+        return {}
+    placeholders = ",".join("?" * len(document_ids))
+    rows = query_db(
+        f"""
+        SELECT di.*
+        FROM document_issues di
+        WHERE di.document_id IN ({placeholders})
+        ORDER BY di.reported_at DESC, di.id DESC
+        """,
+        document_ids,
+    )
+    latest_by_doc: dict[int, dict] = {}
+    open_by_doc: dict[int, dict] = {}
+    for row in rows:
+        doc_id = int(row["document_id"])
+        if doc_id not in latest_by_doc:
+            latest_by_doc[doc_id] = row
+        if doc_id not in open_by_doc and row.get("status") in OPEN_ISSUE_STATUSES:
+            open_by_doc[doc_id] = row
+    out: dict[int, dict] = {}
+    for doc_id in document_ids:
+        latest = latest_by_doc.get(doc_id)
+        current_delivery_status = "verified"
+        if open_by_doc.get(doc_id):
+            current_delivery_status = "reported_under_review"
+        elif latest and latest.get("corrected_document_version_id"):
+            current_delivery_status = "corrected_verified"
+        elif latest and latest.get("status") == "closed":
+            current_delivery_status = "closed"
+        out[doc_id] = {
+            "latest_issue_id": latest.get("id") if latest else None,
+            "latest_status": latest.get("status") if latest else None,
+            "open_issue_id": open_by_doc.get(doc_id, {}).get("id") if open_by_doc.get(doc_id) else None,
+            "open_status": open_by_doc.get(doc_id, {}).get("status") if open_by_doc.get(doc_id) else None,
+            "target_queue": open_by_doc.get(doc_id, {}).get("target_queue") if open_by_doc.get(doc_id) else None,
+            "reason_code": open_by_doc.get(doc_id, {}).get("reason_code") if open_by_doc.get(doc_id) else None,
+            "priority": open_by_doc.get(doc_id, {}).get("priority") if open_by_doc.get(doc_id) else None,
+            "current_delivery_status": current_delivery_status,
+        }
+    return out
+
+
+def _apply_issue_state_to_document(doc: dict) -> dict:
+    summary = _load_issue_summary_map([int(doc["id"])]) if doc and doc.get("id") else {}
+    issue_state = summary.get(int(doc["id"])) if doc and doc.get("id") else None
+    doc["issue_summary"] = issue_state or {
+        "latest_issue_id": None,
+        "latest_status": None,
+        "open_issue_id": None,
+        "open_status": None,
+        "target_queue": None,
+        "reason_code": None,
+        "priority": None,
+        "current_delivery_status": "verified",
+    }
+    doc["current_delivery_status"] = doc["issue_summary"]["current_delivery_status"]
+    return doc
+
+
+def _insert_issue_message(
+    *,
+    client_id: int,
+    issue_id: int | None,
+    thread_type: str,
+    body: str,
+    linked_document_id: int | None = None,
+    is_internal: int = 0,
+) -> dict | None:
+    thread = (thread_type or "").strip()
+    if thread not in VALID_SUPPORT_THREAD_TYPES:
+        return None
+    message_body = (body or "").strip()
+    if not message_body:
+        return None
+    created_at = _utc_now_iso()
+    author_user_id = _current_user_int_id()
+    author_name = _current_user_name()
+    author_role = getattr(current_user, "role", None) or "user"
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO document_issue_messages
+                (client_id, issue_id, thread_type, author_user_id, author_name, author_role, body, linked_document_id, is_internal, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                client_id,
+                issue_id,
+                thread,
+                author_user_id,
+                author_name,
+                author_role,
+                message_body,
+                linked_document_id,
+                int(is_internal),
+                created_at,
+            ),
+        )
+        conn.commit()
+        message_id = int(cur.lastrowid)
+    finally:
+        conn.close()
+    return {
+        "id": message_id,
+        "client_id": client_id,
+        "issue_id": issue_id,
+        "thread_type": thread,
+        "author_user_id": author_user_id,
+        "author_name": author_name,
+        "author_role": author_role,
+        "body": message_body,
+        "linked_document_id": linked_document_id,
+        "is_internal": bool(is_internal),
+        "created_at": created_at,
+    }
 
 
 def log_activity(
@@ -939,6 +1568,22 @@ def reports_page():
     )
 
 
+@app.route("/issues")
+@login_required
+def issues_page():
+    if getattr(current_user, "role", None) != "admin":
+        abort(403, description="Forbidden")
+    client = get_current_client() or ""
+    return render_template(
+        "issues.html",
+        active_view="issues",
+        client_name=client or None,
+        user_full_name=getattr(current_user, "full_name", None),
+        user_email=getattr(current_user, "email", None),
+        user_role=getattr(current_user, "role", None),
+    )
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard_page():
@@ -1406,6 +2051,34 @@ def api_properties():
     )
     doc_count_map = {r["property_id"]: r["cnt"] for r in count_rows}
 
+    doc_meta_rows = query_db(
+        f"""
+        SELECT
+            d.property_id,
+            COALESCE(dt.label, 'Other') AS doc_type_label,
+            d.source_doc_id,
+            COALESCE(d.batch_date, d.scanned_at, d.reviewed_at) AS latest_activity_date
+        FROM documents d
+        LEFT JOIN document_types dt ON d.document_type_id = dt.id
+        WHERE d.property_id IN ({id_ph}) AND d.deleted_at IS NULL
+        """,
+        property_ids,
+    )
+    doc_type_map: dict[int, set[str]] = {}
+    doc_id_map: dict[int, set[str]] = {}
+    latest_activity_map: dict[int, str] = {}
+    for row in doc_meta_rows:
+        pid = row["property_id"]
+        doc_type = (row.get("doc_type_label") or "Other").strip()
+        source_doc_id = (row.get("source_doc_id") or "").strip()
+        latest_activity = row.get("latest_activity_date")
+        if doc_type:
+            doc_type_map.setdefault(pid, set()).add(doc_type)
+        if source_doc_id:
+            doc_id_map.setdefault(pid, set()).add(source_doc_id)
+        if latest_activity:
+            latest_activity_map[pid] = max(latest_activity, latest_activity_map.get(pid, latest_activity))
+
     # ── 5. Tenant name per property — one query ──────────────────────────────
     # Prefer field_key = 'tenant_full_name' on the latest tenancy-agreement doc.
     tenant_rows = query_db(
@@ -1461,6 +2134,31 @@ def api_properties():
     today = date.today()
     expiring_cutoff = today + timedelta(days=_EXPIRING_DAYS)
 
+    postcode_re = re.compile(r"^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$", re.IGNORECASE)
+
+    def extract_area_from_address(address: str | None) -> str:
+        parts = [part.strip() for part in (address or "").split(",") if part and part.strip()]
+        if len(parts) >= 3 and postcode_re.match(parts[-1]):
+            return parts[-2]
+        if len(parts) >= 2 and not postcode_re.match(parts[-1]):
+            return parts[-1]
+        return ""
+
+    def compliance_score_for(compliance_map: dict) -> int:
+        status_scores = {
+            "valid": 100,
+            "no_expiry": 100,
+            "expiring": 70,
+            "expiring_soon": 70,
+            "expired": 25,
+            "missing": 0,
+        }
+        statuses = [entry.get("status", "missing") for entry in compliance_map.values()]
+        if not statuses:
+            return 0
+        total = sum(status_scores.get(status, 0) for status in statuses)
+        return round(total / len(statuses))
+
     for prop in properties:
         pid = prop["property_id"]
 
@@ -1510,6 +2208,19 @@ def api_properties():
         prop["doc_count"] = doc_count_map.get(pid, 0)
         prop["total_documents"] = prop["doc_count"]   # backward compat
         prop["tenant_name"] = tenant_map.get(pid)
+        prop["latest_activity_date"] = latest_activity_map.get(pid)
+        prop["area"] = extract_area_from_address(prop.get("property_address"))
+        prop["borough"] = prop["area"]
+        prop["compliance_score"] = compliance_score_for(compliance)
+        prop["missing_count"] = sum(1 for entry in compliance.values() if entry.get("status") == "missing")
+        prop["attention_count"] = sum(
+            1 for entry in compliance.values() if entry.get("status") in {"missing", "expired"}
+        )
+        prop["search_meta"] = {
+            "area": prop["area"],
+            "document_types": sorted(doc_type_map.get(pid, set())),
+            "document_ids": sorted(doc_id_map.get(pid, set())),
+        }
 
         # Flat status strings kept for backward-compat consumers.
         # Use "expiring_soon" so legacy JS badge logic (certBadgeClass) still
@@ -1535,6 +2246,9 @@ def api_clients():
           ]
         }
     """
+    if getattr(current_user, "role", None) != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+
     clients = query_db(
         """
         SELECT id, name, slug
@@ -1929,11 +2643,7 @@ def api_property_detail(property_id: int):
         client = (doc.get("client_name") or "").strip()
         source_doc_id = (doc.get("source_doc_id") or "").strip()
         if client and source_doc_id:
-            safe_client = quote(client)
-            safe_doc = quote(source_doc_id)
-            doc["pdf_url"] = (
-                f"http://127.0.0.1:8765/pdf/{safe_client}/{safe_doc}#toolbar=0&navpanes=0&page=1&zoom=page-width"
-            )
+            doc["pdf_url"] = scanstation_pdf_url(client, source_doc_id)
         else:
             doc["pdf_url"] = None
 
@@ -2183,7 +2893,7 @@ def api_property_report(property_id: int):
             d["key_fields_summary"] = (flat.get("current_rating") or "") + (" (" + flat.get("potential_rating") + ")" if flat.get("potential_rating") else "")
         elif slug == "tenancy-agreement":
             d["key_fields_summary"] = " · ".join(filter(None, [flat.get("tenant_full_name"), flat.get("start_date"), flat.get("end_date")]))
-        elif slug in ("deposit-protection", "deposit_protection_certificate"):
+        elif slug in ("deposit-protection-certificate", "deposit-protection", "deposit_protection_certificate"):
             d["key_fields_summary"] = " · ".join(filter(None, [flat.get("scheme_name"), flat.get("certificate_number")]))
         else:
             d["key_fields_summary"] = None
@@ -2464,7 +3174,13 @@ def api_documents():
 
         docs = filtered[:limit]
 
+    issue_state_map = _load_issue_summary_map([int(d["id"]) for d in docs]) if docs else {}
     for doc in docs:
+        issue_state = issue_state_map.get(int(doc["id"]))
+        doc["issue_summary"] = issue_state
+        doc["current_delivery_status"] = (
+            issue_state["current_delivery_status"] if issue_state else "verified"
+        )
         doc["pdf_url"] = scanstation_pdf_url(doc.get("client_name"), doc.get("source_doc_id"))
 
     return jsonify({"documents": docs, "count": len(docs)})
@@ -2522,8 +3238,101 @@ def api_document_detail_by_id(doc_id: int):
     }
 
     doc["pdf_url"] = scanstation_pdf_url(doc.get("client_name"), doc.get("source_doc_id"))
+    _apply_issue_state_to_document(doc)
 
     return jsonify(doc)
+
+
+@app.route("/api/documents/by-id/<int:doc_id>/verify", methods=["POST"])
+@login_required
+def api_document_verify_by_id(doc_id: int):
+    """Mark a document as verified in both review.json and portal.db."""
+    doc = query_db(
+        """
+        SELECT
+            d.id,
+            d.source_doc_id,
+            d.status,
+            d.client_id,
+            c.name AS client_name
+        FROM documents d
+        LEFT JOIN clients c ON d.client_id = c.id AND c.deleted_at IS NULL
+        WHERE d.id = ? AND d.deleted_at IS NULL
+        """,
+        (doc_id,),
+        one=True,
+    )
+    if not doc:
+        abort(404, description="Document not found")
+
+    client_scope = get_current_client() or ""
+    if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
+        abort(404, description="Document not found")
+
+    doc_folder = _find_doc_folder_portal(doc.get("client_name") or "", doc.get("source_doc_id") or "")
+    if not doc_folder:
+        return jsonify({"error": "Could not locate review.json for this document"}), 404
+
+    review_path = doc_folder / "review.json"
+    try:
+        with open(review_path, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError) as exc:
+        return jsonify({"error": f"Could not read review.json: {exc}"}), 500
+
+    review_block = payload.get("review")
+    if not isinstance(review_block, dict):
+        review_block = {}
+    reviewed_by = (
+        getattr(current_user, "full_name", None)
+        or getattr(current_user, "email", None)
+        or "Portal Review"
+    )
+    reviewed_at = datetime.now().isoformat(timespec="seconds")
+    payload["status"] = "Verified"
+    review_block["reviewed_by"] = reviewed_by
+    review_block["reviewed_at"] = reviewed_at
+    payload["review"] = review_block
+
+    try:
+        _write_review_json(review_path, payload)
+        from sync_to_portal import sync_single_doc  # Local import avoids circular startup dependency.
+
+        sync_single_doc(doc.get("client_name") or "", doc.get("source_doc_id") or "")
+    except Exception as exc:
+        return jsonify({"error": f"Could not verify document: {exc}"}), 500
+
+    log_activity(
+        "document_verified",
+        entity_type="document",
+        entity_id=int(doc["id"]),
+        description=f"Verified {(doc.get('source_doc_id') or '').strip()}",
+        metadata={"source_doc_id": doc.get("source_doc_id")},
+        client_id=int(doc["client_id"]) if doc.get("client_id") is not None else None,
+    )
+    for issue in query_db(
+        """
+        SELECT id
+        FROM document_issues
+        WHERE document_id = ?
+          AND status IN ('reported', 'triaged', 'assigned', 'in_rescan', 'in_review', 'awaiting_reverification')
+        ORDER BY reported_at DESC
+        """,
+        (doc_id,),
+    ):
+        try:
+            _auto_resolve_issue_if_reverified(int(issue["id"]))
+        except Exception:
+            continue
+
+    return jsonify(
+        {
+            "success": True,
+            "status": "verified",
+            "reviewed_by": reviewed_by,
+            "reviewed_at": reviewed_at,
+        }
+    )
 
 
 @app.route("/api/documents/<source_doc_id>")
@@ -2578,8 +3387,462 @@ def api_document_detail(source_doc_id):
     }
 
     doc["pdf_url"] = scanstation_pdf_url(doc.get("client_name"), doc.get("source_doc_id"))
+    _apply_issue_state_to_document(doc)
 
     return jsonify(doc)
+
+
+@app.route("/api/documents/by-id/<int:doc_id>/issues", methods=["POST"])
+@login_required
+def api_document_issue_create(doc_id: int):
+    """Create or reuse a rework ticket for a delivered document."""
+    client_scope = None if getattr(current_user, "role", None) == "admin" else (get_current_client() or "")
+    doc = _get_document_row_for_issue(doc_id, client_name=client_scope)
+    if not doc:
+        return jsonify({"error": "Document not found"}), 404
+
+    if request.is_json:
+        payload = request.get_json(silent=True) or {}
+        attachment = None
+    else:
+        payload = request.form or {}
+        attachment = request.files.get("attachment")
+
+    reason_code = (payload.get("reason_code") or "").strip()
+    note = (payload.get("note") or "").strip()
+    open_support = _truthy(payload.get("open_support"))
+    if reason_code not in VALID_ISSUE_REASONS:
+        return jsonify({"error": "Invalid reason_code"}), 400
+
+    existing_issue = query_db(
+        """
+        SELECT di.*, c.name AS client_name
+        FROM document_issues di
+        JOIN clients c ON di.client_id = c.id
+        WHERE di.document_id = ? AND di.status IN ('reported', 'triaged', 'assigned', 'in_rescan', 'in_review', 'awaiting_reverification')
+        ORDER BY di.reported_at DESC, di.id DESC
+        LIMIT 1
+        """,
+        (doc_id,),
+        one=True,
+    )
+    if existing_issue:
+        if note:
+            _insert_issue_message(
+                client_id=int(existing_issue["client_id"]),
+                issue_id=int(existing_issue["id"]),
+                thread_type="issue_support",
+                body=note,
+                linked_document_id=doc_id,
+            )
+        response_issue = _serialize_issue_row(_get_issue_for_current_user(int(existing_issue["id"])))
+        return jsonify({"created": False, "issue": response_issue}), 200
+
+    reported_at = _utc_now_iso()
+    status = "reported"
+    target_queue = ISSUE_REASON_TO_QUEUE[reason_code]
+    priority = _default_issue_priority(reason_code, doc.get("doc_type_slug"))
+    reported_by_user_id = _current_user_int_id()
+    reported_by_name = _current_user_name()
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO document_issues
+                (client_id, property_id, document_id, source_doc_id, issue_category, reason_code, note, status,
+                 target_queue, priority, reported_by_user_id, reported_by_name, reported_at, initial_reviewed_at)
+            VALUES (?, ?, ?, ?, 'document_problem', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                doc["client_id"],
+                doc["property_id"],
+                doc["id"],
+                doc["source_doc_id"],
+                reason_code,
+                note or None,
+                status,
+                target_queue,
+                priority,
+                reported_by_user_id,
+                reported_by_name,
+                reported_at,
+                doc.get("reviewed_at"),
+            ),
+        )
+        issue_id = int(cur.lastrowid)
+        conn.commit()
+    finally:
+        conn.close()
+
+    _snapshot_document_version(
+        int(doc["id"]),
+        issue_id=issue_id,
+        kind="reported_snapshot",
+        created_by_user_id=reported_by_user_id,
+    )
+    issue = _get_issue_row(issue_id)
+    if attachment:
+        saved = _save_issue_attachment(issue, attachment)
+        if saved:
+            issue = _get_issue_row(issue_id)
+    if note:
+        _insert_issue_message(
+            client_id=int(issue["client_id"]),
+            issue_id=issue_id,
+            thread_type="issue_support",
+            body=note,
+            linked_document_id=int(doc["id"]),
+        )
+    if open_support and not note:
+        _insert_issue_message(
+            client_id=int(issue["client_id"]),
+            issue_id=issue_id,
+            thread_type="issue_support",
+            body="Support conversation opened for this document issue.",
+            linked_document_id=int(doc["id"]),
+        )
+    log_activity(
+        "document_issue_reported",
+        entity_type="document_issue",
+        entity_id=issue_id,
+        description=f"Reported issue for {(doc.get('source_doc_id') or '').strip()} ({reason_code})",
+        client_id=int(issue["client_id"]),
+        metadata={"document_id": doc_id, "reason_code": reason_code, "target_queue": target_queue},
+    )
+    _queue_issue_notification(
+        issue,
+        "issue_reported",
+        f"Client reported {reason_code} for {(doc.get('source_doc_id') or '').strip()}.",
+    )
+    return jsonify({"created": True, "issue": _serialize_issue_row(_get_issue_for_current_user(issue_id))}), 201
+
+
+@app.route("/api/issues")
+@login_required
+def api_issues():
+    """List exception workflow tickets for the current scope."""
+    role = getattr(current_user, "role", None)
+    client_scope = None if role == "admin" else (get_current_client() or "")
+    queue = (request.args.get("queue") or "").strip()
+    status = (request.args.get("status") or "").strip()
+
+    sql = """
+        SELECT
+            di.*,
+            cu.name AS client_name,
+            p.address AS property_address,
+            d.doc_name,
+            dt.key AS doc_type_slug,
+            dt.label AS doc_type,
+            au.full_name AS assigned_user_name
+        FROM document_issues di
+        JOIN clients cu ON di.client_id = cu.id
+        LEFT JOIN properties p ON di.property_id = p.id
+        LEFT JOIN documents d ON di.document_id = d.id
+        LEFT JOIN document_types dt ON d.document_type_id = dt.id
+        LEFT JOIN users au ON di.assigned_user_id = au.id
+        WHERE 1=1
+    """
+    args: list = []
+    sql, args = _append_issue_client_scope(sql, args, client_scope)
+    if queue:
+        sql += " AND di.target_queue = ?"
+        args.append(queue)
+    if status:
+        sql += " AND di.status = ?"
+        args.append(status)
+    sql += " ORDER BY CASE WHEN di.status IN ('reported', 'triaged', 'assigned', 'in_rescan', 'in_review', 'awaiting_reverification') THEN 0 ELSE 1 END, di.reported_at DESC, di.id DESC"
+
+    issues = [_serialize_issue_row(row) for row in query_db(sql, args)]
+    return jsonify({"issues": issues, "count": len(issues)})
+
+
+@app.route("/api/issues/<int:issue_id>")
+@login_required
+def api_issue_detail(issue_id: int):
+    issue = _get_issue_for_current_user(issue_id)
+    if not issue:
+        return jsonify({"error": "Issue not found"}), 404
+    issue = _serialize_issue_row(issue)
+    messages = query_db(
+        """
+        SELECT id, issue_id, thread_type, author_user_id, author_name, author_role, body, linked_document_id, is_internal, created_at
+        FROM document_issue_messages
+        WHERE issue_id = ?
+        ORDER BY created_at ASC, id ASC
+        """,
+        (issue_id,),
+    )
+    attachments = query_db(
+        """
+        SELECT id, original_name, content_type, size_bytes, created_at
+        FROM document_issue_attachments
+        WHERE issue_id = ?
+        ORDER BY created_at ASC, id ASC
+        """,
+        (issue_id,),
+    )
+    versions = query_db(
+        """
+        SELECT id, kind, reviewed_at_snapshot, snapshot_json, created_at
+        FROM document_versions
+        WHERE issue_id = ?
+        ORDER BY created_at ASC, id ASC
+        """,
+        (issue_id,),
+    )
+    for version in versions:
+        try:
+            version["snapshot"] = json.loads(version.pop("snapshot_json") or "{}")
+        except Exception:
+            version["snapshot"] = {}
+    return jsonify(
+        {
+            "issue": issue,
+            "messages": messages,
+            "attachments": attachments,
+            "versions": versions,
+        }
+    )
+
+
+@app.route("/api/issues/<int:issue_id>/messages", methods=["POST"])
+@login_required
+def api_issue_message_create(issue_id: int):
+    issue = _get_issue_for_current_user(issue_id)
+    if not issue:
+        return jsonify({"error": "Issue not found"}), 404
+    payload = request.get_json(silent=True) or {}
+    body = (payload.get("body") or "").strip()
+    if not body:
+        return jsonify({"error": "Message body is required"}), 400
+    message = _insert_issue_message(
+        client_id=int(issue["client_id"]),
+        issue_id=issue_id,
+        thread_type="issue_support",
+        body=body,
+        linked_document_id=issue.get("document_id"),
+        is_internal=1 if getattr(current_user, "role", None) == "admin" else 0,
+    )
+    return jsonify({"message": message}), 201
+
+
+@app.route("/api/issues/<int:issue_id>/assign", methods=["POST"])
+@login_required
+def api_issue_assign(issue_id: int):
+    if getattr(current_user, "role", None) != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    issue = _get_issue_row(issue_id)
+    if not issue:
+        return jsonify({"error": "Issue not found"}), 404
+    payload = request.get_json(silent=True) or {}
+    assigned_user_id = payload.get("assigned_user_id")
+    if assigned_user_id is None:
+        return jsonify({"error": "assigned_user_id is required"}), 400
+    user = query_db(
+        "SELECT id, full_name FROM users WHERE id = ? AND deleted_at IS NULL",
+        (assigned_user_id,),
+        one=True,
+    )
+    if not user:
+        return jsonify({"error": "Assignee not found"}), 404
+    new_status = issue["status"] if issue["status"] != "reported" else "assigned"
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE document_issues SET assigned_user_id = ?, status = ? WHERE id = ?",
+            (assigned_user_id, new_status, issue_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    updated_issue = _serialize_issue_row(_get_issue_row(issue_id))
+    log_activity(
+        "document_issue_assigned",
+        entity_type="document_issue",
+        entity_id=issue_id,
+        description=f"Issue #{issue_id} assigned to {user.get('full_name') or 'staff'}",
+        client_id=int(updated_issue["client_id"]),
+        metadata={"assigned_user_id": int(assigned_user_id)},
+    )
+    _queue_issue_notification(
+        updated_issue,
+        "issue_assigned",
+        f"Issue #{issue_id} assigned to {(user.get('full_name') or 'staff').strip()}.",
+    )
+    return jsonify({"issue": updated_issue})
+
+
+@app.route("/api/issues/<int:issue_id>/route", methods=["POST"])
+@login_required
+def api_issue_route(issue_id: int):
+    if getattr(current_user, "role", None) != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    issue = _get_issue_row(issue_id)
+    if not issue:
+        return jsonify({"error": "Issue not found"}), 404
+    payload = request.get_json(silent=True) or {}
+    target_queue = (payload.get("target_queue") or "").strip()
+    triage_notes = (payload.get("triage_notes") or "").strip()
+    if target_queue not in VALID_ISSUE_QUEUES:
+        return jsonify({"error": "Invalid target_queue"}), 400
+    new_status = issue["status"] if issue["status"] not in {"reported", "triaged"} else "triaged"
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE document_issues SET target_queue = ?, status = ?, triage_notes = ? WHERE id = ?",
+            (target_queue, new_status, triage_notes or issue.get("triage_notes"), issue_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    updated_issue = _serialize_issue_row(_get_issue_row(issue_id))
+    log_activity(
+        "document_issue_routed",
+        entity_type="document_issue",
+        entity_id=issue_id,
+        description=f"Issue #{issue_id} routed to {target_queue}",
+        client_id=int(updated_issue["client_id"]),
+        metadata={"target_queue": target_queue},
+    )
+    return jsonify({"issue": updated_issue})
+
+
+@app.route("/api/issues/<int:issue_id>/status", methods=["POST"])
+@login_required
+def api_issue_status_update(issue_id: int):
+    if getattr(current_user, "role", None) != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    issue = _get_issue_row(issue_id)
+    if not issue:
+        return jsonify({"error": "Issue not found"}), 404
+    payload = request.get_json(silent=True) or {}
+    new_status = (payload.get("status") or "").strip()
+    resolution_notes = (payload.get("resolution_notes") or "").strip()
+    if new_status not in VALID_ISSUE_STATUSES:
+        return jsonify({"error": "Invalid status"}), 400
+    corrected_document_version_id = issue.get("corrected_document_version_id")
+    resolved_at = issue.get("resolved_at")
+    closed_at = issue.get("closed_at")
+    target_queue = issue.get("target_queue")
+
+    if new_status == "resolved":
+        if not _document_has_been_reverified_after_issue(issue):
+            return jsonify({"error": "Document must be re-verified before the issue can be resolved"}), 409
+        corrected_document_version_id = corrected_document_version_id or _snapshot_document_version(
+            int(issue["document_id"]),
+            issue_id=issue_id,
+            kind="corrected_snapshot",
+            created_by_user_id=_current_user_int_id(),
+        )
+        resolved_at = _utc_now_iso()
+        target_queue = None
+    elif new_status == "closed":
+        if issue.get("status") not in {"resolved", "closed"}:
+            return jsonify({"error": "Issue must be resolved before it can be closed"}), 409
+        closed_at = _utc_now_iso()
+        target_queue = None
+    elif new_status in {"reported", "triaged", "assigned", "in_rescan", "in_review", "awaiting_reverification"}:
+        if new_status == "in_rescan":
+            target_queue = "rescan_queue"
+        elif new_status in {"triaged", "assigned", "in_review", "awaiting_reverification"}:
+            target_queue = target_queue or "review_queue"
+
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            UPDATE document_issues
+            SET status = ?,
+                target_queue = ?,
+                resolution_notes = ?,
+                corrected_document_version_id = ?,
+                resolved_at = ?,
+                closed_at = ?
+            WHERE id = ?
+            """,
+            (
+                new_status,
+                target_queue,
+                resolution_notes or issue.get("resolution_notes"),
+                corrected_document_version_id,
+                resolved_at,
+                closed_at,
+                issue_id,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    updated_issue = _serialize_issue_row(_get_issue_row(issue_id))
+    log_activity(
+        "document_issue_status_changed",
+        entity_type="document_issue",
+        entity_id=issue_id,
+        description=f"Issue #{issue_id} moved to {new_status}",
+        client_id=int(updated_issue["client_id"]),
+        metadata={"status": new_status},
+    )
+    if new_status in {"resolved", "closed"}:
+        _queue_issue_notification(
+            updated_issue,
+            f"issue_{new_status}",
+            f"Issue #{issue_id} moved to {new_status}.",
+        )
+    return jsonify({"issue": updated_issue})
+
+
+@app.route("/api/support/messages", methods=["GET", "POST"])
+@login_required
+def api_support_messages():
+    role = getattr(current_user, "role", None)
+    client_name = (get_current_client() or "") if role != "admin" else ((request.args.get("client") or "").strip() or (request.get_json(silent=True) or {}).get("client") or "")
+    client_name = (client_name or "").strip()
+    if not client_name:
+        return jsonify({"error": "Client context required"}), 400
+    client_row = query_db(
+        "SELECT id, name FROM clients WHERE name = ? AND deleted_at IS NULL",
+        (client_name,),
+        one=True,
+    )
+    if not client_row:
+        return jsonify({"error": "Client not found"}), 404
+    client_id = int(client_row["id"])
+
+    if request.method == "GET":
+        messages = query_db(
+            """
+            SELECT id, issue_id, thread_type, author_user_id, author_name, author_role, body, linked_document_id, is_internal, created_at
+            FROM document_issue_messages
+            WHERE client_id = ? AND issue_id IS NULL AND thread_type = 'general_support'
+            ORDER BY created_at ASC, id ASC
+            """,
+            (client_id,),
+        )
+        return jsonify({"messages": messages, "count": len(messages)})
+
+    payload = request.get_json(silent=True) or {}
+    body = (payload.get("body") or "").strip()
+    linked_document_id = payload.get("linked_document_id")
+    if not body:
+        return jsonify({"error": "Message body is required"}), 400
+    message = _insert_issue_message(
+        client_id=client_id,
+        issue_id=None,
+        thread_type="general_support",
+        body=body,
+        linked_document_id=int(linked_document_id) if linked_document_id else None,
+        is_internal=1 if role == "admin" else 0,
+    )
+    log_activity(
+        "support_message_created",
+        entity_type="support_thread",
+        entity_id=message["id"],
+        description=f"Support message created for {client_name}",
+        client_id=client_id,
+    )
+    return jsonify({"message": message}), 201
 
 
 @app.route("/api/documents/by-id/<int:doc_id>/pdf")
@@ -2718,6 +3981,10 @@ def api_documents_upload():
         one=True,
     )
     if not prop:
+        return jsonify({"error": "Property not found"}), 404
+
+    client_scope = get_current_client() or ""
+    if client_scope and _norm_client_name(prop.get("client_name")) != _norm_client_name(client_scope):
         return jsonify({"error": "Property not found"}), 404
 
     client_name = (prop.get("client_name") or "").strip()
@@ -2923,6 +4190,47 @@ def api_pack_detail(pack_id: int):
     return jsonify({"pack": result})
 
 
+@app.route("/api/packs/<int:pack_id>/available-documents")
+@login_required
+def api_pack_available_documents(pack_id: int):
+    """List current-client documents that are not already in the pack."""
+    client_name = get_current_client() or ""
+    client_id = _get_client_id_for_name(client_name)
+
+    pack = query_db("SELECT * FROM packs WHERE id = ?", (pack_id,), one=True)
+    if not pack or (client_id and pack["client_id"] != client_id):
+        abort(404, description="Pack not found")
+
+    documents = query_db(
+        """
+        SELECT
+            d.id,
+            d.doc_name AS title,
+            d.status,
+            d.scanned_at,
+            d.batch_date,
+            dt.key     AS doc_type_key,
+            dt.label   AS doc_type_label,
+            p.id       AS property_id,
+            p.address  AS property_address
+        FROM documents d
+        LEFT JOIN document_types dt ON d.document_type_id = dt.id
+        LEFT JOIN properties p      ON d.property_id = p.id
+        WHERE d.client_id = ?
+          AND d.deleted_at IS NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM pack_documents pd
+              WHERE pd.pack_id = ?
+                AND pd.document_id = d.id
+          )
+        ORDER BY COALESCE(p.address, 'ZZZZZZ') ASC, COALESCE(dt.label, d.doc_name) ASC, d.id DESC
+        """,
+        (pack["client_id"], pack_id),
+    )
+    return jsonify({"documents": documents, "count": len(documents)})
+
+
 @app.route("/api/packs/<int:pack_id>", methods=["PUT"])
 @login_required
 def api_pack_update(pack_id: int):
@@ -2991,6 +4299,36 @@ def api_pack_add_documents(pack_id: int):
     if not isinstance(doc_ids, list) or not doc_ids:
         return jsonify({"error": "document_ids must be a non-empty array"}), 400
 
+    cleaned_ids = []
+    for doc_id in doc_ids:
+        try:
+            cleaned_ids.append(int(doc_id))
+        except (TypeError, ValueError):
+            continue
+    if not cleaned_ids:
+        return jsonify({"error": "No valid document ids were provided"}), 400
+
+    placeholders = ",".join("?" * len(cleaned_ids))
+    valid_rows = query_db(
+        f"""
+        SELECT d.id
+        FROM documents d
+        WHERE d.id IN ({placeholders})
+          AND d.client_id = ?
+          AND d.deleted_at IS NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM pack_documents pd
+              WHERE pd.pack_id = ?
+                AND pd.document_id = d.id
+          )
+        """,
+        cleaned_ids + [pack["client_id"], pack_id],
+    )
+    valid_doc_ids = [row["id"] for row in valid_rows]
+    if not valid_doc_ids:
+        return jsonify({"added": 0}), 200
+
     max_row = query_db(
         "SELECT COALESCE(MAX(sort_order), 0) AS max_order FROM pack_documents WHERE pack_id = ?",
         (pack_id,),
@@ -3001,11 +4339,7 @@ def api_pack_add_documents(pack_id: int):
     conn = get_db()
     added = 0
     try:
-        for doc_id in doc_ids:
-            try:
-                doc_id = int(doc_id)
-            except (TypeError, ValueError):
-                continue
+        for doc_id in valid_doc_ids:
             conn.execute(
                 "INSERT INTO pack_documents (pack_id, document_id, sort_order, added_at) "
                 "VALUES (?, ?, ?, datetime('now'))",
@@ -4381,12 +5715,22 @@ def api_compliance_resolve():
     try:
         cur = conn.cursor()
         row = cur.execute(
-            "SELECT client_id FROM properties WHERE id = ? AND deleted_at IS NULL",
+            """
+            SELECT p.client_id, c.name AS client_name
+            FROM properties p
+            LEFT JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+            WHERE p.id = ? AND p.deleted_at IS NULL
+            """,
             (property_id,),
         ).fetchone()
         if not row:
             return jsonify({"error": "Property not found"}), 404
         client_id = row[0] if isinstance(row, (tuple, list)) else row["client_id"]
+        client_name = row[1] if isinstance(row, (tuple, list)) else row["client_name"]
+
+        client_scope = get_current_client() or ""
+        if client_scope and _norm_client_name(client_name) != _norm_client_name(client_scope):
+            return jsonify({"error": "Property not found"}), 404
 
         now_iso = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
         resolved_by = getattr(current_user, "full_name", None) or ""
@@ -4450,12 +5794,22 @@ def api_compliance_snooze():
     try:
         cur = conn.cursor()
         row = cur.execute(
-            "SELECT client_id FROM properties WHERE id = ? AND deleted_at IS NULL",
+            """
+            SELECT p.client_id, c.name AS client_name
+            FROM properties p
+            LEFT JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+            WHERE p.id = ? AND p.deleted_at IS NULL
+            """,
             (property_id,),
         ).fetchone()
         if not row:
             return jsonify({"error": "Property not found"}), 404
         client_id = row[0] if isinstance(row, (tuple, list)) else row["client_id"]
+        client_name = row[1] if isinstance(row, (tuple, list)) else row["client_name"]
+
+        client_scope = get_current_client() or ""
+        if client_scope and _norm_client_name(client_name) != _norm_client_name(client_scope):
+            return jsonify({"error": "Property not found"}), 404
 
         today = date.today()
         snoozed_until = (today + timedelta(days=days)).isoformat()
@@ -4934,6 +6288,10 @@ with app.app_context():
     except Exception as e:
         print(f"Startup packs tables warning: {e}")
     try:
+        ensure_issue_tables()
+    except Exception as e:
+        print(f"Startup issue tables warning: {e}")
+    try:
         _sd_conn = get_db()
         try:
             soft_delete.ensure_deleted_at_schema(_sd_conn)
@@ -4963,4 +6321,5 @@ if __name__ == "__main__":
     print(f"  Database: {DATABASE_URL}")
     print(f"  Clients:  {get_clients_dir()}")
     print(f"  Open: http://127.0.0.1:5000\n")
-    app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)
+    _debug = os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true", "yes", "on")
+    app.run(host="127.0.0.1", port=5000, debug=_debug, use_reloader=False)

@@ -57,10 +57,14 @@
     {%- set _overview_url = url_for('overview_page') -%}
     {%- set _properties_url = url_for('properties_page') -%}
     {%- set _compliance_url = url_for('compliance_dashboard') -%}
+    {%- set _documents_url = url_for('documents_page') -%}
+    {%- set _packs_url = url_for('packs_page') -%}
     {%- if _client_q -%}
         {%- set _overview_url = _overview_url + '?client=' + _client_q -%}
         {%- set _properties_url = _properties_url + '?client=' + _client_q -%}
         {%- set _compliance_url = _compliance_url + '?client=' + _client_q -%}
+        {%- set _documents_url = _documents_url + '?client=' + _client_q -%}
+        {%- set _packs_url = _packs_url + '?client=' + _client_q -%}
     {%- endif -%}
     <div class="portal-app-layout">
         {% include 'partials/portal_sidebar_nav.html' %}
@@ -117,6 +121,27 @@
                     <span class="ov-client-pill" id="ov-client-pill">—</span>
                 </div>
 
+                <section class="ov-section">
+                    <div class="portal-nav-grid">
+                        <a class="portal-nav-card" href="{{ _properties_url }}">
+                            <strong>Properties</strong>
+                            <span>Browse the portfolio and inspect one property at a time.</span>
+                        </a>
+                        <a class="portal-nav-card" href="{{ _compliance_url }}">
+                            <strong>Compliance</strong>
+                            <span>Scan risk quickly across certificates, missing files, and renewals.</span>
+                        </a>
+                        <a class="portal-nav-card" href="{{ _documents_url }}">
+                            <strong>Documents</strong>
+                            <span>Search the document library by property, tenant, type, or ID.</span>
+                        </a>
+                        <a class="portal-nav-card" href="{{ _packs_url }}">
+                            <strong>Packs</strong>
+                            <span>Build and export bundles without leaving the portal workflow.</span>
+                        </a>
+                    </div>
+                </section>
+
                 <!-- Hero: score ring (left 280px) + 2×2 status grid (right) -->
                 <div class="ov-hero">
                     <div class="ov-hero-score-card" aria-label="Compliance score">
@@ -133,23 +158,23 @@
                         <p class="ov-ring-caption" id="ov-ring-caption">Loading…</p>
                     </div>
 
-                    <div class="ov-hero-stats" aria-label="Compliance status counts">
-                        <div class="ov-stat-card ov-stat-card--expired">
+                    <div class="ov-hero-stats portal-summary-strip" aria-label="Compliance status counts">
+                        <div class="ov-stat-card ov-stat-card--expired portal-summary-chip">
                             <span class="ov-stat-label">Expired</span>
                             <span class="ov-stat-value" id="ov-stat-expired">—</span>
                             <span class="ov-stat-hint">Certificates past due</span>
                         </div>
-                        <div class="ov-stat-card ov-stat-card--expiring">
+                        <div class="ov-stat-card ov-stat-card--expiring portal-summary-chip">
                             <span class="ov-stat-label">Expiring</span>
                             <span class="ov-stat-value" id="ov-stat-expiring">—</span>
                             <span class="ov-stat-hint">Due within 30 days</span>
                         </div>
-                        <div class="ov-stat-card ov-stat-card--missing">
+                        <div class="ov-stat-card ov-stat-card--missing portal-summary-chip">
                             <span class="ov-stat-label">Missing</span>
                             <span class="ov-stat-value" id="ov-stat-missing">—</span>
                             <span class="ov-stat-hint">No certificate on file</span>
                         </div>
-                        <div class="ov-stat-card ov-stat-card--valid">
+                        <div class="ov-stat-card ov-stat-card--valid portal-summary-chip">
                             <span class="ov-stat-label">Valid</span>
                             <span class="ov-stat-value" id="ov-stat-valid">—</span>
                             <span class="ov-stat-hint">Checks currently valid</span>

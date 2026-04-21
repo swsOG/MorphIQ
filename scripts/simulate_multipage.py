@@ -100,7 +100,7 @@ def main():
         
         # Copy the image
         shutil.copy2(p, dest_path)
-        print(f"  Page {page_num}: {p.name} → {dest_filename}")
+        print(f"  Page {page_num}: {p.name} -> {dest_filename}")
         
         # Create .meta.json (same format ScanStation writes)
         meta = {
@@ -115,7 +115,7 @@ def main():
         meta_path = raw_dir / f"{dest_filename}.meta.json"
         with open(meta_path, "w") as f:
             json.dump(meta, f, indent=2)
-        print(f"         meta → {meta_path.name}")
+        print(f"         meta -> {meta_path.name}")
         
         # Small delay so timestamps are distinct
         time.sleep(0.15)

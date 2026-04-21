@@ -189,10 +189,15 @@
         const s = status.toLowerCase().replace(/\s+/g, "-");
         const map = {
             "verified": "status-verified",
+            "corrected-verified": "status-verified",
+            "corrected_verified": "status-verified",
             "active": "status-active",
             "needs-review": "status-needs-review",
             "needs_review": "status-needs-review",
+            "reported-under-review": "status-needs-review",
+            "reported_under_review": "status-needs-review",
             "new": "status-new",
+            "closed": "status-active",
             "failed": "status-failed",
             "expiring-soon": "status-expiring",
             "expiring": "status-expiring",
@@ -202,6 +207,12 @@
 
     function statusLabel(status) {
         if (!status) return "New";
+        const s = String(status).toLowerCase();
+        const labels = {
+            reported_under_review: "Under Review",
+            corrected_verified: "Corrected & Verified",
+        };
+        if (labels[s]) return labels[s];
         return status.replace(/[_-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
     }
 
@@ -1584,6 +1595,20 @@
 
     function initDocumentViewerPage() {
         const closeBtn = $("#document-view-close");
+        const verifyBtn = $("#document-view-verify");
+        const issueToggleBtn = $("#document-issue-toggle");
+        const issueForm = $("#document-issue-form");
+        const issueCancelBtn = $("#document-issue-cancel");
+        const issueSubmitBtn = $("#document-issue-submit");
+        const issueFeedbackEl = $("#document-issue-feedback");
+        const issueHelperEl = $("#document-issue-helper");
+        const issueLatestEl = $("#document-issue-latest");
+        const issueThreadEl = $("#document-issue-thread");
+        const issueThreadBodyEl = $("#document-issue-thread-body");
+        const issueThreadMetaEl = $("#document-issue-thread-meta");
+        const issueMessageForm = $("#document-issue-message-form");
+        const issueMessageInput = $("#document-issue-message-input");
+        const issueDeliveryPillEl = $("#document-issue-delivery-pill");
         if (closeBtn) {
             const goArchive = () => {
                 const url =
@@ -1605,6 +1630,7 @@
         const docIdRaw = cfg.docId;
         const docIdNum = docIdRaw != null && docIdRaw !== "" ? Number(docIdRaw) : NaN;
         const useDocId = Number.isFinite(docIdNum) && docIdNum > 0;
+        const canReportIssue = !!cfg.canReportIssue;
         const fieldsEl = $("#document-view-summary-fields");
         const pdfInner = $("#document-view-pdf-inner");
         const titleEl = $("#document-view-title");
@@ -1612,6 +1638,174 @@
         const statusEl = $("#document-view-status");
         if (!fieldsEl || !pdfInner) return;
         if (!sourceDocId && !useDocId) return;
+
+        const esc = (s) => String(s ?? "").replace(/</g, "&lt;");
+        const formatDateTime = (value) => {
+            if (!value) return "—";
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return esc(String(value));
+            return esc(
+                d.toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                })
+            );
+        };
+        const reasonLabel = (reasonCode) =>
+            ({
+                image_quality: "Image quality",
+                incorrect_field: "Incorrect field",
+                wrong_document_type: "Wrong document type",
+                missing_pages: "Missing pages",
+                duplicate_document: "Duplicate document",
+                other: "Other",
+            }[String(reasonCode || "").trim()] || statusLabel(String(reasonCode || "").trim()));
+        const queueLabel = (queue) =>
+            ({
+                review_queue: "Review queue",
+                rescan_queue: "Re-scan queue",
+            }[String(queue || "").trim()] || "Unassigned");
+        let currentDoc = null;
+        let latestIssueId = null;
+
+        function setIssueFeedback(message, tone) {
+            if (!issueFeedbackEl) return;
+            if (!message) {
+                issueFeedbackEl.hidden = true;
+                issueFeedbackEl.textContent = "";
+                issueFeedbackEl.className = "document-issue-feedback";
+                return;
+            }
+            issueFeedbackEl.hidden = false;
+            issueFeedbackEl.textContent = message;
+            issueFeedbackEl.className = `document-issue-feedback document-issue-feedback--${tone || "info"}`;
+        }
+
+        function setDeliveryStatus(deliveryStatus) {
+            if (!issueDeliveryPillEl) return;
+            issueDeliveryPillEl.className = `status-badge ${statusClass(deliveryStatus)}`;
+            issueDeliveryPillEl.innerHTML = `<span class="dot"></span>${statusLabel(deliveryStatus)}`;
+        }
+
+        function renderIssueSummary(doc) {
+            const issueSummary = doc.issue_summary || {};
+            latestIssueId = issueSummary.latest_issue_id || null;
+            setDeliveryStatus(doc.current_delivery_status || "verified");
+            if (issueHelperEl) {
+                issueHelperEl.textContent =
+                    doc.current_delivery_status === "reported_under_review"
+                        ? "This document is visible to the client, but it is currently back in MorphIQ's exception workflow until the fix is re-verified."
+                        : "Verified documents stay visible here. If something looks wrong, you can send it back into the MorphIQ rework flow.";
+            }
+            if (issueLatestEl) {
+                if (!latestIssueId) {
+                    issueLatestEl.innerHTML =
+                        '<div class="document-issue-empty">No open or prior rework tickets for this document.</div>';
+                } else {
+                    issueLatestEl.innerHTML = `
+                        <div class="document-issue-summary-card">
+                            <div>
+                                <div class="document-issue-summary-label">Latest ticket</div>
+                                <div class="document-issue-summary-title">Issue #${esc(latestIssueId)}</div>
+                            </div>
+                            <div class="document-issue-summary-meta">
+                                <span class="status-badge ${statusClass(issueSummary.open_status || issueSummary.latest_status || "new")}"><span class="dot"></span>${statusLabel(issueSummary.open_status || issueSummary.latest_status || "new")}</span>
+                                <span>${esc(reasonLabel(issueSummary.reason_code))}</span>
+                                <span>${esc(queueLabel(issueSummary.target_queue))}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            if (issueToggleBtn) {
+                issueToggleBtn.hidden = !canReportIssue;
+                issueToggleBtn.textContent =
+                    doc.current_delivery_status === "reported_under_review"
+                        ? "Update reported issue"
+                        : "Report a problem";
+            }
+        }
+
+        function renderIssueDetail(detail) {
+            const issue = (detail && detail.issue) || null;
+            const messages = (detail && detail.messages) || [];
+            const versions = (detail && detail.versions) || [];
+            if (!issue || !issueThreadEl || !issueThreadBodyEl) {
+                if (issueThreadEl) issueThreadEl.hidden = true;
+                if (issueMessageForm) issueMessageForm.hidden = true;
+                return;
+            }
+            latestIssueId = issue.id;
+            issueThreadEl.hidden = false;
+            if (issueThreadMetaEl) {
+                issueThreadMetaEl.textContent = `${reasonLabel(issue.reason_code)} · ${queueLabel(issue.target_queue)} · ${statusLabel(issue.status)}`;
+            }
+            const versionItems = versions
+                .map((version) => {
+                    const label =
+                        version.kind === "reported_snapshot"
+                            ? "Original delivered version captured"
+                            : "Corrected version captured after re-verification";
+                    return `<div class="document-issue-timeline-item">
+                        <div class="document-issue-timeline-dot"></div>
+                        <div>
+                            <div class="document-issue-timeline-title">${label}</div>
+                            <div class="document-issue-timeline-meta">${formatDateTime(version.created_at)}</div>
+                        </div>
+                    </div>`;
+                })
+                .join("");
+            const messageItems = messages
+                .map((message) => {
+                    const author = message.author_name || (message.author_role === "admin" ? "MorphIQ" : "Client");
+                    const linkedDoc = message.linked_document_id ? ` · Doc ${esc(message.linked_document_id)}` : "";
+                    return `<div class="document-issue-message ${message.author_role === "admin" ? "document-issue-message--staff" : ""}">
+                        <div class="document-issue-message-head">
+                            <strong>${esc(author)}</strong>
+                            <span>${formatDateTime(message.created_at)}${linkedDoc}</span>
+                        </div>
+                        <div class="document-issue-message-body">${esc(message.body)}</div>
+                    </div>`;
+                })
+                .join("");
+            issueThreadBodyEl.innerHTML = `
+                <div class="document-issue-thread-topline">
+                    <div class="document-issue-thread-status">
+                        <span class="status-badge ${statusClass(issue.status)}"><span class="dot"></span>${statusLabel(issue.status)}</span>
+                        <span>Priority ${esc(issue.priority || "normal")}</span>
+                        <span>${esc(issue.assigned_user_name || "Unassigned")}</span>
+                    </div>
+                    <div class="document-issue-thread-note">${esc(issue.note || "No extra note was added to this report.")}</div>
+                </div>
+                <div class="document-issue-timeline">${versionItems || '<div class="document-issue-empty">No audit snapshots yet.</div>'}</div>
+                <div class="document-issue-message-list">${messageItems || '<div class="document-issue-empty">No support messages yet.</div>'}</div>
+            `;
+            if (issueMessageForm) {
+                issueMessageForm.hidden = !canReportIssue;
+            }
+        }
+
+        async function loadIssueDetail(issueId) {
+            if (!issueId) {
+                renderIssueDetail(null);
+                return null;
+            }
+            try {
+                const response = await fetch(withClientQuery(`/api/issues/${encodeURIComponent(issueId)}`), {
+                    credentials: "same-origin",
+                });
+                if (!response.ok) throw new Error(String(response.status));
+                const detail = await response.json();
+                renderIssueDetail(detail);
+                return detail;
+            } catch (error) {
+                if (issueThreadEl) issueThreadEl.hidden = true;
+                return null;
+            }
+        }
 
         const detailUrl = useDocId
             ? `/api/documents/by-id/${encodeURIComponent(docIdNum)}`
@@ -1623,16 +1817,52 @@
                 return r.json();
             })
             .then((doc) => {
+                currentDoc = doc;
                 if (titleEl) titleEl.textContent = doc.doc_type || doc.doc_name || "Document";
                 if (addressEl) addressEl.textContent = doc.property_address || "";
                 if (statusEl) {
-                    statusEl.innerHTML = `<span class="status-badge ${statusClass(doc.status)}"><span class="dot"></span>${statusLabel(doc.status)}</span>`;
+                    const delivery = doc.current_delivery_status || "verified";
+                    const deliveryBadge =
+                        delivery !== "verified"
+                            ? `<span class="status-badge ${statusClass(delivery)}"><span class="dot"></span>${statusLabel(delivery)}</span>`
+                            : "";
+                    statusEl.innerHTML = `<div class="document-view-status-stack"><span class="status-badge ${statusClass(doc.status)}"><span class="dot"></span>${statusLabel(doc.status)}</span>${deliveryBadge}</div>`;
+                }
+                renderIssueSummary(doc);
+                loadIssueDetail(doc.issue_summary && doc.issue_summary.latest_issue_id);
+                if (verifyBtn) {
+                    const needsReview = ["new", "ai_prefilled", "needs_review"].includes(
+                        String(doc.status || "").toLowerCase()
+                    );
+                    verifyBtn.hidden = !needsReview;
+                    verifyBtn.disabled = false;
+                    verifyBtn.textContent = "Mark Verified";
+                    verifyBtn.onclick = async () => {
+                        verifyBtn.disabled = true;
+                        verifyBtn.textContent = "Verifying...";
+                        try {
+                            const response = await fetch(
+                                withClientQuery(
+                                    `/api/documents/by-id/${encodeURIComponent(doc.id)}/verify`
+                                ),
+                                { method: "POST", credentials: "same-origin" }
+                            );
+                            const payload = await response.json().catch(() => ({}));
+                            if (!response.ok || !payload.success) {
+                                throw new Error(payload.error || "Verification failed");
+                            }
+                            window.location.reload();
+                        } catch (error) {
+                            verifyBtn.disabled = false;
+                            verifyBtn.textContent = "Mark Verified";
+                            window.alert(error && error.message ? error.message : "Verification failed");
+                        }
+                    };
                 }
 
                 const fields = doc.fields || {};
                 const fieldKeys = Object.keys(fields);
                 let html = "";
-                const esc = (s) => String(s ?? "").replace(/</g, "&lt;");
                 const coreFields = [
                     ["Document ID", doc.source_doc_id],
                     ["Document Name", doc.doc_name],
@@ -1660,21 +1890,18 @@
                 }
                 fieldsEl.innerHTML = html;
 
-                const clientEnc = encodeURIComponent(doc.client_name || "");
-                const docIdEncPdf = encodeURIComponent(doc.source_doc_id || "");
-                const scanstationPlain =
-                    (doc.pdf_url && String(doc.pdf_url).split("#")[0]) ||
-                    `http://127.0.0.1:8765/pdf/${clientEnc}/${docIdEncPdf}`;
-                const pdfViewerHash = "#toolbar=0&navpanes=0&page=1&zoom=page-width";
-                const pdfUrlWithZoom = doc.pdf_url
-                    ? `${String(doc.pdf_url).split("#")[0]}${pdfViewerHash}`
-                    : `${scanstationPlain}${pdfViewerHash}`;
-                const hasPdf = !!(doc.pdf_path || doc.pdf_url || (doc.client_name && doc.source_doc_id));
                 const pdfProxyUrl = doc.id
                     ? withClientQuery(`/api/documents/by-id/${encodeURIComponent(doc.id)}/pdf`)
                     : withClientQuery(
                           `/api/documents/by-source/${encodeURIComponent(doc.source_doc_id || "")}/pdf`
                       );
+                const scanstationPlain =
+                    (doc.pdf_url && String(doc.pdf_url).split("#")[0]) || pdfProxyUrl;
+                const pdfViewerHash = "#toolbar=0&navpanes=0&page=1&zoom=page-width";
+                const pdfUrlWithZoom = doc.pdf_url
+                    ? `${String(doc.pdf_url).split("#")[0]}${pdfViewerHash}`
+                    : `${scanstationPlain}${pdfViewerHash}`;
+                const hasPdf = !!(doc.pdf_path || doc.pdf_url || (doc.client_name && doc.source_doc_id));
 
                 if (hasPdf) {
                     if (window.MorphIQPortalPdf && typeof pdfjsLib !== "undefined") {
@@ -1720,6 +1947,117 @@
                 fieldsEl.innerHTML = `<div class="empty-state">Could not load this document.</div>`;
                 pdfInner.innerHTML = `<div class="document-view-pdf-missing">Document not found or access denied.</div>`;
             });
+
+        if (issueToggleBtn && issueForm) {
+            issueToggleBtn.addEventListener("click", () => {
+                issueForm.hidden = !issueForm.hidden;
+                if (!issueForm.hidden) {
+                    setIssueFeedback("", "info");
+                    const reasonEl = $("#document-issue-reason");
+                    if (reasonEl) reasonEl.focus();
+                }
+            });
+        }
+        if (issueCancelBtn && issueForm) {
+            issueCancelBtn.addEventListener("click", () => {
+                issueForm.hidden = true;
+                setIssueFeedback("", "info");
+            });
+        }
+        if (issueForm) {
+            issueForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                if (!currentDoc || !currentDoc.id) return;
+                const reasonEl = $("#document-issue-reason");
+                const noteEl = $("#document-issue-note");
+                const attachmentEl = $("#document-issue-attachment");
+                const openSupportEl = $("#document-issue-open-support");
+                const formData = new FormData();
+                formData.set("reason_code", reasonEl ? reasonEl.value : "other");
+                formData.set("note", noteEl ? noteEl.value : "");
+                if (openSupportEl && openSupportEl.checked) formData.set("open_support", "1");
+                if (attachmentEl && attachmentEl.files && attachmentEl.files[0]) {
+                    formData.set("attachment", attachmentEl.files[0]);
+                }
+                if (issueSubmitBtn) {
+                    issueSubmitBtn.disabled = true;
+                    issueSubmitBtn.textContent = "Sending...";
+                }
+                try {
+                    const response = await fetch(
+                        withClientQuery(`/api/documents/by-id/${encodeURIComponent(currentDoc.id)}/issues`),
+                        {
+                            method: "POST",
+                            credentials: "same-origin",
+                            body: formData,
+                        }
+                    );
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok || !payload.issue) {
+                        throw new Error(payload.error || "Could not report this document");
+                    }
+                    currentDoc.current_delivery_status = "reported_under_review";
+                    currentDoc.issue_summary = currentDoc.issue_summary || {};
+                    currentDoc.issue_summary.latest_issue_id = payload.issue.id;
+                    currentDoc.issue_summary.open_issue_id = payload.issue.id;
+                    currentDoc.issue_summary.open_status = payload.issue.status;
+                    currentDoc.issue_summary.latest_status = payload.issue.status;
+                    currentDoc.issue_summary.reason_code = payload.issue.reason_code;
+                    currentDoc.issue_summary.target_queue = payload.issue.target_queue;
+                    renderIssueSummary(currentDoc);
+                    await loadIssueDetail(payload.issue.id);
+                    issueForm.reset();
+                    issueForm.hidden = true;
+                    setIssueFeedback(
+                        payload.created === false
+                            ? "This document already had an open issue, so your update was attached to the existing ticket."
+                            : "Your report has been sent to MorphIQ and the document is now marked under review.",
+                        "success"
+                    );
+                } catch (error) {
+                    setIssueFeedback(
+                        error && error.message ? error.message : "Could not report this document.",
+                        "error"
+                    );
+                } finally {
+                    if (issueSubmitBtn) {
+                        issueSubmitBtn.disabled = false;
+                        issueSubmitBtn.textContent = "Send to MorphIQ";
+                    }
+                }
+            });
+        }
+        if (issueMessageForm && issueMessageInput) {
+            issueMessageForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                if (!latestIssueId) return;
+                const body = String(issueMessageInput.value || "").trim();
+                if (!body) return;
+                const sendBtn = $("#document-issue-message-send");
+                if (sendBtn) sendBtn.disabled = true;
+                try {
+                    const response = await fetch(
+                        withClientQuery(`/api/issues/${encodeURIComponent(latestIssueId)}/messages`),
+                        {
+                            method: "POST",
+                            credentials: "same-origin",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ body }),
+                        }
+                    );
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok || !payload.message) {
+                        throw new Error(payload.error || "Could not send update");
+                    }
+                    issueMessageInput.value = "";
+                    await loadIssueDetail(latestIssueId);
+                } catch (error) {
+                    window.alert(error && error.message ? error.message : "Could not send update");
+                } finally {
+                    if (sendBtn) sendBtn.disabled = false;
+                }
+            });
+        }
     }
 
     function renderDrawerSplit(doc) {
@@ -1734,10 +2072,11 @@
         const downloadBtn = $("#drawer-download-pdf");
         const fullscreenBtn = $("#drawer-fullscreen");
 
-        const clientEnc = encodeURIComponent(doc.client_name || "");
-        const docIdEnc = encodeURIComponent(doc.source_doc_id || "");
-        /* Use pdf_url from API when present, else build from client/source_doc_id */
-        const pdfUrlPlain = (doc.pdf_url && doc.pdf_url.split("#")[0]) || `http://127.0.0.1:8765/pdf/${clientEnc}/${docIdEnc}`;
+        const pdfProxyUrl = doc.id
+            ? withClientQuery(`/api/documents/by-id/${encodeURIComponent(doc.id)}/pdf`)
+            : withClientQuery(`/api/documents/by-source/${encodeURIComponent(doc.source_doc_id || "")}/pdf`);
+        /* Use pdf_url from API when present, else fall back to the portal's same-origin PDF proxy. */
+        const pdfUrlPlain = (doc.pdf_url && doc.pdf_url.split("#")[0]) || pdfProxyUrl;
         const pdfViewerHash = "#toolbar=0&navpanes=0&page=1&zoom=page-width";
         const pdfUrlWithZoom = doc.pdf_url
             ? `${doc.pdf_url.split("#")[0]}${pdfViewerHash}`
