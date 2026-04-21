@@ -79,8 +79,8 @@ def seed_portal_db(db_path: Path) -> None:
         conn.executemany(
             "INSERT INTO clients (id, name, slug, is_active, deleted_at) VALUES (?, ?, ?, 1, NULL)",
             [
-                (28, "Harlow & Essex Lettings", "harlow-essex-lettings"),
-                (30, "Epping Lettings", "epping-lettings"),
+                (28, "Sample Agency Alpha", "sample-agency-alpha"),
+                (30, "Sample Agency Beta", "sample-agency-beta"),
             ],
         )
         conn.executemany(
@@ -90,13 +90,13 @@ def seed_portal_db(db_path: Path) -> None:
             VALUES (?, ?, ?, ?, ?, ?, 1, NULL)
             """,
             [
-                (1, "filip@morphiq.co.uk", "Filip", "admin", None, password_hash),
-                (2, "demo@epping.co.uk", "Epping Manager", "manager", 30, password_hash),
+                (1, "admin@example.test", "Platform Admin", "admin", None, password_hash),
+                (2, "manager@example.test", "Sample Manager", "manager", 30, password_hash),
             ],
         )
         conn.execute(
             "INSERT INTO properties (id, client_id, address, deleted_at) VALUES (?, ?, ?, NULL)",
-            (102, 30, "8 Birchwood Lane, Epping, CM16 4AA"),
+            (102, 30, "202 Demo Avenue, Mockford, ZX2 2BB"),
         )
         conn.execute(
             "INSERT INTO document_types (id, key, label) VALUES (?, ?, ?)",
@@ -114,10 +114,10 @@ def seed_portal_db(db_path: Path) -> None:
                 102,
                 30,
                 2,
-                "EPPING-TENANCY-001",
-                "Epping Tenancy",
+                "BETA-TENANCY-001",
+                "Sample Tenancy",
                 "verified",
-                "Filip",
+                "Platform Admin",
                 "2026-04-02T09:30:00",
                 "2026-04-02T09:00:00",
                 "2026-04-02",
@@ -132,7 +132,7 @@ def seed_portal_db(db_path: Path) -> None:
             """,
             [
                 (1002, "tenant_full_name", "Tenant Full Name", "Alex Tenant"),
-                (1002, "property_address", "Property Address", "8 Birchwood Lane, Epping, CM16 4AA"),
+                (1002, "property_address", "Property Address", "202 Demo Avenue, Mockford, ZX2 2BB"),
             ],
         )
         conn.commit()
@@ -141,10 +141,10 @@ def seed_portal_db(db_path: Path) -> None:
 
 
 def seed_clients_dir(clients_dir: Path) -> None:
-    doc_dir = clients_dir / "Epping Lettings" / "Batches" / "2026-04-02" / "EPPING-TENANCY-001"
+    doc_dir = clients_dir / "Sample Agency Beta" / "Batches" / "2026-04-02" / "BETA-TENANCY-001"
     doc_dir.mkdir(parents=True, exist_ok=True)
     (doc_dir / "review.json").write_text(
-        '{"status":"Verified","review":{"reviewed_by":"Filip","reviewed_at":"2026-04-02T09:30:00"}}\n',
+        '{"status":"Verified","review":{"reviewed_by":"Platform Admin","reviewed_at":"2026-04-02T09:30:00"}}\n',
         encoding="utf-8",
     )
 

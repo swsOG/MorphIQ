@@ -42,18 +42,29 @@ def create_user(
     conn.commit()
 
 
+def get_demo_user_seed():
+    password = (os.environ.get("MORPHIQ_DEMO_PASSWORD") or "").strip()
+    if not password:
+        return None
+
+    return {
+        "email": (os.environ.get("MORPHIQ_DEMO_EMAIL") or "demo@example.invalid").strip(),
+        "password": password,
+        "full_name": (os.environ.get("MORPHIQ_DEMO_NAME") or "Demo Manager").strip(),
+        "role": "manager",
+        "client_id": 1,
+    }
+
+
 def main() -> None:
-    print("Morph IQ Portal — Seed admin and demo users")
+    print("Morph IQ Portal - Seed admin and demo users")
     conn = get_connection()
     try:
-        # Admin user
         admin_email = "admin@yourdomain.com"
         if user_exists(conn, admin_email):
-            print(f"Admin user {admin_email} already exists — skipping.")
+            print(f"Admin user {admin_email} already exists - skipping.")
         else:
-            admin_password = getpass(
-                f"Enter password for admin user {admin_email}: "
-            )
+            admin_password = getpass(f"Enter password for admin user {admin_email}: ")
             if not admin_password:
                 print("No password entered, skipping admin user creation.")
             else:
@@ -67,25 +78,25 @@ def main() -> None:
                 )
                 print(f"Admin user created: {admin_email}")
 
-        # Demo manager user
-        demo_email = "demo@agency.co.uk"
-        demo_password = "demo123"
-        if user_exists(conn, demo_email):
-            print(f"Demo manager user {demo_email} already exists — skipping.")
+        demo_user = get_demo_user_seed()
+        if demo_user is None:
+            print("No MORPHIQ_DEMO_PASSWORD set; skipping demo user creation.")
+        elif user_exists(conn, demo_user["email"]):
+            print(f"Demo manager user {demo_user['email']} already exists - skipping.")
         else:
             create_user(
                 conn,
-                email=demo_email,
-                password=demo_password,
-                full_name="Demo Manager",
-                role="manager",
-                client_id=1,
+                email=demo_user["email"],
+                password=demo_user["password"],
+                full_name=demo_user["full_name"],
+                role=demo_user["role"],
+                client_id=demo_user["client_id"],
             )
             print(
                 "Demo manager user created:\n"
-                f"  Email: {demo_email}\n"
-                f"  Password: {demo_password}\n"
-                "  Role: manager (client_id=1)"
+                f"  Email: {demo_user['email']}\n"
+                "  Password: supplied via MORPHIQ_DEMO_PASSWORD\n"
+                f"  Role: {demo_user['role']} (client_id={demo_user['client_id']})"
             )
     finally:
         conn.close()
@@ -93,4 +104,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

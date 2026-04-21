@@ -42,7 +42,7 @@ class AutoOcrWatchTests(unittest.TestCase):
                 image_name="doc.jpg",
                 template={},
                 doc_name="Tenancy Agreement",
-                initial_fields={"property_address": "22 Ferndale Road"},
+                initial_fields={"property_address": "101 Example Street"},
             )
 
             with review_path.open("r", encoding="utf-8") as handle:
@@ -50,7 +50,7 @@ class AutoOcrWatchTests(unittest.TestCase):
 
         self.assertEqual(
             payload["fields"],
-            {"property_address": "22 Ferndale Road"},
+            {"property_address": "101 Example Street"},
         )
         self.assertEqual(payload["doc_name"], "Tenancy Agreement")
 

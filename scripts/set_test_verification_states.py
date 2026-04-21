@@ -1,7 +1,7 @@
 """
 set_test_verification_states.py
 ================================
-Directly writes the "Harlow & Essex Lettings" test client, 6 properties,
+Directly writes the "Sample Agency Alpha" test client, 6 properties,
 and 27 documents into portal.db with the correct compliance dates and
 verification states. Bypasses the watcher/OCR/AI pipeline entirely.
 
@@ -23,7 +23,7 @@ from pathlib import Path
 
 BASE    = Path(__file__).resolve().parent.parent
 DB_PATH = BASE / "portal.db"
-CLIENT  = "Harlow & Essex Lettings"
+CLIENT  = "Sample Agency Alpha"
 
 NOW = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -67,119 +67,119 @@ EXPIRY_KEY = {
 # ---------------------------------------------------------------------------
 
 SCENARIO = [
-    # ── PROPERTY 1 — 4 Birchwood Close  (all valid, all verified) ────────────
-    ("HE-P1-GAS",  "4 Birchwood Close, Harlow, CM17 0PQ",
+    # ── PROPERTY 1 — 101 Example Street  (all valid, all verified) ────────────
+    ("HE-P1-GAS",  "101 Example Street, Sampletown, ZX1 1AA",
      DT["gas_safety"],        "verified",    "2027-03-10",
-     "Gas Safety Certificate - 4 Birchwood Close",     "prop1_gas_safety.jpg"),
+     "Gas Safety Certificate - 101 Example Street",     "prop1_gas_safety.jpg"),
 
-    ("HE-P1-EICR", "4 Birchwood Close, Harlow, CM17 0PQ",
+    ("HE-P1-EICR", "101 Example Street, Sampletown, ZX1 1AA",
      DT["eicr"],              "verified",    "2029-01-05",
-     "EICR - 4 Birchwood Close",                       "prop1_eicr.jpg"),
+     "EICR - 101 Example Street",                       "prop1_eicr.jpg"),
 
-    ("HE-P1-EPC",  "4 Birchwood Close, Harlow, CM17 0PQ",
+    ("HE-P1-EPC",  "101 Example Street, Sampletown, ZX1 1AA",
      DT["epc"],               "verified",    "2032-06-20",
-     "EPC - 4 Birchwood Close",                        "prop1_epc.jpg"),
+     "EPC - 101 Example Street",                        "prop1_epc.jpg"),
 
-    ("HE-P1-DEP",  "4 Birchwood Close, Harlow, CM17 0PQ",
+    ("HE-P1-DEP",  "101 Example Street, Sampletown, ZX1 1AA",
      DT["deposit_protection"],"verified",    None,
-     "Deposit Protection Certificate - 4 Birchwood Close", "prop1_deposit.jpg"),
+     "Deposit Protection Certificate - 101 Example Street", "prop1_deposit.jpg"),
 
-    ("HE-P1-AST",  "4 Birchwood Close, Harlow, CM17 0PQ",
+    ("HE-P1-AST",  "101 Example Street, Sampletown, ZX1 1AA",
      DT["tenancy_agreement"], "verified",    None,
-     "Tenancy Agreement - 4 Birchwood Close",          "prop1_tenancy.jpg"),
+     "Tenancy Agreement - 101 Example Street",          "prop1_tenancy.jpg"),
 
-    ("HE-P1-INV",  "4 Birchwood Close, Harlow, CM17 0PQ",
+    ("HE-P1-INV",  "101 Example Street, Sampletown, ZX1 1AA",
      DT["inventory"],         "verified",    None,
-     "Inventory Check-in Report - 4 Birchwood Close",  "prop1_inventory.jpg"),
+     "Inventory Check-in Report - 101 Example Street",  "prop1_inventory.jpg"),
 
-    # ── PROPERTY 2 — 12 Rosebank Avenue  (all expiring, all verified) ────────
-    ("HE-P2-GAS",  "12 Rosebank Avenue, Epping, CM16 5TR",
+    # ── PROPERTY 2 — 202 Demo Avenue  (all expiring, all verified) ────────
+    ("HE-P2-GAS",  "202 Demo Avenue, Mockford, ZX2 2BB",
      DT["gas_safety"],        "verified",    "2026-04-18",
-     "Gas Safety Certificate - 12 Rosebank Avenue",    "prop2_gas_safety.jpg"),
+     "Gas Safety Certificate - 202 Demo Avenue",    "prop2_gas_safety.jpg"),
 
-    ("HE-P2-EICR", "12 Rosebank Avenue, Epping, CM16 5TR",
+    ("HE-P2-EICR", "202 Demo Avenue, Mockford, ZX2 2BB",
      DT["eicr"],              "verified",    "2026-05-12",
-     "EICR - 12 Rosebank Avenue",                      "prop2_eicr.jpg"),
+     "EICR - 202 Demo Avenue",                      "prop2_eicr.jpg"),
 
-    ("HE-P2-EPC",  "12 Rosebank Avenue, Epping, CM16 5TR",
+    ("HE-P2-EPC",  "202 Demo Avenue, Mockford, ZX2 2BB",
      DT["epc"],               "verified",    "2026-06-01",
-     "EPC - 12 Rosebank Avenue",                       "prop2_epc.jpg"),
+     "EPC - 202 Demo Avenue",                       "prop2_epc.jpg"),
 
-    ("HE-P2-DEP",  "12 Rosebank Avenue, Epping, CM16 5TR",
+    ("HE-P2-DEP",  "202 Demo Avenue, Mockford, ZX2 2BB",
      DT["deposit_protection"],"verified",    None,
-     "Deposit Protection Certificate - 12 Rosebank Avenue", "prop2_deposit.jpg"),
+     "Deposit Protection Certificate - 202 Demo Avenue", "prop2_deposit.jpg"),
 
-    ("HE-P2-AST",  "12 Rosebank Avenue, Epping, CM16 5TR",
+    ("HE-P2-AST",  "202 Demo Avenue, Mockford, ZX2 2BB",
      DT["tenancy_agreement"], "verified",    None,
-     "Tenancy Agreement - 12 Rosebank Avenue",         "prop2_tenancy.jpg"),
+     "Tenancy Agreement - 202 Demo Avenue",         "prop2_tenancy.jpg"),
 
-    # ── PROPERTY 3 — 7 Thornfield Road  (all expired, all verified) ──────────
-    ("HE-P3-GAS",  "7 Thornfield Road, Harlow, CM20 2BX",
+    # ── PROPERTY 3 — 303 Fixture Road  (all expired, all verified) ──────────
+    ("HE-P3-GAS",  "303 Fixture Road, Sampletown, ZX3 3CC",
      DT["gas_safety"],        "verified",    "2025-01-08",
-     "Gas Safety Certificate - 7 Thornfield Road",     "prop3_gas_safety.jpg"),
+     "Gas Safety Certificate - 303 Fixture Road",     "prop3_gas_safety.jpg"),
 
-    ("HE-P3-EICR", "7 Thornfield Road, Harlow, CM20 2BX",
+    ("HE-P3-EICR", "303 Fixture Road, Sampletown, ZX3 3CC",
      DT["eicr"],              "verified",    "2024-03-15",
-     "EICR - 7 Thornfield Road",                       "prop3_eicr.jpg"),
+     "EICR - 303 Fixture Road",                       "prop3_eicr.jpg"),
 
-    ("HE-P3-EPC",  "7 Thornfield Road, Harlow, CM20 2BX",
+    ("HE-P3-EPC",  "303 Fixture Road, Sampletown, ZX3 3CC",
      DT["epc"],               "verified",    "2024-06-02",
-     "EPC - 7 Thornfield Road",                        "prop3_epc.jpg"),
+     "EPC - 303 Fixture Road",                        "prop3_epc.jpg"),
 
-    ("HE-P3-AST",  "7 Thornfield Road, Harlow, CM20 2BX",
+    ("HE-P3-AST",  "303 Fixture Road, Sampletown, ZX3 3CC",
      DT["tenancy_agreement"], "verified",    None,
-     "Tenancy Agreement - 7 Thornfield Road",          "prop3_tenancy.jpg"),
+     "Tenancy Agreement - 303 Fixture Road",          "prop3_tenancy.jpg"),
 
-    # ── PROPERTY 4 — 23 Linnet Drive  (mixed, NO deposit) ────────────────────
-    ("HE-P4-GAS",  "23 Linnet Drive, Hoddesdon, EN11 9QR",
+    # ── PROPERTY 4 — 404 Placeholder Drive  (mixed, NO deposit) ────────────────────
+    ("HE-P4-GAS",  "404 Placeholder Drive, Mockford, ZX4 4DD",
      DT["gas_safety"],        "verified",    "2027-02-14",
-     "Gas Safety Certificate - 23 Linnet Drive",       "prop4_gas_safety.jpg"),
+     "Gas Safety Certificate - 404 Placeholder Drive",       "prop4_gas_safety.jpg"),
 
-    ("HE-P4-EICR", "23 Linnet Drive, Hoddesdon, EN11 9QR",
+    ("HE-P4-EICR", "404 Placeholder Drive, Mockford, ZX4 4DD",
      DT["eicr"],              "ai_prefilled","2028-10-03",
-     "EICR - 23 Linnet Drive",                         "prop4_eicr.jpg"),
+     "EICR - 404 Placeholder Drive",                         "prop4_eicr.jpg"),
 
-    ("HE-P4-EPC",  "23 Linnet Drive, Hoddesdon, EN11 9QR",
+    ("HE-P4-EPC",  "404 Placeholder Drive, Mockford, ZX4 4DD",
      DT["epc"],               "verified",    "2023-11-05",    # expired
-     "EPC - 23 Linnet Drive",                          "prop4_epc.jpg"),
+     "EPC - 404 Placeholder Drive",                          "prop4_epc.jpg"),
 
-    ("HE-P4-AST",  "23 Linnet Drive, Hoddesdon, EN11 9QR",
+    ("HE-P4-AST",  "404 Placeholder Drive, Mockford, ZX4 4DD",
      DT["tenancy_agreement"], "verified",    None,
-     "Tenancy Agreement - 23 Linnet Drive",            "prop4_tenancy.jpg"),
+     "Tenancy Agreement - 404 Placeholder Drive",            "prop4_tenancy.jpg"),
 
-    # ── PROPERTY 5 — 9 Coppice Lane  (sparse: gas + AST only) ───────────────
-    ("HE-P5-GAS",  "9 Coppice Lane, Bishops Stortford, CM23 4HH",
+    # ── PROPERTY 5 — 505 Synthetic Lane  (sparse: gas + AST only) ───────────────
+    ("HE-P5-GAS",  "505 Synthetic Lane, Testham, ZX5 5EE",
      DT["gas_safety"],        "verified",    "2027-01-22",
-     "Gas Safety Certificate - 9 Coppice Lane",        "prop5_gas_safety.jpg"),
+     "Gas Safety Certificate - 505 Synthetic Lane",        "prop5_gas_safety.jpg"),
 
-    ("HE-P5-AST",  "9 Coppice Lane, Bishops Stortford, CM23 4HH",
+    ("HE-P5-AST",  "505 Synthetic Lane, Testham, ZX5 5EE",
      DT["tenancy_agreement"], "ai_prefilled",None,
-     "Tenancy Agreement - 9 Coppice Lane",             "prop5_tenancy.jpg"),
+     "Tenancy Agreement - 505 Synthetic Lane",             "prop5_tenancy.jpg"),
 
-    # ── PROPERTY 6 — 31 Mallard Way  (all AI prefilled) ──────────────────────
-    ("HE-P6-GAS",  "31 Mallard Way, Epping, CM16 7RN",
+    # ── PROPERTY 6 — 606 Example Way  (all AI prefilled) ──────────────────────
+    ("HE-P6-GAS",  "606 Example Way, Demochester, ZX6 6FF",
      DT["gas_safety"],        "ai_prefilled","2026-07-15",
-     "Gas Safety Certificate - 31 Mallard Way",        "prop6_gas_safety.jpg"),
+     "Gas Safety Certificate - 606 Example Way",        "prop6_gas_safety.jpg"),
 
-    ("HE-P6-EICR", "31 Mallard Way, Epping, CM16 7RN",
+    ("HE-P6-EICR", "606 Example Way, Demochester, ZX6 6FF",
      DT["eicr"],              "ai_prefilled","2028-08-08",
-     "EICR - 31 Mallard Way",                          "prop6_eicr.jpg"),
+     "EICR - 606 Example Way",                          "prop6_eicr.jpg"),
 
-    ("HE-P6-EPC",  "31 Mallard Way, Epping, CM16 7RN",
+    ("HE-P6-EPC",  "606 Example Way, Demochester, ZX6 6FF",
      DT["epc"],               "ai_prefilled","2033-08-10",
-     "EPC - 31 Mallard Way",                           "prop6_epc.jpg"),
+     "EPC - 606 Example Way",                           "prop6_epc.jpg"),
 
-    ("HE-P6-DEP",  "31 Mallard Way, Epping, CM16 7RN",
+    ("HE-P6-DEP",  "606 Example Way, Demochester, ZX6 6FF",
      DT["deposit_protection"],"ai_prefilled",None,
-     "Deposit Protection Certificate - 31 Mallard Way","prop6_deposit.jpg"),
+     "Deposit Protection Certificate - 606 Example Way","prop6_deposit.jpg"),
 
-    ("HE-P6-AST",  "31 Mallard Way, Epping, CM16 7RN",
+    ("HE-P6-AST",  "606 Example Way, Demochester, ZX6 6FF",
      DT["tenancy_agreement"], "ai_prefilled",None,
-     "Tenancy Agreement - 31 Mallard Way",             "prop6_tenancy.jpg"),
+     "Tenancy Agreement - 606 Example Way",             "prop6_tenancy.jpg"),
 
-    ("HE-P6-INV",  "31 Mallard Way, Epping, CM16 7RN",
+    ("HE-P6-INV",  "606 Example Way, Demochester, ZX6 6FF",
      DT["inventory"],         "ai_prefilled",None,
-     "Inventory Check-in Report - 31 Mallard Way",     "prop6_inventory.jpg"),
+     "Inventory Check-in Report - 606 Example Way",     "prop6_inventory.jpg"),
 ]
 
 # ---------------------------------------------------------------------------
@@ -412,7 +412,7 @@ def main():
         print("  WARNING: some documents have doc_type=unknown — check above.")
     else:
         print("  All documents look correct.")
-        print("  Reload http://127.0.0.1:5000 and select 'Harlow & Essex Lettings'.")
+        print("  Reload http://127.0.0.1:5000 and select 'Sample Agency Alpha'.")
     print()
 
 

@@ -101,8 +101,8 @@ def seed_portal_db(db_path: Path):
         conn.executemany(
             "INSERT INTO clients (id, name, slug, is_active, deleted_at) VALUES (?, ?, ?, 1, NULL)",
             [
-                (28, "Harlow & Essex Lettings", "harlow-essex-lettings"),
-                (30, "Epping Lettings", "epping-lettings"),
+                (28, "Sample Agency Alpha", "sample-agency-alpha"),
+                (30, "Sample Agency Beta", "sample-agency-beta"),
             ],
         )
         conn.executemany(
@@ -112,15 +112,15 @@ def seed_portal_db(db_path: Path):
             VALUES (?, ?, ?, ?, ?, '', 1, NULL)
             """,
             [
-                (1, "filip@morphiq.co.uk", "Filip", "admin", None),
-                (2, "demo@harlowessex.co.uk", "Demo Manager", "manager", 30),
+                (1, "admin@example.test", "Platform Admin", "admin", None),
+                (2, "manager@example.test", "Demo Manager", "manager", 30),
             ],
         )
         conn.executemany(
             "INSERT INTO properties (id, client_id, address, deleted_at) VALUES (?, ?, ?, NULL)",
             [
-                (101, 28, "22 Ferndale Road, Harlow, CM17 0HL"),
-                (102, 30, "8 Birchwood Lane, Epping, CM16 4AA"),
+                (101, 28, "101 Example Street, Sampletown, ZX1 1AA"),
+                (102, 30, "202 Demo Avenue, Mockford, ZX2 2BB"),
             ],
         )
         conn.executemany(
@@ -143,8 +143,8 @@ def seed_portal_db(db_path: Path):
                     101,
                     28,
                     1,
-                    "HARLOW-GAS-001",
-                    "Harlow Gas Safety",
+                    "ALPHA-GAS-001",
+                    "Sample Gas Safety",
                     "verified",
                     "2026-04-01T09:00:00",
                     "2026-04-01",
@@ -154,8 +154,8 @@ def seed_portal_db(db_path: Path):
                     102,
                     30,
                     2,
-                    "EPPING-TENANCY-001",
-                    "Epping Tenancy",
+                    "BETA-TENANCY-001",
+                    "Sample Tenancy",
                     "verified",
                     "2026-04-02T09:00:00",
                     "2026-04-02",
@@ -181,8 +181,8 @@ def seed_portal_db(db_path: Path):
 @pytest.fixture()
 def portal_app(tmp_path, monkeypatch):
     clients_dir = tmp_path / "Clients"
-    (clients_dir / "Harlow & Essex Lettings").mkdir(parents=True)
-    (clients_dir / "Epping Lettings").mkdir(parents=True)
+    (clients_dir / "Sample Agency Alpha").mkdir(parents=True)
+    (clients_dir / "Sample Agency Beta").mkdir(parents=True)
 
     db_path = tmp_path / "portal.db"
     seed_portal_db(db_path)
@@ -208,32 +208,32 @@ def login_as(client, user_id: int):
 def test_manager_get_current_client_ignores_query_param(portal_app):
     manager = portal_app.User(
         user_id=2,
-        email="demo@harlowessex.co.uk",
+        email="manager@example.test",
         full_name="Demo Manager",
         role="manager",
         client_id=30,
         is_active=True,
     )
 
-    with portal_app.app.test_request_context("/overview?client=Harlow%20%26%20Essex%20Lettings"):
+    with portal_app.app.test_request_context("/overview?client=Sample%20Agency%20Alpha"):
         login_user(manager)
-        assert portal_app.get_current_client() == "Epping Lettings"
+        assert portal_app.get_current_client() == "Sample Agency Beta"
 
 
 def test_admin_get_current_client_persists_query_param(portal_app):
     admin = portal_app.User(
         user_id=1,
-        email="filip@morphiq.co.uk",
-        full_name="Filip",
+        email="admin@example.test",
+        full_name="Platform Admin",
         role="admin",
         client_id=None,
         is_active=True,
     )
 
-    with portal_app.app.test_request_context("/overview?client=Epping%20Lettings"):
+    with portal_app.app.test_request_context("/overview?client=Sample%20Agency%20Beta"):
         login_user(admin)
-        assert portal_app.get_current_client() == "Epping Lettings"
-        assert portal_app.session["selected_client"] == "Epping Lettings"
+        assert portal_app.get_current_client() == "Sample Agency Beta"
+        assert portal_app.session["selected_client"] == "Sample Agency Beta"
 
 
 def test_manager_cannot_fetch_global_client_list(portal_app):
@@ -254,8 +254,8 @@ def test_admin_can_fetch_active_client_list(portal_app):
     assert response.status_code == 200
     payload = response.get_json()
     assert [row["name"] for row in payload["clients"]] == [
-        "Epping Lettings",
-        "Harlow & Essex Lettings",
+        "Sample Agency Alpha",
+        "Sample Agency Beta",
     ]
 
 
@@ -263,12 +263,12 @@ def test_manager_properties_are_scoped_to_assigned_client(portal_app):
     client = portal_app.app.test_client()
     login_as(client, 2)
 
-    response = client.get("/api/properties?client=Harlow%20%26%20Essex%20Lettings")
+    response = client.get("/api/properties?client=Sample%20Agency%20Alpha")
 
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["count"] == 1
-    assert [row["client_name"] for row in payload["properties"]] == ["Epping Lettings"]
+    assert [row["client_name"] for row in payload["properties"]] == ["Sample Agency Beta"]
     assert [row["property_id"] for row in payload["properties"]] == [102]
 
 
@@ -276,12 +276,12 @@ def test_admin_properties_respect_selected_client_scope(portal_app):
     client = portal_app.app.test_client()
     login_as(client, 1)
 
-    response = client.get("/api/properties?client=Harlow%20%26%20Essex%20Lettings")
+    response = client.get("/api/properties?client=Sample%20Agency%20Alpha")
 
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["count"] == 1
-    assert [row["client_name"] for row in payload["properties"]] == ["Harlow & Essex Lettings"]
+    assert [row["client_name"] for row in payload["properties"]] == ["Sample Agency Alpha"]
     assert [row["property_id"] for row in payload["properties"]] == [101]
 
 
@@ -289,26 +289,26 @@ def test_manager_documents_are_scoped_to_assigned_client(portal_app):
     client = portal_app.app.test_client()
     login_as(client, 2)
 
-    response = client.get("/api/documents?client=Harlow%20%26%20Essex%20Lettings")
+    response = client.get("/api/documents?client=Sample%20Agency%20Alpha")
 
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["count"] == 1
-    assert [row["client_name"] for row in payload["documents"]] == ["Epping Lettings"]
-    assert [row["source_doc_id"] for row in payload["documents"]] == ["EPPING-TENANCY-001"]
+    assert [row["client_name"] for row in payload["documents"]] == ["Sample Agency Beta"]
+    assert [row["source_doc_id"] for row in payload["documents"]] == ["BETA-TENANCY-001"]
 
 
 def test_admin_documents_respect_selected_client_scope(portal_app):
     client = portal_app.app.test_client()
     login_as(client, 1)
 
-    response = client.get("/api/documents?client=Harlow%20%26%20Essex%20Lettings")
+    response = client.get("/api/documents?client=Sample%20Agency%20Alpha")
 
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["count"] == 1
-    assert [row["client_name"] for row in payload["documents"]] == ["Harlow & Essex Lettings"]
-    assert [row["source_doc_id"] for row in payload["documents"]] == ["HARLOW-GAS-001"]
+    assert [row["client_name"] for row in payload["documents"]] == ["Sample Agency Alpha"]
+    assert [row["source_doc_id"] for row in payload["documents"]] == ["ALPHA-GAS-001"]
 
 
 def test_manager_can_fetch_property_detail_for_assigned_client(portal_app):
@@ -320,7 +320,7 @@ def test_manager_can_fetch_property_detail_for_assigned_client(portal_app):
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["property"]["property_id"] == 102
-    assert payload["property"]["client_name"] == "Epping Lettings"
+    assert payload["property"]["client_name"] == "Sample Agency Beta"
 
 
 def test_manager_cannot_fetch_property_detail_for_other_client(portal_app):
@@ -341,7 +341,7 @@ def test_admin_can_fetch_property_detail_across_clients(portal_app):
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["property"]["property_id"] == 101
-    assert payload["property"]["client_name"] == "Harlow & Essex Lettings"
+    assert payload["property"]["client_name"] == "Sample Agency Alpha"
 
 
 def test_manager_cannot_fetch_property_report_for_other_client(portal_app):
@@ -381,14 +381,14 @@ def test_admin_can_fetch_document_by_id_across_clients(portal_app):
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["id"] == 1001
-    assert payload["client_name"] == "Harlow & Essex Lettings"
+    assert payload["client_name"] == "Sample Agency Alpha"
 
 
 def test_manager_cannot_fetch_document_by_source_for_other_client(portal_app):
     client = portal_app.app.test_client()
     login_as(client, 2)
 
-    response = client.get("/api/documents/HARLOW-GAS-001")
+    response = client.get("/api/documents/ALPHA-GAS-001")
 
     assert response.status_code == 404
 
@@ -406,7 +406,7 @@ def test_manager_cannot_fetch_document_pdf_by_source_for_other_client(portal_app
     client = portal_app.app.test_client()
     login_as(client, 2)
 
-    response = client.get("/api/documents/by-source/HARLOW-GAS-001/pdf")
+    response = client.get("/api/documents/by-source/ALPHA-GAS-001/pdf")
 
     assert response.status_code == 404
 

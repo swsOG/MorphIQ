@@ -2,7 +2,7 @@
 Re-run ai_prefill.py for DOC folders that are still New or have unknown doc type.
 
 Usage:
-  python rerun_prefill.py "Oakwood Lettings" "Riverside Property Management"
+  python rerun_prefill.py "Sample Agency Alpha" "Sample Agency Beta"
 """
 
 from __future__ import annotations
@@ -147,7 +147,7 @@ def main() -> None:
     parser.add_argument(
         "clients",
         nargs="+",
-        help='One or more client folder names under Clients/, e.g. "Oakwood Lettings"',
+        help='One or more client folder names under Clients/, e.g. "Sample Agency Alpha"',
     )
     args = parser.parse_args()
 

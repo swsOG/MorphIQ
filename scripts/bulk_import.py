@@ -32,11 +32,11 @@ class ClientConfig:
 
 
 CLIENTS: dict[str, ClientConfig] = {
-    "A": ClientConfig("A", "Northgate Properties", 50, 5),
-    "B": ClientConfig("B", "Oakwood Lettings", 100, 10),
-    "C": ClientConfig("C", "Riverside Property Management", 150, 15),
-    "D": ClientConfig("D", "Heritage Estates", 300, 30),
-    "E": ClientConfig("E", "Belmont & Associates", 400, 40),
+    "A": ClientConfig("A", "Sample Agency Alpha", 50, 5),
+    "B": ClientConfig("B", "Sample Agency Beta", 100, 10),
+    "C": ClientConfig("C", "Sample Agency Gamma", 150, 15),
+    "D": ClientConfig("D", "Sample Agency Delta", 300, 30),
+    "E": ClientConfig("E", "Sample Agency Epsilon", 400, 40),
 }
 
 
@@ -70,16 +70,16 @@ def parse_doc_type_from_filename(path: Path) -> str:
 
 def generate_property_addresses(count: int) -> List[str]:
     towns = [
-        "Harlow",
-        "Bishops Stortford",
-        "Epping",
-        "Hoddesdon",
-        "Waltham Abbey",
-        "Broxbourne",
-        "Cheshunt",
-        "Sawbridgeworth",
-        "Roydon",
-        "Nazeing",
+        "Sampletown",
+        "Mockford",
+        "Demochester",
+        "Testham",
+        "Fixture Bay",
+        "Placeholder Green",
+        "Example Cross",
+        "Synthetic Fields",
+        "Mockbury",
+        "Demo Heath",
     ]
     street_bases = [
         "Gilden Way",
@@ -104,18 +104,18 @@ def generate_property_addresses(count: int) -> List[str]:
         "Beech Avenue",
     ]
     postcodes = [
-        "CM17",
-        "CM18",
-        "CM19",
-        "CM20",
-        "CM23",
-        "CM16",
-        "EN7",
-        "EN8",
-        "EN9",
-        "EN10",
-        "EN11",
-        "SG12",
+        "ZX1",
+        "ZX2",
+        "ZX3",
+        "ZX4",
+        "ZX5",
+        "ZX6",
+        "QX1",
+        "QX2",
+        "QX3",
+        "QX4",
+        "QX5",
+        "QX6",
     ]
 
     rng = random.Random(42)  # deterministic for repeatable runs
@@ -481,4 +481,3 @@ def main(argv: List[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-

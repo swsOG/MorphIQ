@@ -8,7 +8,7 @@ async function signIn(page, email, password) {
 }
 
 test("manager can report an issue and admin sees it in the issues workspace", async ({ page, context }) => {
-  await signIn(page, "demo@epping.co.uk", "Password123!");
+  await signIn(page, "manager@example.test", "Password123!");
 
   await expect(page).toHaveURL(/\/overview$/);
 
@@ -26,18 +26,18 @@ test("manager can report an issue and admin sees it in the issues workspace", as
   await expect(page.getByText("Issue #", { exact: false })).toBeVisible();
 
   await page.locator("#document-issue-support-link").click();
-  await expect(page).toHaveURL(/\/settings\?client=Epping%20Lettings#settings-support-card$/);
+  await expect(page).toHaveURL(/\/settings\?client=Sample%20Agency%20Beta#settings-support-card$/);
   await expect(page.getByRole("heading", { name: "Support and delivery follow-up" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Support chat" })).toBeVisible();
 
   await page.goto("/logout");
 
   const adminPage = await context.newPage();
-  await signIn(adminPage, "filip@morphiq.co.uk", "Password123!");
-  await adminPage.goto("/issues?client=Epping%20Lettings");
+  await signIn(adminPage, "admin@example.test", "Password123!");
+  await adminPage.goto("/issues?client=Sample%20Agency%20Beta");
 
   await expect(adminPage.getByRole("heading", { name: "Issues workspace" })).toBeVisible();
   await expect(adminPage.locator("#issues-metric-open")).toHaveText("1");
   await expect(adminPage.locator("#issues-queue-tbody")).toContainText("Review queue");
-  await expect(adminPage.locator("#issues-queue-tbody")).toContainText("Epping Lettings");
+  await expect(adminPage.locator("#issues-queue-tbody")).toContainText("Sample Agency Beta");
 });

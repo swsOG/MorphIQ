@@ -9,8 +9,8 @@ USAGE:
     python simulate_multipage.py <client_name> <image1> <image2> [image3] [--doc-name "Tenancy Agreement"]
 
 EXAMPLES:
-    python simulate_multipage.py "Ligant Agency" page1.jpg page2.jpg page3.jpg
-    python simulate_multipage.py "Ligant Agency" page1.jpg page2.jpg --doc-name "Tenancy Agreement - 14 Elm Street"
+    python simulate_multipage.py "Sample Agency Alpha" page1.jpg page2.jpg page3.jpg
+    python simulate_multipage.py "Sample Agency Alpha" page1.jpg page2.jpg --doc-name "Tenancy Agreement - 101 Example Street"
 
 The script will:
   1. Copy each image into Clients/<client>/raw/ with a timestamped filename
@@ -31,7 +31,7 @@ def main():
     
     if len(args) < 3:
         print("Usage: python simulate_multipage.py <client_name> <image1> <image2> [image3] [--doc-name \"name\"]")
-        print("Example: python simulate_multipage.py \"Ligant Agency\" page1.jpg page2.jpg page3.jpg")
+        print("Example: python simulate_multipage.py \"Sample Agency Alpha\" page1.jpg page2.jpg page3.jpg")
         sys.exit(1)
     
     client_name = args[0]

@@ -218,7 +218,7 @@ def main() -> None:
         "clients",
         nargs="*",
         default=[],
-        help='Exact client names as in clients.name, e.g. "Oakwood Lettings"',
+        help='Exact client names as in clients.name, e.g. "Sample Agency Alpha"',
     )
     args = parser.parse_args()
 

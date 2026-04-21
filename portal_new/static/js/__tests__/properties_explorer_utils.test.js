@@ -13,13 +13,13 @@ const {
 const sampleProperties = [
   {
     property_id: 1,
-    property_address: "7 Thornfield Road, Harlow, CM20 2BX",
-    client_name: "Harlow & Essex Lettings",
+    property_address: "303 Fixture Road, Sampletown, ZX3 3CC",
+    client_name: "Sample Agency Alpha",
     tenant_name: "Sandra Obi",
     overall_status: "non_compliant",
     latest_activity_date: "2026-04-18T10:00:00Z",
     search_meta: {
-      area: "Harlow",
+      area: "Sampletown",
       document_types: ["EICR", "Gas Safety Certificate", "EPC"],
       document_ids: ["DOC-00031"],
     },
@@ -32,13 +32,13 @@ const sampleProperties = [
   },
   {
     property_id: 2,
-    property_address: "31 Mallard Way, Epping, CM16 7RN",
-    client_name: "Harlow & Essex Lettings",
+    property_address: "606 Example Way, Demochester, ZX6 6FF",
+    client_name: "Sample Agency Alpha",
     tenant_name: "George Kowalski",
     overall_status: "compliant",
     latest_activity_date: "2026-04-19T12:00:00Z",
     search_meta: {
-      area: "Epping",
+      area: "Demochester",
       document_types: ["EICR", "Gas Safety Certificate", "EPC", "Deposit Protection Certificate"],
       document_ids: ["DOC-00099"],
     },
@@ -51,13 +51,13 @@ const sampleProperties = [
   },
   {
     property_id: 3,
-    property_address: "23 Linnet Drive, Hoddesdon, EN11 9QR",
-    client_name: "Harlow & Essex Lettings",
+    property_address: "404 Placeholder Drive, Mockford, ZX4 4DD",
+    client_name: "Sample Agency Alpha",
     tenant_name: "Priya Nair",
     overall_status: "at_risk",
     latest_activity_date: "2026-04-16T09:30:00Z",
     search_meta: {
-      area: "Hoddesdon",
+      area: "Mockford",
       document_types: ["EICR", "Gas Safety Certificate"],
       document_ids: ["DOC-00420"],
     },
@@ -81,8 +81,8 @@ function runTest(name, fn) {
 }
 
 runTest("extractArea returns the middle address segment before the postcode", () => {
-  assert.equal(extractArea("7 Thornfield Road, Harlow, CM20 2BX"), "Harlow");
-  assert.equal(extractArea("23 Linnet Drive, Hoddesdon, EN11 9QR"), "Hoddesdon");
+  assert.equal(extractArea("303 Fixture Road, Sampletown, ZX3 3CC"), "Sampletown");
+  assert.equal(extractArea("404 Placeholder Drive, Mockford, ZX4 4DD"), "Mockford");
 });
 
 runTest("calculateComplianceScore ranks compliant properties above non-compliant ones", () => {
@@ -92,7 +92,7 @@ runTest("calculateComplianceScore ranks compliant properties above non-compliant
 
 runTest("buildPropertySearchBlob includes document types, ids, area, and status keywords", () => {
   const blob = buildPropertySearchBlob(sampleProperties[0]);
-  assert.match(blob, /harlow/i);
+  assert.match(blob, /sampletown/i);
   assert.match(blob, /eicr/i);
   assert.match(blob, /doc-00031/i);
   assert.match(blob, /expired/i);
@@ -109,7 +109,7 @@ runTest("filterProperties matches unified search text across property and docume
     [1, 2, 3]
   );
   assert.deepEqual(
-    filterProperties(sampleProperties, { query: "harlow", area: "Harlow" }).map((row) => row.property_id),
+    filterProperties(sampleProperties, { query: "sampletown", area: "Sampletown" }).map((row) => row.property_id),
     [1]
   );
 });

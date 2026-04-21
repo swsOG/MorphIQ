@@ -3,7 +3,7 @@ MorphIQ Test Document Generator -- JPEG Edition
 Generates A4 JPEG images (2480x3508px @ 300dpi) that look like real UK letting
 agency documents with clearly laid-out field labels and values for Tesseract OCR.
 
-Output: Clients/Harlow & Essex Lettings/raw/
+Output: Clients/Sample Agency Alpha/raw/
 Each JPEG has a matching .meta.json sidecar.
 
 Usage:
@@ -25,7 +25,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 BASE = Path(__file__).resolve().parent.parent
-CLIENT_NAME = "Harlow & Essex Lettings"
+CLIENT_NAME = "Sample Agency Alpha"
 RAW_DIR = BASE / "Clients" / CLIENT_NAME / "raw"
 
 # A4 at 300 dpi
@@ -201,16 +201,16 @@ def write_meta(jpg_path, address, doc_name, doc_type):
 DOCS = [
 
     # =========================================================================
-    # PROPERTY 1 -- 4 Birchwood Close, Harlow  (all fully valid)
+    # PROPERTY 1 -- 101 Example Street, Sampletown  (all fully valid)
     # =========================================================================
     dict(
         filename = "prop1_gas_safety.jpg",
         title    = "GAS SAFETY CERTIFICATE (CP12)",
         doc_type = "gas_safety",
-        address  = "4 Birchwood Close, Harlow, CM17 0PQ",
-        doc_name = "Gas Safety Certificate - 4 Birchwood Close",
+        address  = "101 Example Street, Sampletown, ZX1 1AA",
+        doc_name = "Gas Safety Certificate - 101 Example Street",
         fields   = [
-            ("Property Address",      "4 Birchwood Close, Harlow, CM17 0PQ"),
+            ("Property Address",      "101 Example Street, Sampletown, ZX1 1AA"),
             ("Engineer Name",         "Paul Hendry"),
             ("Gas Safe Registration", "612934"),
             ("Inspection Date",       "10 March 2026"),
@@ -225,10 +225,10 @@ DOCS = [
         filename = "prop1_eicr.jpg",
         title    = "ELECTRICAL INSTALLATION CONDITION REPORT (EICR)",
         doc_type = "eicr",
-        address  = "4 Birchwood Close, Harlow, CM17 0PQ",
-        doc_name = "EICR - 4 Birchwood Close",
+        address  = "101 Example Street, Sampletown, ZX1 1AA",
+        doc_name = "EICR - 101 Example Street",
         fields   = [
-            ("Property Address",    "4 Birchwood Close, Harlow, CM17 0PQ"),
+            ("Property Address",    "101 Example Street, Sampletown, ZX1 1AA"),
             ("Electrician",         "Bright Spark Ltd"),
             ("NICEIC Registration", "7731"),
             ("Inspection Date",     "05 January 2024"),
@@ -242,10 +242,10 @@ DOCS = [
         filename = "prop1_epc.jpg",
         title    = "ENERGY PERFORMANCE CERTIFICATE (EPC)",
         doc_type = "epc",
-        address  = "4 Birchwood Close, Harlow, CM17 0PQ",
-        doc_name = "EPC - 4 Birchwood Close",
+        address  = "101 Example Street, Sampletown, ZX1 1AA",
+        doc_name = "EPC - 101 Example Street",
         fields   = [
-            ("Property Address",         "4 Birchwood Close, Harlow, CM17 0PQ"),
+            ("Property Address",         "101 Example Street, Sampletown, ZX1 1AA"),
             ("Current Energy Rating",    "B"),
             ("Energy Score",             "85"),
             ("Assessor",                 "EcoAssess UK"),
@@ -259,10 +259,10 @@ DOCS = [
         filename = "prop1_deposit.jpg",
         title    = "DEPOSIT PROTECTION CERTIFICATE",
         doc_type = "deposit_protection",
-        address  = "4 Birchwood Close, Harlow, CM17 0PQ",
-        doc_name = "Deposit Protection Certificate - 4 Birchwood Close",
+        address  = "101 Example Street, Sampletown, ZX1 1AA",
+        doc_name = "Deposit Protection Certificate - 101 Example Street",
         fields   = [
-            ("Property Address",   "4 Birchwood Close, Harlow, CM17 0PQ"),
+            ("Property Address",   "101 Example Street, Sampletown, ZX1 1AA"),
             ("Tenant Name",        "James & Claire Whitfield"),
             ("Deposit Amount",     "GBP 1,295"),
             ("Protection Scheme",  "TDS (Tenancy Deposit Scheme)"),
@@ -275,10 +275,10 @@ DOCS = [
         filename = "prop1_tenancy.jpg",
         title    = "ASSURED SHORTHOLD TENANCY AGREEMENT",
         doc_type = "tenancy_agreement",
-        address  = "4 Birchwood Close, Harlow, CM17 0PQ",
-        doc_name = "Tenancy Agreement - 4 Birchwood Close",
+        address  = "101 Example Street, Sampletown, ZX1 1AA",
+        doc_name = "Tenancy Agreement - 101 Example Street",
         fields   = [
-            ("Property Address",    "4 Birchwood Close, Harlow, CM17 0PQ"),
+            ("Property Address",    "101 Example Street, Sampletown, ZX1 1AA"),
             ("Tenant Full Name",    "James & Claire Whitfield"),
             ("Landlord",            "H. Patel"),
             ("Monthly Rent Amount", "GBP 1,295"),
@@ -292,10 +292,10 @@ DOCS = [
         filename = "prop1_inventory.jpg",
         title    = "INVENTORY AND CHECK-IN REPORT",
         doc_type = "inventory",
-        address  = "4 Birchwood Close, Harlow, CM17 0PQ",
-        doc_name = "Inventory Check-in Report - 4 Birchwood Close",
+        address  = "101 Example Street, Sampletown, ZX1 1AA",
+        doc_name = "Inventory Check-in Report - 101 Example Street",
         fields   = [
-            ("Property Address", "4 Birchwood Close, Harlow, CM17 0PQ"),
+            ("Property Address", "101 Example Street, Sampletown, ZX1 1AA"),
             ("Inspection Date",  "15 September 2022"),
             ("Clerk",            "Premier Inventories Ltd"),
             ("Tenant",           "James & Claire Whitfield"),
@@ -310,16 +310,16 @@ DOCS = [
     ),
 
     # =========================================================================
-    # PROPERTY 2 -- 12 Rosebank Avenue, Epping  (all expiring within 60 days)
+    # PROPERTY 2 -- 202 Demo Avenue, Mockford  (all expiring within 60 days)
     # =========================================================================
     dict(
         filename = "prop2_gas_safety.jpg",
         title    = "GAS SAFETY CERTIFICATE (CP12)",
         doc_type = "gas_safety",
-        address  = "12 Rosebank Avenue, Epping, CM16 5TR",
-        doc_name = "Gas Safety Certificate - 12 Rosebank Avenue",
+        address  = "202 Demo Avenue, Mockford, ZX2 2BB",
+        doc_name = "Gas Safety Certificate - 202 Demo Avenue",
         fields   = [
-            ("Property Address",      "12 Rosebank Avenue, Epping, CM16 5TR"),
+            ("Property Address",      "202 Demo Avenue, Mockford, ZX2 2BB"),
             ("Engineer Name",         "SafeGas Essex"),
             ("Gas Safe Registration", "509122"),
             ("Inspection Date",       "18 April 2025"),
@@ -333,10 +333,10 @@ DOCS = [
         filename = "prop2_eicr.jpg",
         title    = "ELECTRICAL INSTALLATION CONDITION REPORT (EICR)",
         doc_type = "eicr",
-        address  = "12 Rosebank Avenue, Epping, CM16 5TR",
-        doc_name = "EICR - 12 Rosebank Avenue",
+        address  = "202 Demo Avenue, Mockford, ZX2 2BB",
+        doc_name = "EICR - 202 Demo Avenue",
         fields   = [
-            ("Property Address",    "12 Rosebank Avenue, Epping, CM16 5TR"),
+            ("Property Address",    "202 Demo Avenue, Mockford, ZX2 2BB"),
             ("Electrician",         "Voltex Electrical"),
             ("NICEIC Registration", "4422"),
             ("Inspection Date",     "12 May 2021"),
@@ -350,10 +350,10 @@ DOCS = [
         filename = "prop2_epc.jpg",
         title    = "ENERGY PERFORMANCE CERTIFICATE (EPC)",
         doc_type = "epc",
-        address  = "12 Rosebank Avenue, Epping, CM16 5TR",
-        doc_name = "EPC - 12 Rosebank Avenue",
+        address  = "202 Demo Avenue, Mockford, ZX2 2BB",
+        doc_name = "EPC - 202 Demo Avenue",
         fields   = [
-            ("Property Address",     "12 Rosebank Avenue, Epping, CM16 5TR"),
+            ("Property Address",     "202 Demo Avenue, Mockford, ZX2 2BB"),
             ("Current Energy Rating","C"),
             ("Energy Score",         "72"),
             ("Assessor",             "HomeSurvey Ltd"),
@@ -366,10 +366,10 @@ DOCS = [
         filename = "prop2_deposit.jpg",
         title    = "DEPOSIT PROTECTION CERTIFICATE",
         doc_type = "deposit_protection",
-        address  = "12 Rosebank Avenue, Epping, CM16 5TR",
-        doc_name = "Deposit Protection Certificate - 12 Rosebank Avenue",
+        address  = "202 Demo Avenue, Mockford, ZX2 2BB",
+        doc_name = "Deposit Protection Certificate - 202 Demo Avenue",
         fields   = [
-            ("Property Address",   "12 Rosebank Avenue, Epping, CM16 5TR"),
+            ("Property Address",   "202 Demo Avenue, Mockford, ZX2 2BB"),
             ("Tenant Name",        "Mohammed Al-Rashid"),
             ("Deposit Amount",     "GBP 1,150"),
             ("Protection Scheme",  "MyDeposits"),
@@ -382,10 +382,10 @@ DOCS = [
         filename = "prop2_tenancy.jpg",
         title    = "ASSURED SHORTHOLD TENANCY AGREEMENT",
         doc_type = "tenancy_agreement",
-        address  = "12 Rosebank Avenue, Epping, CM16 5TR",
-        doc_name = "Tenancy Agreement - 12 Rosebank Avenue",
+        address  = "202 Demo Avenue, Mockford, ZX2 2BB",
+        doc_name = "Tenancy Agreement - 202 Demo Avenue",
         fields   = [
-            ("Property Address",    "12 Rosebank Avenue, Epping, CM16 5TR"),
+            ("Property Address",    "202 Demo Avenue, Mockford, ZX2 2BB"),
             ("Tenant Full Name",    "Mohammed Al-Rashid"),
             ("Landlord",            "S. Okafor"),
             ("Monthly Rent Amount", "GBP 1,150"),
@@ -396,16 +396,16 @@ DOCS = [
     ),
 
     # =========================================================================
-    # PROPERTY 3 -- 7 Thornfield Road, Harlow  (all expired)
+    # PROPERTY 3 -- 303 Fixture Road, Sampletown  (all expired)
     # =========================================================================
     dict(
         filename = "prop3_gas_safety.jpg",
         title    = "GAS SAFETY CERTIFICATE (CP12)",
         doc_type = "gas_safety",
-        address  = "7 Thornfield Road, Harlow, CM20 2BX",
-        doc_name = "Gas Safety Certificate - 7 Thornfield Road",
+        address  = "303 Fixture Road, Sampletown, ZX3 3CC",
+        doc_name = "Gas Safety Certificate - 303 Fixture Road",
         fields   = [
-            ("Property Address",      "7 Thornfield Road, Harlow, CM20 2BX"),
+            ("Property Address",      "303 Fixture Road, Sampletown, ZX3 3CC"),
             ("Engineer Name",         "Essex Gas Services"),
             ("Gas Safe Registration", "388812"),
             ("Inspection Date",       "08 January 2024"),
@@ -420,10 +420,10 @@ DOCS = [
         filename = "prop3_eicr.jpg",
         title    = "ELECTRICAL INSTALLATION CONDITION REPORT (EICR)",
         doc_type = "eicr",
-        address  = "7 Thornfield Road, Harlow, CM20 2BX",
-        doc_name = "EICR - 7 Thornfield Road",
+        address  = "303 Fixture Road, Sampletown, ZX3 3CC",
+        doc_name = "EICR - 303 Fixture Road",
         fields   = [
-            ("Property Address",    "7 Thornfield Road, Harlow, CM20 2BX"),
+            ("Property Address",    "303 Fixture Road, Sampletown, ZX3 3CC"),
             ("Electrician",         "County Electrics"),
             ("NICEIC Registration", "3301"),
             ("Inspection Date",     "15 March 2019"),
@@ -437,10 +437,10 @@ DOCS = [
         filename = "prop3_epc.jpg",
         title    = "ENERGY PERFORMANCE CERTIFICATE (EPC)",
         doc_type = "epc",
-        address  = "7 Thornfield Road, Harlow, CM20 2BX",
-        doc_name = "EPC - 7 Thornfield Road",
+        address  = "303 Fixture Road, Sampletown, ZX3 3CC",
+        doc_name = "EPC - 303 Fixture Road",
         fields   = [
-            ("Property Address",     "7 Thornfield Road, Harlow, CM20 2BX"),
+            ("Property Address",     "303 Fixture Road, Sampletown, ZX3 3CC"),
             ("Current Energy Rating","D"),
             ("Energy Score",         "58"),
             ("Assessor",             "SurveyCo"),
@@ -453,10 +453,10 @@ DOCS = [
         filename = "prop3_tenancy.jpg",
         title    = "ASSURED SHORTHOLD TENANCY AGREEMENT",
         doc_type = "tenancy_agreement",
-        address  = "7 Thornfield Road, Harlow, CM20 2BX",
-        doc_name = "Tenancy Agreement - 7 Thornfield Road",
+        address  = "303 Fixture Road, Sampletown, ZX3 3CC",
+        doc_name = "Tenancy Agreement - 303 Fixture Road",
         fields   = [
-            ("Property Address",    "7 Thornfield Road, Harlow, CM20 2BX"),
+            ("Property Address",    "303 Fixture Road, Sampletown, ZX3 3CC"),
             ("Tenant Full Name",    "Sandra & Kevin Obi"),
             ("Landlord",            "T. Brennan"),
             ("Monthly Rent Amount", "GBP 1,400"),
@@ -467,16 +467,16 @@ DOCS = [
     ),
 
     # =========================================================================
-    # PROPERTY 4 -- 23 Linnet Drive, Hoddesdon  (mixed / no deposit)
+    # PROPERTY 4 -- 404 Placeholder Drive, Mockford  (mixed / no deposit)
     # =========================================================================
     dict(
         filename = "prop4_gas_safety.jpg",
         title    = "GAS SAFETY CERTIFICATE (CP12)",
         doc_type = "gas_safety",
-        address  = "23 Linnet Drive, Hoddesdon, EN11 9QR",
-        doc_name = "Gas Safety Certificate - 23 Linnet Drive",
+        address  = "404 Placeholder Drive, Mockford, ZX4 4DD",
+        doc_name = "Gas Safety Certificate - 404 Placeholder Drive",
         fields   = [
-            ("Property Address",      "23 Linnet Drive, Hoddesdon, EN11 9QR"),
+            ("Property Address",      "404 Placeholder Drive, Mockford, ZX4 4DD"),
             ("Engineer Name",         "SafeHeat Ltd"),
             ("Gas Safe Registration", "701234"),
             ("Inspection Date",       "14 February 2026"),
@@ -490,10 +490,10 @@ DOCS = [
         filename = "prop4_eicr.jpg",
         title    = "ELECTRICAL INSTALLATION CONDITION REPORT (EICR)",
         doc_type = "eicr",
-        address  = "23 Linnet Drive, Hoddesdon, EN11 9QR",
-        doc_name = "EICR - 23 Linnet Drive",
+        address  = "404 Placeholder Drive, Mockford, ZX4 4DD",
+        doc_name = "EICR - 404 Placeholder Drive",
         fields   = [
-            ("Property Address",    "23 Linnet Drive, Hoddesdon, EN11 9QR"),
+            ("Property Address",    "404 Placeholder Drive, Mockford, ZX4 4DD"),
             ("Electrician",         "Spark Right"),
             ("NICEIC Registration", "8821"),
             ("Inspection Date",     "03 October 2023"),
@@ -507,10 +507,10 @@ DOCS = [
         filename = "prop4_epc.jpg",
         title    = "ENERGY PERFORMANCE CERTIFICATE (EPC)",
         doc_type = "epc",
-        address  = "23 Linnet Drive, Hoddesdon, EN11 9QR",
-        doc_name = "EPC - 23 Linnet Drive",
+        address  = "404 Placeholder Drive, Mockford, ZX4 4DD",
+        doc_name = "EPC - 404 Placeholder Drive",
         fields   = [
-            ("Property Address",     "23 Linnet Drive, Hoddesdon, EN11 9QR"),
+            ("Property Address",     "404 Placeholder Drive, Mockford, ZX4 4DD"),
             ("Current Energy Rating","E"),
             ("Energy Score",         "42"),
             ("Assessor",             "BasicSurveys"),
@@ -523,10 +523,10 @@ DOCS = [
         filename = "prop4_tenancy.jpg",
         title    = "ASSURED SHORTHOLD TENANCY AGREEMENT",
         doc_type = "tenancy_agreement",
-        address  = "23 Linnet Drive, Hoddesdon, EN11 9QR",
-        doc_name = "Tenancy Agreement - 23 Linnet Drive",
+        address  = "404 Placeholder Drive, Mockford, ZX4 4DD",
+        doc_name = "Tenancy Agreement - 404 Placeholder Drive",
         fields   = [
-            ("Property Address",    "23 Linnet Drive, Hoddesdon, EN11 9QR"),
+            ("Property Address",    "404 Placeholder Drive, Mockford, ZX4 4DD"),
             ("Tenant Full Name",    "Priya Nair"),
             ("Landlord",            "R. Gupta"),
             ("Monthly Rent Amount", "GBP 1,050"),
@@ -537,16 +537,16 @@ DOCS = [
     ),
 
     # =========================================================================
-    # PROPERTY 5 -- 9 Coppice Lane, Bishops Stortford  (sparse: 2 docs only)
+    # PROPERTY 5 -- 505 Synthetic Lane, Testham  (sparse: 2 docs only)
     # =========================================================================
     dict(
         filename = "prop5_gas_safety.jpg",
         title    = "GAS SAFETY CERTIFICATE (CP12)",
         doc_type = "gas_safety",
-        address  = "9 Coppice Lane, Bishops Stortford, CM23 4HH",
-        doc_name = "Gas Safety Certificate - 9 Coppice Lane",
+        address  = "505 Synthetic Lane, Testham, ZX5 5EE",
+        doc_name = "Gas Safety Certificate - 505 Synthetic Lane",
         fields   = [
-            ("Property Address",      "9 Coppice Lane, Bishops Stortford, CM23 4HH"),
+            ("Property Address",      "505 Synthetic Lane, Testham, ZX5 5EE"),
             ("Engineer Name",         "Premier Gas"),
             ("Gas Safe Registration", "445521"),
             ("Inspection Date",       "22 January 2026"),
@@ -559,10 +559,10 @@ DOCS = [
         filename = "prop5_tenancy.jpg",
         title    = "ASSURED SHORTHOLD TENANCY AGREEMENT",
         doc_type = "tenancy_agreement",
-        address  = "9 Coppice Lane, Bishops Stortford, CM23 4HH",
-        doc_name = "Tenancy Agreement - 9 Coppice Lane",
+        address  = "505 Synthetic Lane, Testham, ZX5 5EE",
+        doc_name = "Tenancy Agreement - 505 Synthetic Lane",
         fields   = [
-            ("Property Address",    "9 Coppice Lane, Bishops Stortford, CM23 4HH"),
+            ("Property Address",    "505 Synthetic Lane, Testham, ZX5 5EE"),
             ("Tenant Full Name",    "To Be Confirmed"),
             ("Landlord",            "F. Andersen"),
             ("Monthly Rent Amount", "GBP 1,100"),
@@ -573,16 +573,16 @@ DOCS = [
     ),
 
     # =========================================================================
-    # PROPERTY 6 -- 31 Mallard Way, Epping  (all AI prefilled -- none verified)
+    # PROPERTY 6 -- 606 Example Way, Demochester  (all AI prefilled -- none verified)
     # =========================================================================
     dict(
         filename = "prop6_gas_safety.jpg",
         title    = "GAS SAFETY CERTIFICATE (CP12)",
         doc_type = "gas_safety",
-        address  = "31 Mallard Way, Epping, CM16 7RN",
-        doc_name = "Gas Safety Certificate - 31 Mallard Way",
+        address  = "606 Example Way, Demochester, ZX6 6FF",
+        doc_name = "Gas Safety Certificate - 606 Example Way",
         fields   = [
-            ("Property Address",      "31 Mallard Way, Epping, CM16 7RN"),
+            ("Property Address",      "606 Example Way, Demochester, ZX6 6FF"),
             ("Engineer Name",         "AllGas UK"),
             ("Gas Safe Registration", "523001"),
             ("Inspection Date",       "15 July 2025"),
@@ -596,10 +596,10 @@ DOCS = [
         filename = "prop6_eicr.jpg",
         title    = "ELECTRICAL INSTALLATION CONDITION REPORT (EICR)",
         doc_type = "eicr",
-        address  = "31 Mallard Way, Epping, CM16 7RN",
-        doc_name = "EICR - 31 Mallard Way",
+        address  = "606 Example Way, Demochester, ZX6 6FF",
+        doc_name = "EICR - 606 Example Way",
         fields   = [
-            ("Property Address",    "31 Mallard Way, Epping, CM16 7RN"),
+            ("Property Address",    "606 Example Way, Demochester, ZX6 6FF"),
             ("Electrician",         "PowerCheck Ltd"),
             ("NICEIC Registration", "6612"),
             ("Inspection Date",     "08 August 2023"),
@@ -613,10 +613,10 @@ DOCS = [
         filename = "prop6_epc.jpg",
         title    = "ENERGY PERFORMANCE CERTIFICATE (EPC)",
         doc_type = "epc",
-        address  = "31 Mallard Way, Epping, CM16 7RN",
-        doc_name = "EPC - 31 Mallard Way",
+        address  = "606 Example Way, Demochester, ZX6 6FF",
+        doc_name = "EPC - 606 Example Way",
         fields   = [
-            ("Property Address",     "31 Mallard Way, Epping, CM16 7RN"),
+            ("Property Address",     "606 Example Way, Demochester, ZX6 6FF"),
             ("Current Energy Rating","C"),
             ("Energy Score",         "68"),
             ("Assessor",             "GreenRate"),
@@ -629,10 +629,10 @@ DOCS = [
         filename = "prop6_deposit.jpg",
         title    = "DEPOSIT PROTECTION CERTIFICATE",
         doc_type = "deposit_protection",
-        address  = "31 Mallard Way, Epping, CM16 7RN",
-        doc_name = "Deposit Protection Certificate - 31 Mallard Way",
+        address  = "606 Example Way, Demochester, ZX6 6FF",
+        doc_name = "Deposit Protection Certificate - 606 Example Way",
         fields   = [
-            ("Property Address",   "31 Mallard Way, Epping, CM16 7RN"),
+            ("Property Address",   "606 Example Way, Demochester, ZX6 6FF"),
             ("Tenant Name",        "George & Irene Kowalski"),
             ("Deposit Amount",     "GBP 1,375"),
             ("Protection Scheme",  "DPS (Deposit Protection Service)"),
@@ -645,10 +645,10 @@ DOCS = [
         filename = "prop6_tenancy.jpg",
         title    = "ASSURED SHORTHOLD TENANCY AGREEMENT",
         doc_type = "tenancy_agreement",
-        address  = "31 Mallard Way, Epping, CM16 7RN",
-        doc_name = "Tenancy Agreement - 31 Mallard Way",
+        address  = "606 Example Way, Demochester, ZX6 6FF",
+        doc_name = "Tenancy Agreement - 606 Example Way",
         fields   = [
-            ("Property Address",    "31 Mallard Way, Epping, CM16 7RN"),
+            ("Property Address",    "606 Example Way, Demochester, ZX6 6FF"),
             ("Tenant Full Name",    "George & Irene Kowalski"),
             ("Landlord",            "M. Nowak"),
             ("Monthly Rent Amount", "GBP 1,375"),
@@ -661,10 +661,10 @@ DOCS = [
         filename = "prop6_inventory.jpg",
         title    = "INVENTORY AND CHECK-IN REPORT",
         doc_type = "inventory",
-        address  = "31 Mallard Way, Epping, CM16 7RN",
-        doc_name = "Inventory Check-in Report - 31 Mallard Way",
+        address  = "606 Example Way, Demochester, ZX6 6FF",
+        doc_name = "Inventory Check-in Report - 606 Example Way",
         fields   = [
-            ("Property Address", "31 Mallard Way, Epping, CM16 7RN"),
+            ("Property Address", "606 Example Way, Demochester, ZX6 6FF"),
             ("Inspection Date",  "01 August 2023"),
             ("Clerk",            "CheckIn Pro"),
             ("Tenant",           "George & Irene Kowalski"),

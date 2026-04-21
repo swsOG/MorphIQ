@@ -87,8 +87,8 @@ def seed_portal_db(db_path: Path):
         conn.executemany(
             "INSERT INTO clients (id, name, slug, is_active, deleted_at) VALUES (?, ?, ?, 1, NULL)",
             [
-                (28, "Harlow & Essex Lettings", "harlow-essex-lettings"),
-                (30, "Epping Lettings", "epping-lettings"),
+                (28, "Sample Agency Alpha", "sample-agency-alpha"),
+                (30, "Sample Agency Beta", "sample-agency-beta"),
             ],
         )
         conn.executemany(
@@ -98,16 +98,16 @@ def seed_portal_db(db_path: Path):
             VALUES (?, ?, ?, ?, ?, '', 1, NULL)
             """,
             [
-                (1, "filip@morphiq.co.uk", "Filip", "admin", None),
-                (2, "demo@epping.co.uk", "Epping Manager", "manager", 30),
-                (3, "demo@harlow.co.uk", "Harlow Manager", "manager", 28),
+                (1, "admin@example.test", "Platform Admin", "admin", None),
+                (2, "manager@example.test", "Sample Manager", "manager", 30),
+                (3, "other-manager@example.test", "Other Sample Manager", "manager", 28),
             ],
         )
         conn.executemany(
             "INSERT INTO properties (id, client_id, address, deleted_at) VALUES (?, ?, ?, NULL)",
             [
-                (101, 28, "22 Ferndale Road, Harlow, CM17 0HL"),
-                (102, 30, "8 Birchwood Lane, Epping, CM16 4AA"),
+                (101, 28, "101 Example Street, Sampletown, ZX1 1AA"),
+                (102, 30, "202 Demo Avenue, Mockford, ZX2 2BB"),
             ],
         )
         conn.executemany(
@@ -130,10 +130,10 @@ def seed_portal_db(db_path: Path):
                     101,
                     28,
                     1,
-                    "HARLOW-GAS-001",
-                    "Harlow Gas Safety",
+                    "ALPHA-GAS-001",
+                    "Sample Gas Safety",
                     "verified",
-                    "Filip",
+                    "Platform Admin",
                     "2026-04-01T09:30:00",
                     "2026-04-01T09:00:00",
                     "2026-04-01",
@@ -143,10 +143,10 @@ def seed_portal_db(db_path: Path):
                     102,
                     30,
                     2,
-                    "EPPING-TENANCY-001",
-                    "Epping Tenancy",
+                    "BETA-TENANCY-001",
+                    "Sample Tenancy",
                     "verified",
-                    "Filip",
+                    "Platform Admin",
                     "2026-04-02T09:30:00",
                     "2026-04-02T09:00:00",
                     "2026-04-02",
@@ -172,15 +172,15 @@ def seed_portal_db(db_path: Path):
 @pytest.fixture()
 def portal_app(tmp_path, monkeypatch):
     clients_dir = tmp_path / "Clients"
-    (clients_dir / "Harlow & Essex Lettings" / "Batches" / "2026-04-01" / "HARLOW-GAS-001").mkdir(parents=True)
-    (clients_dir / "Epping Lettings" / "Batches" / "2026-04-02" / "EPPING-TENANCY-001").mkdir(parents=True)
+    (clients_dir / "Sample Agency Alpha" / "Batches" / "2026-04-01" / "ALPHA-GAS-001").mkdir(parents=True)
+    (clients_dir / "Sample Agency Beta" / "Batches" / "2026-04-02" / "BETA-TENANCY-001").mkdir(parents=True)
 
-    (clients_dir / "Harlow & Essex Lettings" / "Batches" / "2026-04-01" / "HARLOW-GAS-001" / "review.json").write_text(
-        '{"status":"Verified","review":{"reviewed_by":"Filip","reviewed_at":"2026-04-01T09:30:00"}}\n',
+    (clients_dir / "Sample Agency Alpha" / "Batches" / "2026-04-01" / "ALPHA-GAS-001" / "review.json").write_text(
+        '{"status":"Verified","review":{"reviewed_by":"Platform Admin","reviewed_at":"2026-04-01T09:30:00"}}\n',
         encoding="utf-8",
     )
-    (clients_dir / "Epping Lettings" / "Batches" / "2026-04-02" / "EPPING-TENANCY-001" / "review.json").write_text(
-        '{"status":"Verified","review":{"reviewed_by":"Filip","reviewed_at":"2026-04-02T09:30:00"}}\n',
+    (clients_dir / "Sample Agency Beta" / "Batches" / "2026-04-02" / "BETA-TENANCY-001" / "review.json").write_text(
+        '{"status":"Verified","review":{"reviewed_by":"Platform Admin","reviewed_at":"2026-04-02T09:30:00"}}\n',
         encoding="utf-8",
     )
 
@@ -200,7 +200,7 @@ def portal_app(tmp_path, monkeypatch):
                 """
                 UPDATE documents
                 SET status = 'verified',
-                    reviewed_by = 'Filip',
+                    reviewed_by = 'Platform Admin',
                     reviewed_at = '2026-05-01T12:30:00'
                 WHERE source_doc_id = ?
                 """,
@@ -440,7 +440,7 @@ def test_admin_can_list_and_assign_reported_issues(portal_app):
     assert assign.status_code == 200
     assign_payload = assign.get_json()
     assert assign_payload["issue"]["assigned_user_id"] == 1
-    assert assign_payload["issue"]["assigned_user_name"] == "Filip"
+    assert assign_payload["issue"]["assigned_user_name"] == "Platform Admin"
 
 
 def test_manager_cannot_assign_issue(portal_app):

@@ -5,10 +5,14 @@ Logs/
 
 # Secrets
 .env
+.env.*
+!.env.example
 
 # Database
 portal.db
 portal.db-journal
+portal.db-shm
+portal.db-wal
 
 # Backups
 backups/
@@ -43,6 +47,8 @@ node_modules/
 temp/
 test_data/
 debug-*.log
+test-results/
+.pytest_cache/
 
 # Internal-only files (not for public repo)
 docs/internal/
