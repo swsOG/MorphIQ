@@ -85,7 +85,7 @@ def _status_from_expiry(expiry: date | None, today: date | None = None) -> str:
     return "valid"
 
 
-def evaluate_compliance() -> List[Dict[str, Any]]:
+def evaluate_compliance(client_id: int | None = None) -> List[Dict[str, Any]]:
     """
     Compute compliance status for all properties.
 
@@ -104,17 +104,31 @@ def evaluate_compliance() -> List[Dict[str, Any]]:
     conn = _get_db()
     try:
         # Fetch all properties (including the client name for context).
-        props = conn.execute(
-            """
-            SELECT
-                p.id AS property_id,
-                p.address AS property_address,
-                c.name AS client_name
-            FROM properties p
-            JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
-            WHERE p.deleted_at IS NULL
-            """
-        ).fetchall()
+        if client_id is None:
+            props = conn.execute(
+                """
+                SELECT
+                    p.id AS property_id,
+                    p.address AS property_address,
+                    c.name AS client_name
+                FROM properties p
+                JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+                WHERE p.deleted_at IS NULL
+                """
+            ).fetchall()
+        else:
+            props = conn.execute(
+                """
+                SELECT
+                    p.id AS property_id,
+                    p.address AS property_address,
+                    c.name AS client_name
+                FROM properties p
+                JOIN clients c ON p.client_id = c.id AND c.deleted_at IS NULL
+                WHERE p.deleted_at IS NULL AND p.client_id = ?
+                """,
+                (client_id,),
+            ).fetchall()
 
         if not props:
             return []
@@ -203,6 +217,10 @@ def evaluate_compliance() -> List[Dict[str, Any]]:
         return results
     finally:
         conn.close()
+
+
+def evaluate_compliance_for_client(client_id: int) -> List[Dict[str, Any]]:
+    return evaluate_compliance(client_id=client_id)
 
 
 OTHER_EXPIRY_FIELD_CANDIDATES = (

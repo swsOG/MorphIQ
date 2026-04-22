@@ -24,7 +24,7 @@ Capture -> OCR / AI Pipeline -> Review / Verification -> Portal / Compliance
 | Layer | Technology |
 |-------|-----------|
 | OCR pipeline | Tesseract, OCRmyPDF, ImageMagick |
-| AI classification & extraction | Gemini 2.5 Flash by default, Anthropic optional |
+| AI classification & extraction | Gemini Flash |
 | Backend / API | Python 3, Flask, Flask-Login |
 | Database | SQLite (`portal.db`) |
 | Document processing | pypdf, ReportLab, pdfminer |
@@ -76,7 +76,7 @@ Gemini API key (set in .env - see .env.example)
 ```bat
 pip install -r requirements.txt
 copy .env.example .env
-REM edit .env and add your provider key
+REM edit .env and add your Gemini key and portal secret
 Start_System_v2.bat
 ```
 
@@ -123,7 +123,7 @@ The core flow is operational:
 Current emphasis is on broadening test coverage, refining internal rework workflows, and keeping the repo clean, reusable, and deployment-ready.
 
 **Reference docs**
-- [docs/CLAUDE_HANDOFF.md](docs/CLAUDE_HANDOFF.md)
+- [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md)
 - [docs/PROJECT_BRAIN.md](docs/PROJECT_BRAIN.md)
 - [docs/VISION.md](docs/VISION.md)
 
@@ -134,6 +134,7 @@ python -m pytest tests -q
 npm install
 npm run playwright:install
 npm run test:smoke
+python scripts/scan_tracked_secrets.py
 ```
 
 ---

@@ -22,7 +22,14 @@ if not defined PYTHON_CMD (
 )
 
 if exist ".env" (
-    for /f "tokens=1,* delims==" %%a in ('findstr /i "ANTHROPIC_API_KEY" .env') do set ANTHROPIC_API_KEY=%%b
+    for /f "usebackq tokens=1,* delims==" %%a in (".env") do (
+        if not "%%a"=="" if /i not "%%a:~0,1"=="#" set "%%a=%%b"
+    )
+)
+
+set "PYTHON_EXE=%PYTHON_CMD%"
+if exist "C:\morph-iq-portal\venv\Scripts\python.exe" (
+    set "PYTHON_EXE=C:\morph-iq-portal\venv\Scripts\python.exe"
 )
 
 echo ============================================
@@ -37,19 +44,19 @@ echo.
 
 echo Starting document watcher...
 
-start "ScanStation Watcher" /min cmd /c ""%PYTHON_CMD%" auto_ocr_watch.py"
+start "ScanStation Watcher" /min cmd /c ""%PYTHON_EXE%" auto_ocr_watch.py"
 
 :: Start the API server in a minimized window
 
 echo Starting API server on http://127.0.0.1:8765 ...
 
-start "ScanStation API" /min cmd /c ""%PYTHON_CMD%" server.py"
+start "ScanStation API" /min cmd /c ""%PYTHON_EXE%" server.py"
 
 :: Start the MorphIQ portal (portal_new) in a minimized window
 
 echo Starting MorphIQ portal on http://127.0.0.1:5000 ...
 
-start "MorphIQ Portal" /min cmd /c ""%PYTHON_CMD%" portal_new\app.py"
+start "MorphIQ Portal" /min cmd /c ""%PYTHON_EXE%" portal_new\app.py"
 
 :: Wait for background services to start
 

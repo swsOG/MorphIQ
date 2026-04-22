@@ -8,18 +8,10 @@ import re
 from pathlib import Path
 from datetime import datetime
 
+from portal_new.ai_runtime import load_project_env
 from sync_to_portal import sync_single_doc
 
-env_path = Path(__file__).parent / ".env"
-if env_path.exists():
-    try:
-        with env_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                if "=" in line and not line.lstrip().startswith("#"):
-                    key, val = line.strip().split("=", 1)
-                    os.environ[key] = val
-    except Exception:
-        pass
+load_project_env(Path(__file__).parent)
 
 # ──────────────────────────────────────────────
 # CONFIGURATION

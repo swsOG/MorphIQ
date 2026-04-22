@@ -23,6 +23,7 @@
         {% endif %}
 
         <form method="post" action="{{ url_for('login_post') }}" class="login-form" autocomplete="off">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="login-field">
                 <label for="email">Email</label>
                 <input

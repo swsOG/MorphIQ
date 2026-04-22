@@ -6,6 +6,31 @@
 (function () {
     "use strict";
 
+    function readCsrfToken() {
+        const match = document.cookie.match(/(?:^|;\s*)_csrf_token=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : "";
+    }
+
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+        const options = init ? { ...init } : {};
+        const method = String(options.method || "GET").toUpperCase();
+        const url = typeof input === "string" ? input : (input && input.url) || "";
+        const isMutating = !["GET", "HEAD", "OPTIONS"].includes(method);
+        const isSameOrigin = !/^https?:\/\//i.test(url) || url.startsWith(window.location.origin);
+
+        if (isMutating && isSameOrigin) {
+            const headers = new Headers(options.headers || {});
+            if (!headers.has("X-CSRF-Token")) {
+                const token = readCsrfToken();
+                if (token) headers.set("X-CSRF-Token", token);
+            }
+            options.headers = headers;
+        }
+
+        return originalFetch(input, options);
+    };
+
     // ── State (archive view) ────────────────────────────────────────────────
     let allProperties = [];
     let filteredProperties = [];

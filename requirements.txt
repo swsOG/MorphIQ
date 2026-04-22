@@ -1,5 +1,4 @@
 # System CLIs required but not installable via pip: ocrmypdf, tesseract, imagemagick (magick).
-anthropic==0.84.0
 flask==3.1.3
 flask-cors==6.0.2
 flask-login==0.6.3
@@ -9,4 +8,5 @@ pypdf==6.9.2
 pdfminer.six==20251230
 pdfplumber==0.11.9
 openpyxl==3.1.5
+sentry-sdk[flask]==2.27.0
 pytest==8.4.2

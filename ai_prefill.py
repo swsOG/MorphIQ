@@ -5,21 +5,10 @@ import os
 from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict
-from urllib.parse import quote
-import urllib.request
-import urllib.error
+from portal_new.ai_runtime import generate_gemini_text, get_prefill_model_name, load_project_env
 
 
-env_path = Path(__file__).parent / ".env"
-if env_path.exists():
-    try:
-        with env_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                if "=" in line and not line.lstrip().startswith("#"):
-                    key, val = line.strip().split("=", 1)
-                    os.environ[key] = val
-    except Exception:
-        pass
+load_project_env(Path(__file__).parent)
 
 
 BASE = Path(__file__).resolve().parent
@@ -255,170 +244,17 @@ def build_inventory_prompt(review_data: Dict[str, Any]) -> str:
     )
 
 
-def call_claude_with_pdf(
-    pdf_b64: str,
-    system_prompt: str,
-    user_prompt: str,
-    model: str = "claude-sonnet-4-20250514",
-) -> str:
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise RuntimeError("ANTHROPIC_API_KEY is not set")
-
-    url = "https://api.anthropic.com/v1/messages"
-
-    content = [
-        {
-            "type": "text",
-            "text": user_prompt,
-        },
-        {
-            # NOTE: Anthropic supports multimodal inputs. This structure assumes
-            # a document-style input encoded as base64. Adjust if your account
-            # uses a different format for PDFs.
-            "type": "document",
-            "source": {
-                "type": "base64",
-                "media_type": "application/pdf",
-                "data": pdf_b64,
-            },
-        },
-    ]
-
-    body = {
-        "model": model,
-        "max_tokens": 1024,
-        "system": system_prompt,
-        "messages": [
-            {
-                "role": "user",
-                "content": content,
-            }
-        ],
-    }
-
-    data = json.dumps(body).encode("utf-8")
-    headers = {
-        "Content-Type": "application/json",
-        "x-api-key": api_key,
-        "anthropic-version": "2023-06-01",
-    }
-
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            resp_data = resp.read().decode("utf-8")
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Anthropic API error {e.code}: {error_body}") from e
-    except urllib.error.URLError as e:
-        raise RuntimeError(f"Error calling Anthropic API: {e}") from e
-
-    payload = json.loads(resp_data)
-    content_items = payload.get("content") or []
-    if not content_items:
-        raise RuntimeError("No content returned from Claude")
-    # Assume first content item is text
-    first = content_items[0]
-    if first.get("type") == "text":
-        return first.get("text", "")
-    # Fallback: try to find any text item
-    for item in content_items:
-        if item.get("type") == "text":
-            return item.get("text", "")
-    raise RuntimeError("No text content returned from Claude")
+def get_model_name(task_type: str) -> str:
+    return get_prefill_model_name(task_type)
 
 
-def call_gemini_with_pdf(
-    pdf_b64: str,
-    system_prompt: str,
-    user_prompt: str,
-    model: str = "gemini-2.5-flash",
-) -> str:
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set")
-
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{quote(model, safe='')}"
-        f":generateContent?key={quote(api_key, safe='')}"
-    )
-
-    body = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": user_prompt,
-                    },
-                    {
-                        "inline_data": {
-                            "mime_type": "application/pdf",
-                            "data": pdf_b64,
-                        }
-                    },
-                ]
-            }
-        ],
-        "system_instruction": {
-            "parts": [
-                {"text": system_prompt}
-            ]
-        },
-    }
-
-    data = json.dumps(body).encode("utf-8")
-    headers = {
-        "Content-Type": "application/json",
-    }
-
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            resp_data = resp.read().decode("utf-8")
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Gemini API error {e.code}: {error_body}") from e
-    except urllib.error.URLError as e:
-        raise RuntimeError(f"Error calling Gemini API: {e}") from e
-
-    payload = json.loads(resp_data)
-    candidates = payload.get("candidates") or []
-    if not candidates:
-        raise RuntimeError("No candidates returned from Gemini")
-
-    parts = ((candidates[0].get("content") or {}).get("parts")) or []
-    for item in parts:
-        text = item.get("text")
-        if text:
-            return text
-    raise RuntimeError("No text content returned from Gemini")
+def call_ai_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str, task_type: str) -> str:
+    model = get_model_name(task_type)
+    prompt = f"{system_prompt}\n\n{user_prompt}".strip()
+    return generate_gemini_text(model=model, prompt=prompt, inline_pdf_b64=pdf_b64)
 
 
-def get_ai_provider() -> str:
-    provider = (os.getenv("AI_PROVIDER") or "").strip().lower()
-    if provider:
-        return provider
-    return "gemini"
-
-
-def call_model_with_pdf(
-    pdf_b64: str,
-    system_prompt: str,
-    user_prompt: str,
-) -> str:
-    provider = get_ai_provider()
-    if provider == "gemini":
-        model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-        return call_gemini_with_pdf(pdf_b64, system_prompt, user_prompt, model=model)
-    if provider == "anthropic":
-        model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
-        return call_claude_with_pdf(pdf_b64, system_prompt, user_prompt, model=model)
-    raise RuntimeError(f"Unsupported AI_PROVIDER: {provider}")
-
-
-def parse_json_from_model(text: str) -> Dict[str, Any]:
+def parse_json_from_ai(text: str) -> Dict[str, Any]:
     cleaned = text.strip()
     # Handle ```json ... ``` wrappers if present
     if cleaned.startswith("```"):
@@ -564,8 +400,8 @@ def _normalize_doc_type(raw: str) -> str:
 
 
 def detect_doc_type_from_pdf(pdf_b64: str) -> str:
-    """Call Claude to classify the document; returns one of RECOGNIZED_DOC_TYPES (or raw response)."""
-    raw = call_model_with_pdf(pdf_b64, DETECTION_SYSTEM, DETECTION_USER)
+    """Call Gemini to classify the document; returns one of RECOGNIZED_DOC_TYPES (or raw response)."""
+    raw = call_ai_with_pdf(pdf_b64, DETECTION_SYSTEM, DETECTION_USER, "detection")
     return _normalize_doc_type(raw.strip())
 
 
@@ -616,8 +452,8 @@ def prefill_doc(doc_folder: Path) -> None:
     system_prompt = EXTRACTION_SYSTEM
     user_prompt = builder_fn(review)
 
-    model_raw = call_model_with_pdf(pdf_b64, system_prompt, user_prompt)
-    ai_fields = parse_json_from_model(model_raw)
+    model_raw = call_ai_with_pdf(pdf_b64, system_prompt, user_prompt, "extraction")
+    ai_fields = parse_json_from_ai(model_raw)
 
     fields = review.get("fields") or {}
     for key in target_keys:
@@ -634,7 +470,7 @@ def prefill_doc(doc_folder: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="AI prefill for DOC-XXXXX folder using Claude Sonnet.")
+    parser = argparse.ArgumentParser(description="AI prefill for DOC-XXXXX folder using the configured Gemini models.")
     parser.add_argument("doc_folder", type=str, help="Path to DOC-XXXXX folder")
     args = parser.parse_args()
 
