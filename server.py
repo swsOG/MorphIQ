@@ -470,6 +470,77 @@ def _find_doc_folder(client_name: str, doc_id: str):
     return None
 
 
+def _find_doc_folder_by_raw_source(client_name: str, raw_name: str):
+    """Find a DOC folder whose review.json references the given raw source file."""
+    target = (raw_name or "").strip()
+    if not target:
+        return None
+    batches_path = _client_dir(client_name) / "Batches"
+    if not batches_path.exists():
+        return None
+    for date_folder in sorted(batches_path.iterdir(), reverse=True):
+        if not date_folder.is_dir():
+            continue
+        for doc_folder in sorted(date_folder.iterdir()):
+            if not doc_folder.is_dir() or not doc_folder.name.startswith("DOC-"):
+                continue
+            review_file = doc_folder / "review.json"
+            if not review_file.exists():
+                continue
+            try:
+                with review_file.open("r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception:
+                continue
+            files = data.get("files") or {}
+            raw_candidates = []
+            for key in ("raw_source", "raw_image"):
+                value = files.get(key)
+                if value:
+                    raw_candidates.append(str(value).strip())
+            for value in files.get("raw_images") or []:
+                if value:
+                    raw_candidates.append(str(value).strip())
+            if target in raw_candidates:
+                return doc_folder, data
+    return None
+
+
+def _review_needs_attention(review_data: dict, database_url: str) -> bool:
+    doc_type = (review_data.get("doc_type") or "").strip()
+    if not doc_type or doc_type.lower() == "unknown":
+        return True
+    config = document_config.find_document_config(doc_type, database_url)
+    if not config:
+        return True
+    fields = review_data.get("fields") or {}
+    required = config.get("required_fields") or []
+    if not (fields.get("property_address") or "").strip():
+        return True
+    if not required:
+        return False
+    filled = 0
+    for key in required:
+        value = fields.get(key, "")
+        if isinstance(value, str):
+            value = value.strip()
+        if value:
+            filled += 1
+    score = int((filled / len(required)) * 100) if required else 0
+    return score < 70
+
+
+def _derive_intake_state(review_data: dict, database_url: str) -> str:
+    status = (review_data.get("status") or "").strip().casefold()
+    if status == "failed":
+        return "Failed"
+    if status in {"reprocessing", "processing"}:
+        return "Processing"
+    if _review_needs_attention(review_data, database_url):
+        return "Needs attention"
+    return "Ready for review"
+
+
 @app.route("/docs/<client_name>", methods=["GET"])
 def list_docs(client_name: str):
     """Return all documents for a client with review.json data and status counts."""
@@ -533,6 +604,49 @@ def list_docs(client_name: str):
     return jsonify({"docs": docs, "counts": counts})
 
 
+@app.route("/intake-status/<client_name>/<raw_name>", methods=["GET"])
+def intake_status(client_name: str, raw_name: str):
+    """Resolve a raw imported file to its current intake/review state."""
+    database_url = os.environ.get("DATABASE_URL", str(BASE / "portal.db"))
+    resolved = _find_doc_folder_by_raw_source(client_name, raw_name)
+    if resolved:
+        doc_folder, review_data = resolved
+        return jsonify(
+            {
+                "success": True,
+                "raw_name": raw_name,
+                "intake_state": _derive_intake_state(review_data, database_url),
+                "doc_id": review_data.get("doc_id") or doc_folder.name,
+                "doc_type": review_data.get("doc_type") or "Unknown",
+                "status": review_data.get("status") or "New",
+            }
+        )
+
+    raw_path = _raw_dir(client_name) / raw_name
+    if raw_path.exists():
+        return jsonify(
+            {
+                "success": True,
+                "raw_name": raw_name,
+                "intake_state": "Processing",
+                "doc_id": "",
+                "doc_type": "Unknown",
+                "status": "",
+            }
+        )
+
+    return jsonify(
+        {
+            "success": False,
+            "raw_name": raw_name,
+            "intake_state": "Failed",
+            "doc_id": "",
+            "doc_type": "Unknown",
+            "status": "",
+        }
+    )
+
+
 @app.route("/review/<client_name>/<doc_id>", methods=["POST"])
 def save_review(client_name: str, doc_id: str):
     """Save review data (status, fields, review) to the document's review.json."""
@@ -553,6 +667,8 @@ def save_review(client_name: str, doc_id: str):
 
     if "status" in data:
         current["status"] = data["status"]
+    if "doc_type" in data and data["doc_type"]:
+        current["doc_type"] = data["doc_type"]
     if "fields" in data:
         current["fields"] = data["fields"]
     if "review" in data:

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>ScanStation — Document Capture</title>
+<title>ScanStation â€” Document Capture</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -944,12 +944,12 @@
       <div class="control-group">
         <span class="control-label">Camera</span>
         <select id="cameraSelect"><option value="">Loading...</option></select>
-        <button type="button" id="cameraSettingsToggle" class="camera-settings-btn" title="Camera settings">⚙</button>
+        <button type="button" id="cameraSettingsToggle" class="camera-settings-btn" title="Camera settings">âš™</button>
       </div>
       <div class="control-group">
         <span class="control-label">Client</span>
         <select id="clientSelect">
-          <option value="">— Select Client —</option>
+          <option value="">â€” Select Client â€”</option>
           <option value="__add__">+ Add New Client</option>
         </select>
       </div>
@@ -974,18 +974,18 @@
 <!-- STATS BAR -->
 <div class="stats-bar">
   <div class="stat-item">
-    <span class="stat-icon">📄</span>
+    <span class="stat-icon">ðŸ“„</span>
     <span class="stat-value" id="statCount">0</span>
     <span class="stat-label">captured</span>
   </div>
   <div class="stat-item">
-    <span class="stat-icon">⏱</span>
+    <span class="stat-icon">â±</span>
     <span class="stat-value" id="statTime">00:00:00</span>
   </div>
   <div class="stat-item">
-    <span class="stat-icon">📋</span>
+    <span class="stat-icon">ðŸ“‹</span>
     <span class="stat-label">Last:</span>
-    <span class="stat-value" id="statLast">—</span>
+    <span class="stat-value" id="statLast">â€”</span>
   </div>
 </div>
 
@@ -995,7 +995,7 @@
   <!-- LEFT COLUMN -->
   <div class="col-left">
     <div class="camera-preview">
-      <span class="camera-live-badge">● LIVE</span>
+      <span class="camera-live-badge">â— LIVE</span>
       <video id="videoFeed" autoplay playsinline></video>
       <canvas id="captureCanvas" style="display:none;"></canvas>
       <div class="camera-offline" id="cameraOffline">
@@ -1067,10 +1067,10 @@
 
     <div class="action-bar">
       <div id="defaultActions" class="action-main">
-        <button class="btn btn-primary" type="button" id="btnCapture">📸 Capture Document</button>
+        <button class="btn btn-primary" type="button" id="btnCapture">ðŸ“¸ Capture Document</button>
         <button class="btn" type="button" id="btnBrowse">Import Document</button>
-        <button class="btn btn-add-page" type="button" id="btnAddPage" disabled style="display:none;">📄 Add Page</button>
-        <button class="btn btn-finish-doc" type="button" id="btnFinishDoc" style="display:none;">✓ Finish Document</button>
+        <button class="btn btn-add-page" type="button" id="btnAddPage" disabled style="display:none;">ðŸ“„ Add Page</button>
+        <button class="btn btn-finish-doc" type="button" id="btnFinishDoc" style="display:none;">âœ“ Finish Document</button>
       </div>
       <div class="action-settings">
         <label class="review-toggle" for="reviewBeforeSaveToggle">
@@ -1079,9 +1079,9 @@
         </label>
       </div>
       <div id="previewActions" style="display:none;gap:8px;width:100%;align-items:center;">
-        <input class="naming-input" type="text" id="nameInput" placeholder="Document name (optional) — Enter to confirm">
+        <input class="naming-input" type="text" id="nameInput" placeholder="Document name (optional) â€” Enter to confirm">
         <button class="btn" type="button" id="btnRetake">Retake</button>
-        <button class="btn btn-primary" type="button" id="btnConfirm">Confirm ↵</button>
+        <button class="btn btn-primary" type="button" id="btnConfirm">Confirm â†µ</button>
       </div>
     </div>
 
@@ -1100,10 +1100,13 @@
     </div>
 
     <div class="intake-summary-card" id="intakeSummaryCard">
-      <div class="intake-summary-row"><span class="intake-summary-label">Current client</span><span class="intake-summary-value" id="summaryClient">—</span></div>
-      <div class="intake-summary-row"><span class="intake-summary-label">Documents captured</span><span class="intake-summary-value" id="summaryCaptured">0</span></div>
-      <div class="intake-summary-row"><span class="intake-summary-label">Rescans waiting</span><span class="intake-summary-value" id="summaryRescans">0</span></div>
-      <div class="intake-summary-row"><span class="intake-summary-label">Pipeline status</span><span class="intake-summary-value" id="summaryPipeline">Offline</span></div>
+      <div class="intake-summary-row"><span class="intake-summary-label">Current client</span><span class="intake-summary-value" id="summaryClient">â€”</span></div>
+      <div class="intake-summary-row"><span class="intake-summary-label">Current run</span><span class="intake-summary-value" id="summaryCaptured">0</span></div>
+      <div class="intake-summary-row"><span class="intake-summary-label">Uploaded</span><span class="intake-summary-value" id="summaryUploaded">0</span></div>
+      <div class="intake-summary-row"><span class="intake-summary-label">Processing</span><span class="intake-summary-value" id="summaryProcessing">0</span></div>
+      <div class="intake-summary-row"><span class="intake-summary-label">Ready for review</span><span class="intake-summary-value" id="summaryReady">0</span></div>
+      <div class="intake-summary-row"><span class="intake-summary-label">Needs attention</span><span class="intake-summary-value" id="summaryAttention">0</span></div>
+      <div class="intake-summary-row"><span class="intake-summary-label">Failed</span><span class="intake-summary-value" id="summaryFailed">0</span></div>
     </div>
 
     <!-- Rescan Requests: doc type breakdown (amber/warning theme) -->
@@ -1160,6 +1163,7 @@
 
   let serverCheckTimer = null;
   let rescanPollTimer = null;
+  let intakeStatusTimer = null;
   let lastServerOkAt = 0;
   let pipelineStatus = "offline";
   let lastProcessingDocLabel = "";
@@ -1295,6 +1299,15 @@
     }
   }
 
+  function getReadyFooterMode() {
+    return currentStream ? "Camera-first intake · ready" : "Fallback import mode · ready";
+  }
+
+  function setFooterMode(text) {
+    const el = document.getElementById("footerMode");
+    if (el) el.textContent = text;
+  }
+
   function updateEmptyState() {
     const textEl = document.getElementById("centerEmptyText");
     const subEl = document.getElementById("centerEmptySub");
@@ -1303,7 +1316,7 @@
       textEl.textContent = "Place document under camera and press Space";
       subEl.textContent = "Camera-first intake. Use Import Document only for fallback or testing.";
     } else {
-      textEl.textContent = "Camera unavailable — use Import Document for fallback intake";
+      textEl.textContent = "Camera unavailable â€” use Import Document for fallback intake";
       subEl.textContent = "The rig is not connected right now. Imported files still go through the same pipeline.";
     }
   }
@@ -1317,7 +1330,7 @@
     if (pendingCapture && captureMode === "careful") {
       parts.push("<span><kbd>R</kbd> Retake</span>");
       parts.push("<span><kbd>Tab</kbd> Name</span>");
-      parts.push("<span><kbd>↵</kbd> Confirm</span>");
+      parts.push("<span><kbd>â†µ</kbd> Confirm</span>");
       parts.push("<span><kbd>Esc</kbd> Skip</span>");
     } else if (rescanMode) {
       parts.push("<span><kbd>Esc</kbd> Cancel rescan</span>");
@@ -1334,19 +1347,24 @@
   function updateIntakeSummary() {
     const summaryClient = document.getElementById("summaryClient");
     const summaryCaptured = document.getElementById("summaryCaptured");
-    const summaryRescans = document.getElementById("summaryRescans");
-    const summaryPipeline = document.getElementById("summaryPipeline");
-    if (summaryClient) summaryClient.textContent = selectedClient || "—";
+    const summaryUploaded = document.getElementById("summaryUploaded");
+    const summaryProcessing = document.getElementById("summaryProcessing");
+    const summaryReady = document.getElementById("summaryReady");
+    const summaryAttention = document.getElementById("summaryAttention");
+    const summaryFailed = document.getElementById("summaryFailed");
+    const counts = { Uploaded: 0, Processing: 0, "Ready for review": 0, "Needs attention": 0, Failed: 0 };
+    sessionDocs.forEach(doc => {
+      const state = ((doc.intakeState || "").trim()) || "Uploaded";
+      if (state && state in counts) counts[state] += 1;
+    });
+    if (summaryClient) summaryClient.textContent = selectedClient || "â€”";
     if (summaryCaptured) summaryCaptured.textContent = String(sessionDocs.length);
-    if (summaryRescans) {
-      const countEl = document.getElementById("rescanRequestsCount");
-      summaryRescans.textContent = countEl ? countEl.textContent : "0";
-    }
-    if (summaryPipeline) {
-      if (pipelineStatus === "idle") summaryPipeline.textContent = "Idle";
-      else if (pipelineStatus === "processing") summaryPipeline.textContent = "Processing";
-      else summaryPipeline.textContent = "Offline";
-    }
+    if (summaryUploaded) summaryUploaded.textContent = String(counts["Uploaded"]);
+    if (summaryProcessing) summaryProcessing.textContent = String(counts["Processing"]);
+    if (summaryReady) summaryReady.textContent = String(counts["Ready for review"]);
+    if (summaryAttention) summaryAttention.textContent = String(counts["Needs attention"]);
+    if (summaryFailed) summaryFailed.textContent = String(counts["Failed"]);
+    syncPipelineStatusFromCurrentRun(counts);
   }
 
   function updatePrimaryActions() {
@@ -1372,14 +1390,14 @@
       captureBtn.disabled = false;
       captureBtn.classList.add("btn-primary");
       captureBtn.classList.remove("disabled-soft");
-      captureBtn.textContent = "📸 Capture Document";
+      captureBtn.textContent = "ðŸ“¸ Capture Document";
       browseBtn.classList.remove("btn-primary");
       browseBtn.classList.remove("disabled-soft");
       browseBtn.textContent = "Import Document";
     } else {
       captureBtn.disabled = true;
       captureBtn.classList.add("disabled-soft");
-      captureBtn.textContent = "📸 Camera Unavailable";
+      captureBtn.textContent = "ðŸ“¸ Camera Unavailable";
       browseBtn.classList.add("btn-primary");
       browseBtn.classList.remove("disabled-soft");
       browseBtn.textContent = "Import Document";
@@ -1511,7 +1529,7 @@
     const actualW = settings.width || "?";
     const actualH = settings.height || "?";
     const fps = settings.frameRate || "?";
-    info.textContent = `Actual: ${actualW}×${actualH} @ ${fps}fps`;
+    info.textContent = `Actual: ${actualW}Ã—${actualH} @ ${fps}fps`;
 
     loadSavedCameraSettings();
 
@@ -1520,13 +1538,13 @@
 
     // Resolution dropdown (always show)
     const resOptions = [
-      { label: "1280 × 720 (HD)", w: 1280, h: 720 },
-      { label: "1920 × 1080 (Full HD)", w: 1920, h: 1080 },
-      { label: "2560 × 1440 (QHD)", w: 2560, h: 1440 },
+      { label: "1280 Ã— 720 (HD)", w: 1280, h: 720 },
+      { label: "1920 Ã— 1080 (Full HD)", w: 1920, h: 1080 },
+      { label: "2560 Ã— 1440 (QHD)", w: 2560, h: 1440 },
     ];
     // 4K only if supported by capabilities
     if (caps.width && caps.height && caps.width.max >= 3840 && caps.height.max >= 2160) {
-      resOptions.push({ label: "3840 × 2160 (4K)", w: 3840, h: 2160 });
+      resOptions.push({ label: "3840 Ã— 2160 (4K)", w: 3840, h: 2160 });
     }
     const storedRes = getPreferredResolution();
     let currentResKey = `${storedRes.width}x${storedRes.height}`;
@@ -1873,7 +1891,7 @@
         setCameraStatus(false);
         return;
       }
-      select.innerHTML = '<option value="">— Select Camera —</option>';
+      select.innerHTML = '<option value="">â€” Select Camera â€”</option>';
       cams.forEach((d, i) => {
         const opt = document.createElement("option");
         opt.value = d.deviceId;
@@ -1908,7 +1926,7 @@
     updateShortcutBar();
     setTimeout(() => {
       if (rescanMode || pendingCapture || multiPageState.isMultiPage) return;
-      document.getElementById("footerMode").textContent = on ? "Camera-first intake · ready" : "Fallback import mode · ready";
+      setFooterMode(on ? "Camera-first intake · ready" : "Fallback import mode · ready");
     }, 0);
   }
 
@@ -1918,7 +1936,7 @@
     cameraCapabilities = null;
     if (!deviceId) {
       setCameraStatus(false);
-      document.getElementById("footerMode").textContent = "Fallback import mode · ready";
+      setFooterMode(getReadyFooterMode());
       updateAddPageButton();
       updateShortcutBar();
       return;
@@ -1944,10 +1962,9 @@
       showToast("Camera error: " + e.message, "error");
       setCameraStatus(false);
     }
-    document.getElementById("footerMode").textContent = currentStream ? "Camera-first intake · ready" : "Fallback import mode · ready";
+    setFooterMode(getReadyFooterMode());
     updateAddPageButton();
     updateShortcutBar();
-    document.getElementById("footerMode").textContent = "Review Before Save · confirm document details";
   }
 
   /* Client selection */
@@ -1984,57 +2001,7 @@
     updateAddPageButton();
     updateMultiPageUI();
     updateShortcutBar();
-
-    if (!selectedClient) return;
-
-    try {
-      const res = await fetch(`${API_URL}/docs/${encodeURIComponent(selectedClient)}`, {
-        signal: AbortSignal.timeout(10000)
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      const docs = data.docs || [];
-      docs.forEach(d => {
-        // Skip docs that have already been sent to rescan; those are tracked
-        // separately in the right-hand "Rescan requests" panel.
-        if (d.status === "Sent to Rescan") return;
-        const id = d.doc_id;
-        const name = (d.doc_name != null && d.doc_name !== "") ? d.doc_name : ((d.fields && (d.fields.doc_name || d.fields.document_name)) || d.doc_id);
-        const stamp = d.scanned_at || d.batch_date || "";
-        const doc = {
-          id,
-          docId: d.doc_id,
-          name,
-          createdAt: stamp,
-          score: 0,
-          sharp: 0,
-          bright: 0,
-          contrast: 0,
-          align: 0,
-          qualityClass: "ok",
-          rawName: null,
-          hasPdf: true,
-          blob: null,
-          thumbUrl: null,
-          docType: d.doc_type || "",
-          propertyAddress: (d.fields && d.fields.property_address) ? String(d.fields.property_address).trim() : ""
-        };
-        sessionDocs.push(doc);
-      });
-      sessionCount = sessionDocs.length;
-      if (sessionDocs.length > 0) {
-        activeDocId = sessionDocs[0].id;
-      }
-      updateLeftQueue();
-      updateDashboardCounts();
-      updateProgress();
-      updateFilteredList();
-      updateRetakeQueue();
-      updateSessionStats(sessionDocs.length ? sessionDocs[0].name : null);
-      updateShortcutBar();
-    } catch (e) {
-      // ignore fetch errors; queue will just start empty
-    }
+    updateIntakeSummary();
   }
 
   function selectClient(name) {
@@ -2064,12 +2031,6 @@
     } catch (e) {
       // If the server is unreachable, leave the dropdown as-is
     }
-  }
-
-  /* Folder / File System Access */
-  async function pickScanSystemFolder() {
-    baseFolderHandle = null;
-    showToast("ScanStation now saves through the backend pipeline. No folder selection needed.", "info");
   }
 
   function browseFile() {
@@ -2108,6 +2069,7 @@
       if (!res.ok || !data.success) {
         throw new Error((data && data.error) || "Upload failed");
       }
+      markPipelineProcessing(docName || filename || "document");
       return data.raw_name || null;
     } catch (e) {
       if (e.name === "AbortError") return null;
@@ -2165,7 +2127,7 @@
       document.getElementById("footerMode").textContent =
         "\uD83D\uDCC4 multi-page \u00B7 Page " + multiPageState.pageNumber + " \u00B7 " + (multiPageState.groupDocName || "");
     } else if (!pendingCapture && !rescanMode) {
-      document.getElementById("footerMode").textContent = "Camera-first intake · ready";
+      setFooterMode(getReadyFooterMode());
     }
   }
 
@@ -2258,6 +2220,7 @@
       thumbUrl: tmpUrl,
       rawName: safeName,
       docType: "Unknown",
+      intakeState: "Uploaded",
       propertyAddress: multiPageState.groupPropertyAddress,
       groupId: multiPageState.groupId,
       pageNumber: multiPageState.pageNumber
@@ -2265,6 +2228,7 @@
 
     addDocToSession(doc);
     showDocPreview(doc, "camera");
+    refreshCurrentRunStatuses();
     showToast("Page " + multiPageState.pageNumber + " added to group", "success");
   }
 
@@ -2281,8 +2245,7 @@
     };
     updateMultiPageUI();
     updateAddPageButton();
-    document.getElementById("footerMode").textContent =
-      (captureMode === "quick" ? "\u26A1 quick \u00B7 ready" : "\uD83D\uDD0D careful \u00B7 ready");
+    setFooterMode(getReadyFooterMode());
     showToast("Document group completed", "success");
   }
 
@@ -2432,14 +2395,14 @@
     const iconEl = document.getElementById("qualityIcon");
     const textEl = document.getElementById("qualityText");
     if (cls === "good") {
-      iconEl.textContent = "✓";
+      iconEl.textContent = "âœ“";
       textEl.textContent = "Good quality";
     } else if (cls === "ok") {
-      iconEl.textContent = "⚠";
-      textEl.textContent = "Medium — may need retake";
+      iconEl.textContent = "âš ";
+      textEl.textContent = "Medium â€” may need retake";
     } else {
-      iconEl.textContent = "✕";
-      textEl.textContent = "Poor — retake recommended";
+      iconEl.textContent = "âœ•";
+      textEl.textContent = "Poor â€” retake recommended";
     }
     const tag = document.getElementById("qualityScoreTag");
     tag.className = "quality-score-tag " + cls;
@@ -2600,13 +2563,15 @@
       nameEl.textContent = isGroupChild ? ("\u21B3 Page " + doc.pageNumber) : (doc.name || doc.docId);
       const metaEl = document.createElement("div");
       metaEl.className = "q-meta";
-      metaEl.textContent = doc.docId + " \u00B7 " + doc.createdAt;
+      const idText = doc.docId || (doc.rawName || "Pending");
+      const stateText = doc.intakeState || "Uploaded";
+      metaEl.textContent = idText + " \u00B7 " + stateText;
       info.appendChild(nameEl);
       info.appendChild(metaEl);
 
       const scoreEl = document.createElement("div");
       scoreEl.className = "q-score " + doc.qualityClass;
-      scoreEl.textContent = doc.score.toString();
+      scoreEl.textContent = doc.intakeState || "";
 
       div.appendChild(thumbWrap);
       div.appendChild(info);
@@ -2626,6 +2591,59 @@
 
   function updateProgress() {
     updateIntakeSummary();
+  }
+
+  function applyResolvedIntakeStatus(doc, payload) {
+    if (!doc || !payload) return;
+    const nextState = payload.intake_state || doc.intakeState || "Uploaded";
+    doc.intakeState = nextState;
+    if (payload.doc_id) {
+      doc.docId = payload.doc_id;
+      doc.hasPdf = nextState === "Ready for review" || nextState === "Needs attention";
+    }
+    if (payload.doc_type && payload.doc_type !== "Unknown") {
+      doc.docType = payload.doc_type;
+    }
+    if (payload.status) {
+      doc.resolvedStatus = payload.status;
+    }
+  }
+
+  async function refreshCurrentRunStatuses() {
+    if (!selectedClient || !sessionDocs.length) return;
+    let changed = false;
+    for (const doc of sessionDocs) {
+      if (!doc.rawName) continue;
+      try {
+        const res = await fetch(`${API_URL}/intake-status/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.rawName)}`, {
+          signal: AbortSignal.timeout(5000)
+        });
+        if (!res.ok) continue;
+        const payload = await res.json();
+        const before = JSON.stringify({
+          intakeState: doc.intakeState,
+          docId: doc.docId,
+          docType: doc.docType,
+          resolvedStatus: doc.resolvedStatus,
+          hasPdf: doc.hasPdf
+        });
+        applyResolvedIntakeStatus(doc, payload);
+        const after = JSON.stringify({
+          intakeState: doc.intakeState,
+          docId: doc.docId,
+          docType: doc.docType,
+          resolvedStatus: doc.resolvedStatus,
+          hasPdf: doc.hasPdf
+        });
+        if (before !== after) changed = true;
+      } catch (e) {
+        // ignore transient intake polling failures
+      }
+    }
+    if (changed) {
+      updateLeftQueue();
+      updateIntakeSummary();
+    }
   }
 
   function escapeHtml(s) {
@@ -2677,7 +2695,7 @@
           const thumbUrl = `${API_URL}/doc-image/${encodeURIComponent(selectedClient)}/${encodeURIComponent(item.doc_id)}`;
           const thumb = item.has_image
             ? `<img class="rescan-thumb" src="${escapeHtml(thumbUrl)}" alt="">`
-            : `<div class="rescan-thumb-placeholder">📄</div>`;
+            : `<div class="rescan-thumb-placeholder">ðŸ“„</div>`;
           card.innerHTML =
             thumb +
             `<div class="rescan-card-body">
@@ -2706,7 +2724,7 @@
     rescanMode = true;
     const banner = document.getElementById("rescanBanner");
     if (banner) {
-      banner.textContent = `RESCANNING ${item.doc_id} — ${item.doc_name || item.doc_id}. Capture the replacement.`;
+      banner.textContent = `RESCANNING ${item.doc_id} â€” ${item.doc_name || item.doc_id}. Capture the replacement.`;
       banner.classList.add("visible");
     }
     document.getElementById("centerEmpty").classList.add("hidden");
@@ -2737,7 +2755,7 @@
     setPreviewStatus("Previewing rescan target");
     updatePrimaryActions();
     updateShortcutBar();
-    document.getElementById("footerMode").textContent = "Rescan mode — Capture replacement or press Esc to cancel";
+    document.getElementById("footerMode").textContent = "Rescan mode â€” Capture replacement or press Esc to cancel";
   }
 
   function exitRescanMode() {
@@ -2747,7 +2765,7 @@
     if (banner) banner.classList.remove("visible");
     const btnCapture = document.getElementById("btnCapture");
     if (btnCapture) {
-      btnCapture.textContent = "📸 Capture Document";
+      btnCapture.textContent = "ðŸ“¸ Capture Document";
       btnCapture.classList.remove("btn-rescan-capture");
     }
     setPreviewStatus("");
@@ -2845,7 +2863,8 @@
       contrast: metrics.contrast,
       align: metrics.alignment,
       qualityClass: classifyScore(metrics.overall),
-      thumbUrl: tmpUrl
+      thumbUrl: tmpUrl,
+      intakeState: "Uploaded"
     };
 
     pendingCapture = doc;
@@ -2862,6 +2881,9 @@
         doc.propertyAddress = getPropertyValue();
         addDocToSession(doc);
         showDocPreview(doc, "camera");
+        refreshCurrentRunStatuses();
+      } else {
+        doc.intakeState = "Failed";
       }
       pendingCapture = null;
     } else {
@@ -2953,11 +2975,9 @@
     const input = document.getElementById("nameInput");
     input.value = getNextDocName();
     setTimeout(() => input.focus(), 30);
-    document.getElementById("footerMode").textContent = "Review Before Save · confirm document details";
-    document.getElementById("footerMode").textContent = "🔍 careful · naming";
+    setFooterMode("Review Before Save · confirm document details");
     updateAddPageButton();
     updateShortcutBar();
-    document.getElementById("footerMode").textContent = currentStream ? "Camera-first intake · ready" : "Fallback import mode · ready";
   }
 
   async function confirmCurrentName(skipName) {
@@ -2975,6 +2995,7 @@
     doc.propertyAddress = getPropertyValue();
     addDocToSession(doc);
     pendingCapture = null;
+    refreshCurrentRunStatuses();
     exitPreviewToCamera();
   }
 
@@ -3000,18 +3021,12 @@
     if (multiPageState.isMultiPage) {
       updateMultiPageUI();
     } else {
-      document.getElementById("footerMode").textContent =
-        (captureMode === "quick" ? "⚡ quick · ready" : "🔍 careful · ready");
+      setFooterMode(getReadyFooterMode());
     }
-    document.getElementById("footerMode").textContent = "Camera-first intake · ready";
+    setFooterMode(getReadyFooterMode());
     updateAddPageButton();
     updatePrimaryActions();
     updateShortcutBar();
-  }
-
-  /* Export + server status */
-  function updateExportBtn() {
-    return;
   }
 
   async function checkServer() {
@@ -3037,16 +3052,38 @@
     const txt = document.getElementById("serverStatus");
     if (pipelineStatus === "idle") {
       dot.classList.add("on");
-      txt.textContent = "🟢 Pipeline: Idle";
+      txt.textContent = "ðŸŸ¢ Pipeline: Idle";
     } else if (pipelineStatus === "processing") {
       dot.classList.add("on");
       txt.textContent = lastProcessingDocLabel
-        ? `🟡 Pipeline: Processing ${lastProcessingDocLabel}...`
-        : "🟡 Pipeline: Processing...";
+        ? `ðŸŸ¡ Pipeline: Processing ${lastProcessingDocLabel}...`
+        : "ðŸŸ¡ Pipeline: Processing...";
     } else {
       dot.classList.remove("on");
-      txt.textContent = "🔴 Pipeline: Offline";
+      txt.textContent = "ðŸ”´ Pipeline: Offline";
     }
+  }
+
+  function syncPipelineStatusFromCurrentRun(counts) {
+    if (pipelineStatus === "offline") {
+      updatePipelineStatus();
+      return;
+    }
+    const activeCounts = counts || sessionDocs.reduce((acc, doc) => {
+      const state = ((doc.intakeState || "").trim()) || "Uploaded";
+      acc[state] = (acc[state] || 0) + 1;
+      return acc;
+    }, {});
+    const inFlight = Number(activeCounts["Uploaded"] || 0) + Number(activeCounts["Processing"] || 0);
+    if (inFlight > 0) {
+      pipelineStatus = "processing";
+      const processingDoc = sessionDocs.find(doc => ["Uploaded", "Processing"].includes((doc.intakeState || "").trim() || "Uploaded"));
+      lastProcessingDocLabel = processingDoc ? (processingDoc.name || processingDoc.rawName || processingDoc.docId || "document") : "document";
+    } else {
+      pipelineStatus = "idle";
+      lastProcessingDocLabel = "";
+    }
+    updatePipelineStatus();
   }
 
   function markPipelineProcessing(label) {
@@ -3061,48 +3098,6 @@
         updateIntakeSummary();
       }
     }, 5000);
-  }
-
-  async function exportClient() {
-    if (!selectedClient) {
-      showToast("Select a client first", "error");
-      return;
-    }
-    const btn = document.getElementById("btnExport");
-    const prev = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "Exporting...";
-    markPipelineProcessing("export");
-    try {
-      const res = await fetch(`${API_URL}/export`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client: selectedClient })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(`Exported ${data.document_count} docs → ${data.spreadsheet}`, "success");
-        if (data.delivery_folder && confirm("Export complete. Open the delivery folder?")) {
-          try {
-            await fetch(`${API_URL}/open-folder`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ path: data.delivery_folder })
-            });
-            if (data.viewer_url) window.open(data.viewer_url, "_blank");
-          } catch (_) { /* ignore */ }
-        }
-      } else {
-        showToast(`Export failed: ${data.error}`, "error");
-      }
-    } catch (e) {
-      showToast("Export failed: Cannot reach API server. Is it running?", "error");
-      pipelineStatus = "offline";
-      updatePipelineStatus();
-    } finally {
-      btn.textContent = prev;
-      updateExportBtn();
-    }
   }
 
   /* Keyboard */
@@ -3288,20 +3283,30 @@
     el.addEventListener("blur", () => { persistPropertyForClient(); });
   })();
 
-  (function ensureLegacyActionShims() {
-    const ensure = (tag, id) => {
-      if (document.getElementById(id)) return;
-      const el = document.createElement(tag);
-      el.id = id;
-      el.style.display = "none";
-      document.body.appendChild(el);
-    };
-    ensure("button", "btnSelectFolder");
-    ensure("button", "modeQuickBtn");
-    ensure("button", "modeCarefulBtn");
-    ensure("button", "btnExport");
-    ensure("input", "progTarget");
-  })();
+  const _startCamera = startCamera;
+  startCamera = async function(deviceId) {
+    const result = await _startCamera(deviceId);
+    if (!rescanMode && !pendingCapture && !multiPageState.isMultiPage) {
+      setFooterMode(getReadyFooterMode());
+    }
+    return result;
+  };
+
+  const _updateMultiPageUI = updateMultiPageUI;
+  updateMultiPageUI = function() {
+    _updateMultiPageUI();
+    if (!multiPageState.isMultiPage && !pendingCapture && !rescanMode) {
+      setFooterMode(getReadyFooterMode());
+    }
+  };
+
+  const _exitPreviewToCamera = exitPreviewToCamera;
+  exitPreviewToCamera = function() {
+    _exitPreviewToCamera();
+    if (!multiPageState.isMultiPage) {
+      setFooterMode(getReadyFooterMode());
+    }
+  };
 
   document.getElementById("btnBrowse").addEventListener("click", browseFile);
   document.getElementById("btnCapture").addEventListener("click", captureImage);
@@ -3312,13 +3317,13 @@
   document.getElementById("btnConfirm").addEventListener("click", () => confirmCurrentName(false));
   document.getElementById("nameInput").addEventListener("focus", () => {
     if (pendingCapture) {
-      document.getElementById("footerMode").textContent = "Review Before Save · confirm document details";
+      setFooterMode("Review Before Save · confirm document details");
     }
   });
   document.getElementById("reviewBeforeSaveToggle").addEventListener("change", () => {
     syncCaptureModeFromUi();
     if (!pendingCapture && !rescanMode && !multiPageState.isMultiPage) {
-      document.getElementById("footerMode").textContent = "Camera-first intake · ready";
+      setFooterMode(getReadyFooterMode());
     }
     updateShortcutBar();
   });
@@ -3355,7 +3360,8 @@
           localPdfUrl: isPdf ? URL.createObjectURL(f) : null,
           isPdf,
           docType: "Unknown",
-          propertyAddress: getPropertyValue()
+          propertyAddress: getPropertyValue(),
+          intakeState: "Uploaded"
         };
 
         // Immediately add to session so every selected file appears in the queue,
@@ -3387,6 +3393,11 @@
             doc.docId = deriveDocIdFromSafeName(safeName);
             doc.rawName = safeName;
             updateLeftQueue();
+            refreshCurrentRunStatuses();
+          } else {
+            doc.intakeState = "Failed";
+            updateLeftQueue();
+            updateIntakeSummary();
           }
         })();
       } catch (err) {
@@ -3396,22 +3407,6 @@
     e.target.value = "";
   });
 
-  document.getElementById("modeQuickBtn").addEventListener("click", () => {
-    captureMode = "quick";
-    document.getElementById("modeQuickBtn").classList.add("active");
-    document.getElementById("modeCarefulBtn").classList.remove("active");
-    document.getElementById("footerMode").textContent = "⚡ quick · ready";
-  });
-  document.getElementById("modeCarefulBtn").addEventListener("click", () => {
-    captureMode = "careful";
-    document.getElementById("modeCarefulBtn").classList.add("active");
-    document.getElementById("modeQuickBtn").classList.remove("active");
-    document.getElementById("footerMode").textContent = "🔍 careful · ready";
-  });
-
-  document.getElementById("progTarget").addEventListener("change", updateProgress);
-
-  document.getElementById("btnExport").addEventListener("click", exportClient);
   document.getElementById("btnOpenPortal").addEventListener("click", () => {
     const baseUrl = "http://127.0.0.1:5000";
     if (selectedClient) {
@@ -3439,8 +3434,11 @@
   checkServer();
   serverCheckTimer = setInterval(checkServer, 5000);
   rescanPollTimer = setInterval(updateRetakeQueue, 10000);
+  intakeStatusTimer = setInterval(refreshCurrentRunStatuses, 2000);
   updateRetakeQueue();
 </script>
 </body>
 </html>
+
+
 

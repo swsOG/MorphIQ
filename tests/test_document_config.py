@@ -111,6 +111,54 @@ def _make_db(tmp_path: Path) -> Path:
 
 
 class DocumentConfigTests(unittest.TestCase):
+    def test_live_default_config_seeds_fire_door_certificate(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            db_path = Path(tmp_dir) / "portal.db"
+            conn = sqlite3.connect(db_path)
+            try:
+                conn.execute(
+                    """
+                    CREATE TABLE document_types (
+                        id INTEGER PRIMARY KEY,
+                        key TEXT NOT NULL
+                    )
+                    """
+                )
+                conn.commit()
+            finally:
+                conn.close()
+
+            with unittest.mock.patch.dict(os.environ, {"DATABASE_URL": str(db_path)}, clear=False):
+                from portal_new import document_config
+
+                importlib.reload(document_config)
+                document_config.ensure_document_config(str(db_path))
+                config = document_config.find_document_config("Fire Door Certificate", str(db_path))
+
+            self.assertIsNotNone(config)
+            self.assertEqual(config["document_key"], "fire-door-certificate")
+            self.assertEqual(
+                config["field_keys"],
+                [
+                    "property_address",
+                    "certificate_number",
+                    "door_location",
+                    "inspection_date",
+                    "result",
+                    "next_inspection_date",
+                ],
+            )
+            self.assertEqual(
+                config["required_fields"],
+                [
+                    "property_address",
+                    "certificate_number",
+                    "door_location",
+                    "inspection_date",
+                    "result",
+                ],
+            )
+
     def test_ai_prefill_reads_new_document_type_from_database_config(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             db_path = _make_db(Path(tmp_dir))
@@ -124,11 +172,24 @@ class DocumentConfigTests(unittest.TestCase):
             self.assertEqual(config["document_key"], "fire-door-certificate")
             self.assertEqual(
                 config["field_keys"],
-                ["property_address", "door_location", "inspection_date"],
+                [
+                    "property_address",
+                    "certificate_number",
+                    "door_location",
+                    "inspection_date",
+                    "result",
+                    "next_inspection_date",
+                ],
             )
             self.assertEqual(
                 config["required_fields"],
-                ["property_address", "door_location", "inspection_date"],
+                [
+                    "property_address",
+                    "certificate_number",
+                    "door_location",
+                    "inspection_date",
+                    "result",
+                ],
             )
 
     def test_inactive_document_types_are_ignored_by_runtime_config_readers(self):

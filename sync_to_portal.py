@@ -29,6 +29,7 @@ DOC_TYPE_MAP = {
     "EICR": "eicr",
     "EPC": "epc",
     "Deposit Protection": "deposit-protection-certificate",
+    "Fire Door Certificate": "fire-door-certificate",
     "Inventory": "inventory",
 }
 

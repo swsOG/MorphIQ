@@ -486,7 +486,7 @@
 
   .field-group { margin-bottom: 14px; }
   .field-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
-  .field-group input, .field-group textarea {
+  .field-group input, .field-group textarea, .field-group select {
     width: 100%;
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -497,11 +497,37 @@
     color: var(--text);
     outline: none;
   }
-  .field-group input:focus, .field-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+  .field-group input:focus, .field-group textarea:focus, .field-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
   .field-group textarea { resize: vertical; min-height: 56px; }
 
   .reviewer-section { padding: 16px 20px; border-top: 1px solid var(--border); }
   .reviewer-section h3 { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+
+  .manual-field-box {
+    padding: 14px 20px 18px;
+    border-top: 1px solid var(--border);
+    background: rgba(79, 125, 249, 0.04);
+  }
+  .manual-field-box.hidden { display: none; }
+  .manual-field-box h3 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .manual-field-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: end;
+  }
+  .manual-field-help {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
 
   .nav-and-actions {
     padding: 12px 16px;
@@ -693,7 +719,8 @@
   }
 
   .field-group.field-attention input,
-  .field-group.field-attention textarea {
+  .field-group.field-attention textarea,
+  .field-group.field-attention select {
     border-left: 4px solid var(--amber);
   }
 
@@ -863,8 +890,27 @@
     <div class="fields-panel">
       <div class="fields-header">Verify key fields</div>
       <div class="fields-body" id="fieldsBody"></div>
+      <div class="manual-field-box hidden" id="manualFieldBox">
+        <h3>Add missing field</h3>
+        <div class="manual-field-grid">
+          <div class="field-group">
+            <label>Field label</label>
+            <input type="text" id="manualFieldLabel" placeholder="e.g. Inspector name">
+          </div>
+          <div class="field-group">
+            <label>Field key (optional)</label>
+            <input type="text" id="manualFieldKey" placeholder="e.g. inspector_name">
+          </div>
+          <button type="button" class="btn-nav" id="btnAddManualField">Add field</button>
+        </div>
+        <div class="manual-field-help">Use this only for one-off gaps in the current Fire Door review.</div>
+      </div>
       <div class="reviewer-section">
         <h3>Review info</h3>
+        <div class="field-group">
+          <label>Document type</label>
+          <select id="reviewDocTypeSelect"></select>
+        </div>
         <div class="field-group">
           <label>Reviewed by</label>
           <input type="text" id="reviewedBy" value="Filip" placeholder="Name">
@@ -963,6 +1009,7 @@
   let refreshIntervalId = null;
   let rescanDocIds = new Set();
   let selectedDocIds = new Set();
+  let documentTypeConfigs = new Map();
 
   function getRequiredFields(doc) {
     const explicit = Array.isArray(doc.required_fields) ? doc.required_fields.filter(Boolean) : [];
@@ -1098,6 +1145,22 @@
       loading.style.display = "none";
       errEl.textContent = "Cannot reach server. Is it running at " + API_URL + "?";
       errEl.style.display = "block";
+    }
+  }
+
+  async function loadStationConfig() {
+    try {
+      const res = await fetch(`${API_URL}/station-config`, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) return;
+      const data = await res.json();
+      documentTypeConfigs = new Map();
+      (data.document_types || []).forEach(item => {
+        if (item && item.label) {
+          documentTypeConfigs.set(item.label, item);
+        }
+      });
+    } catch (e) {
+      // ignore config fetch failures; the existing review metadata still works
     }
   }
 
@@ -1396,6 +1459,109 @@
     return filteredDocs[currentDocIndex];
   }
 
+  function computeMissingFieldsForDoc(doc) {
+    const required = getRequiredFields(doc);
+    const fields = doc.fields || {};
+    return required.filter(key => !(fields[key] || "").toString().trim());
+  }
+
+  function snapshotEditedFieldsIntoDoc(doc) {
+    if (!doc) return;
+    const nextFields = { ...(doc.fields || {}) };
+    document.querySelectorAll("#fieldsBody [data-field]").forEach(input => {
+      nextFields[input.dataset.field] = input.value.trim();
+    });
+    doc.fields = nextFields;
+  }
+
+  function populateReviewDocTypeSelect(doc) {
+    const select = document.getElementById("reviewDocTypeSelect");
+    if (!select || !doc) return;
+    const labels = Array.from(documentTypeConfigs.keys()).sort((a, b) => a.localeCompare(b));
+    if (doc.doc_type && !labels.includes(doc.doc_type)) {
+      labels.unshift(doc.doc_type);
+    }
+    select.innerHTML = labels.map(label => `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`).join("");
+    select.value = doc.doc_type || "";
+  }
+
+  function applySelectedDocTypeConfig() {
+    const doc = getCurrentDoc();
+    const select = document.getElementById("reviewDocTypeSelect");
+    if (!doc || !select) return;
+    snapshotEditedFieldsIntoDoc(doc);
+    const selectedType = (select.value || doc.doc_type || "").trim();
+    if (!selectedType) return;
+    doc.doc_type = selectedType;
+    document.getElementById("reviewDocType").textContent = selectedType;
+    const config = documentTypeConfigs.get(selectedType);
+    if (config) {
+      doc.field_definitions = config.field_definitions || [];
+      doc.required_fields = config.required_fields || [];
+      const mergedFields = { ...(doc.fields || {}) };
+      (config.field_definitions || []).forEach(field => {
+        if (field && field.field_key && !(field.field_key in mergedFields)) {
+          mergedFields[field.field_key] = "";
+        }
+      });
+      doc.fields = mergedFields;
+      doc.missing_fields = computeMissingFieldsForDoc(doc);
+      renderFields(doc.fields, doc.missing_fields, doc.field_definitions || []);
+    }
+    updateManualFieldBox(doc);
+  }
+
+  function updateManualFieldBox(doc) {
+    const box = document.getElementById("manualFieldBox");
+    if (!box) return;
+    const isFireDoor = ((doc && doc.doc_type) || "").trim() === "Fire Door Certificate";
+    box.classList.toggle("hidden", !isFireDoor);
+  }
+
+  function addManualField() {
+    const doc = getCurrentDoc();
+    if (!doc) return;
+    if (((doc.doc_type || "").trim()) !== "Fire Door Certificate") {
+      showToast("Manual field add is only enabled for Fire Door reviews in this phase.", "info");
+      return;
+    }
+    const labelInput = document.getElementById("manualFieldLabel");
+    const keyInput = document.getElementById("manualFieldKey");
+    const label = (labelInput?.value || "").trim();
+    const requestedKey = (keyInput?.value || "").trim();
+    if (!label) {
+      showToast("Enter a field label first", "error");
+      return;
+    }
+    snapshotEditedFieldsIntoDoc(doc);
+    const normalizedKey = (requestedKey || label)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    if (!normalizedKey) {
+      showToast("Could not derive a valid field key", "error");
+      return;
+    }
+    const existingKeys = new Set(Object.keys(doc.fields || {}));
+    if (existingKeys.has(normalizedKey)) {
+      showToast("That field already exists on this document", "info");
+      return;
+    }
+    const nextOrder = Array.isArray(doc.field_definitions) ? doc.field_definitions.length + 1 : 1;
+    doc.field_definitions = [...(doc.field_definitions || []), {
+      field_key: normalizedKey,
+      field_label: label,
+      field_order: nextOrder,
+      is_required: 0,
+    }];
+    doc.fields = { ...(doc.fields || {}), [normalizedKey]: "" };
+    doc.missing_fields = computeMissingFieldsForDoc(doc);
+    renderFields(doc.fields, doc.missing_fields, doc.field_definitions || []);
+    if (labelInput) labelInput.value = "";
+    if (keyInput) keyInput.value = "";
+    showToast(`Added field: ${label}`, "success");
+  }
+
   function renderReviewDoc() {
     const doc = getCurrentDoc();
     if (!doc) {
@@ -1410,7 +1576,9 @@
     const total = filteredDocs.length;
     const pos = currentDocIndex + 1;
     document.getElementById("reviewCounter").textContent = pos + " of " + total + (statusFilter ? " " + statusFilter : "");
+    populateReviewDocTypeSelect(doc);
     renderFields(doc.fields || {}, doc.missing_fields, doc.field_definitions || []);
+    updateManualFieldBox(doc);
     document.getElementById("reviewedBy").value = (doc.review && doc.review.reviewed_by) || "Filip";
     document.getElementById("reviewNotes").value = (doc.review && doc.review.notes) || "";
     loadPdfPreview(doc);
@@ -1641,6 +1809,7 @@
 
     const payload = {
       status: status,
+      doc_type: (document.getElementById("reviewDocTypeSelect")?.value || doc.doc_type || "").trim(),
       fields: {},
       review: {
         reviewed_by: document.getElementById("reviewedBy").value.trim() || "Filip",
@@ -1662,6 +1831,7 @@
       if (!data.success) throw new Error(data.error || "Save failed");
       showToast("Saved as " + status, "success");
       doc.status = status;
+      doc.doc_type = payload.doc_type || doc.doc_type;
       doc.fields = payload.fields;
       doc.review = payload.review;
       currentDocIndex++;
@@ -1681,6 +1851,7 @@
     const doc = getCurrentDoc();
     if (!doc) return;
     const payload = {
+      doc_type: (document.getElementById("reviewDocTypeSelect")?.value || doc.doc_type || "").trim(),
       fields: {},
       review: {
         reviewed_by: document.getElementById("reviewedBy").value.trim() || "Filip",
@@ -1701,6 +1872,7 @@
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Save failed");
       showToast("Fields saved", "success");
+      doc.doc_type = payload.doc_type || doc.doc_type;
       doc.fields = payload.fields;
       doc.review = payload.review;
     } catch (e) {
@@ -1741,6 +1913,8 @@
       }
     });
   }
+  document.getElementById("reviewDocTypeSelect").addEventListener("change", applySelectedDocTypeConfig);
+  document.getElementById("btnAddManualField").addEventListener("click", addManualField);
 
   document.getElementById("btnToggleOcr").addEventListener("click", toggleOcrText);
 
@@ -1898,6 +2072,7 @@
     }
   });
 
+  loadStationConfig();
   showView(1);
 </script>
 </body>

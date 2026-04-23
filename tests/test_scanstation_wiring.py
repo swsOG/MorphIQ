@@ -114,6 +114,7 @@ class ScanStationWiringTests(unittest.TestCase):
         self.assertIn("Review Before Save", html)
         self.assertIn("Intake Summary", html)
         self.assertIn("Current client", html)
+        self.assertIn("Uploaded", html)
         self.assertNotIn("Select Folder", html)
         self.assertNotIn("Export Verified", html)
         self.assertNotIn("Quality Dashboard", html)
@@ -121,6 +122,14 @@ class ScanStationWiringTests(unittest.TestCase):
         self.assertNotIn("Live Session Summary", html)
         self.assertNotIn("Quick</button>", html)
         self.assertNotIn("Careful</button>", html)
+
+    def test_reviewstation_supports_fire_door_type_confirmation_and_manual_field_add(self):
+        html = (PROJECT_ROOT / "review_station.html").read_text(encoding="utf-8")
+
+        self.assertIn('id="reviewDocTypeSelect"', html)
+        self.assertIn("Add missing field", html)
+        self.assertIn('id="btnAddManualField"', html)
+        self.assertIn("Fire Door reviews", html)
 
     def test_scanstation_guide_matches_camera_first_fallback_import_model(self):
         guide = (PROJECT_ROOT / "docs" / "User_Guide" / "01_ScanStation.md").read_text(encoding="utf-8")
@@ -212,12 +221,131 @@ class ScanStationWiringTests(unittest.TestCase):
             self.assertEqual(doc["doc_type"], "Fire Door Certificate")
             self.assertEqual(
                 doc["required_fields"],
-                ["property_address", "door_location", "inspection_date"],
+                [
+                    "property_address",
+                    "certificate_number",
+                    "door_location",
+                    "inspection_date",
+                    "result",
+                ],
             )
             self.assertEqual(
                 [field["field_key"] for field in doc["field_definitions"]],
-                ["property_address", "door_location", "inspection_date"],
+                [
+                    "property_address",
+                    "certificate_number",
+                    "door_location",
+                    "inspection_date",
+                    "result",
+                    "next_inspection_date",
+                ],
             )
+
+    def test_intake_status_endpoint_maps_raw_file_to_processing_and_ready_states(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            raw_dir = base / "Clients" / "Epping Lettings" / "raw"
+            raw_dir.mkdir(parents=True, exist_ok=True)
+            (raw_dir / "fire_door_certificate_clean.jpg").write_bytes(b"fake-image")
+            db_path = base / "portal.db"
+            seed_config_db(db_path)
+
+            with mock.patch.dict(
+                "os.environ",
+                {"MORPHIQ_BASE": str(base), "DATABASE_URL": str(db_path)},
+                clear=False,
+            ):
+                server = load_module(
+                    f"server_status_test_{base.name}",
+                    PROJECT_ROOT / "server.py",
+                )
+                client = server.app.test_client()
+                processing = client.get("/intake-status/Epping Lettings/fire_door_certificate_clean.jpg")
+
+                doc_folder = base / "Clients" / "Epping Lettings" / "Batches" / "2026-04-23" / "DOC-00001"
+                doc_folder.mkdir(parents=True, exist_ok=True)
+                (doc_folder / "review.json").write_text(
+                    json.dumps(
+                        {
+                            "doc_id": "DOC-00001",
+                            "doc_type": "Fire Door Certificate",
+                            "status": "New",
+                            "files": {
+                                "pdf": "fire-door.pdf",
+                                "raw_image": "",
+                                "raw_source": "fire_door_certificate_clean.jpg",
+                            },
+                            "fields": {
+                                "property_address": "12 Oak Street",
+                                "certificate_number": "FDC-1028",
+                                "door_location": "Ground floor lobby",
+                                "inspection_date": "2026-04-23",
+                                "result": "Pass",
+                            },
+                            "review": {"scanned_at": "2026-04-23 10:00:00"},
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                ready = client.get("/intake-status/Epping Lettings/fire_door_certificate_clean.jpg")
+
+            self.assertEqual(processing.status_code, 200)
+            self.assertEqual(processing.get_json()["intake_state"], "Processing")
+            self.assertEqual(ready.status_code, 200)
+            ready_payload = ready.get_json()
+            self.assertEqual(ready_payload["intake_state"], "Ready for review")
+            self.assertEqual(ready_payload["doc_id"], "DOC-00001")
+            self.assertEqual(ready_payload["doc_type"], "Fire Door Certificate")
+
+    def test_review_endpoint_can_update_doc_type_for_manual_correction(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            doc_folder = base / "Clients" / "Epping Lettings" / "Batches" / "2026-04-23" / "DOC-00002"
+            doc_folder.mkdir(parents=True, exist_ok=True)
+            (doc_folder / "review.json").write_text(
+                json.dumps(
+                    {
+                        "doc_id": "DOC-00002",
+                        "doc_type": "Unknown",
+                        "status": "New",
+                        "files": {"pdf": "unknown.pdf", "raw_source": "unknown.jpg"},
+                        "fields": {"property_address": "12 Oak Street"},
+                        "review": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            db_path = base / "portal.db"
+            seed_config_db(db_path)
+
+            with mock.patch.dict(
+                "os.environ",
+                {"MORPHIQ_BASE": str(base), "DATABASE_URL": str(db_path)},
+                clear=False,
+            ):
+                server = load_module(
+                    f"server_review_type_test_{base.name}",
+                    PROJECT_ROOT / "server.py",
+                )
+                client = server.app.test_client()
+                response = client.post(
+                    "/review/Epping Lettings/DOC-00002",
+                    json={
+                        "doc_type": "Fire Door Certificate",
+                        "fields": {
+                            "property_address": "12 Oak Street",
+                            "certificate_number": "FDC-2044",
+                            "door_location": "Rear escape route",
+                            "inspection_date": "2026-04-23",
+                            "result": "Pass",
+                        },
+                    },
+                )
+
+            self.assertEqual(response.status_code, 200)
+            saved = json.loads((doc_folder / "review.json").read_text(encoding="utf-8"))
+            self.assertEqual(saved["doc_type"], "Fire Door Certificate")
+            self.assertEqual(saved["fields"]["certificate_number"], "FDC-2044")
 
     def test_pdf_raw_files_are_processed_without_image_preprocessing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
