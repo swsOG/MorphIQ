@@ -1129,7 +1129,7 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.tiff,.tif,.bmp" multiple style="display:none;">
+<input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.tiff,.tif,.bmp,.pdf,application/pdf" multiple style="display:none;">
 
 <script>
   const API_URL = "http://127.0.0.1:8765";
@@ -1945,12 +1945,8 @@
 
   /* Folder / File System Access */
   async function pickScanSystemFolder() {
-    try {
-      baseFolderHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-      showToast("ScanSystem folder selected", "success");
-    } catch (e) {
-      if (e.name !== "AbortError") showToast("Folder selection cancelled or failed", "error");
-    }
+    baseFolderHandle = null;
+    showToast("ScanStation now saves through the backend pipeline. No folder selection needed.", "info");
   }
 
   function browseFile() {
@@ -1966,49 +1962,30 @@
   }
 
   async function saveFileToClient(filename, blob, docName = "", propertyAddress = "", groupMeta = null) {
-    if (!baseFolderHandle) {
-      showToast('Click "Select Folder" first (one-time setup)', "info");
-      return null;
-    }
     if (!selectedClient) {
       showToast("Select a client first", "error");
       return null;
     }
     try {
-      const clientsDir = await baseFolderHandle.getDirectoryHandle("Clients", { create: true });
-      const clientDir = await clientsDir.getDirectoryHandle(selectedClient, { create: true });
-      const rawDir = await clientDir.getDirectoryHandle("raw", { create: true });
-
-      const ts = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 15);
-      const ext = filename.split(".").pop().toLowerCase();
-      const safeName = `scan_${ts}_${Math.random().toString(36).slice(2, 6)}.${ext}`;
-
-      const fh = await rawDir.getFileHandle(safeName, { create: true });
-      const w = await fh.createWritable();
-      await w.write(blob);
-      await w.close();
-
-      const prop = (propertyAddress || "").trim();
-      const nameToStore = (docName || "").trim() || null;
-      try {
-        const metaObj = {
-          doc_name: nameToStore,
-          property_address: prop || null
-        };
-        if (groupMeta) {
-          metaObj.group_id = groupMeta.group_id;
-          metaObj.page_number = groupMeta.page_number;
-          metaObj.total_pages_so_far = groupMeta.total_pages_so_far;
-        }
-        const metaHandle = await rawDir.getFileHandle(`${safeName}.meta.json`, { create: true });
-        const metaWritable = await metaHandle.createWritable();
-        await metaWritable.write(JSON.stringify(metaObj, null, 2));
-        await metaWritable.close();
-      } catch (e) {
-        // non-fatal
+      const formData = new FormData();
+      formData.append("file", blob, filename);
+      formData.append("doc_name", (docName || "").trim());
+      formData.append("property_address", (propertyAddress || "").trim());
+      if (groupMeta) {
+        if (groupMeta.group_id) formData.append("group_id", groupMeta.group_id);
+        if (groupMeta.page_number != null) formData.append("page_number", String(groupMeta.page_number));
+        if (groupMeta.total_pages_so_far != null) formData.append("total_pages_so_far", String(groupMeta.total_pages_so_far));
       }
 
-      return safeName;
+      const res = await fetch(
+        `${API_URL}/intake/${encodeURIComponent(selectedClient)}`,
+        { method: "POST", body: formData, signal: AbortSignal.timeout(30000) }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error((data && data.error) || "Upload failed");
+      }
+      return data.raw_name || null;
     } catch (e) {
       if (e.name === "AbortError") return null;
       showToast("Save error: " + e.message, "error");
@@ -2018,30 +1995,29 @@
 
   /* Multi-page group helpers */
   async function retroUpdatePageMeta(rawFileName, metaObj) {
-    if (!baseFolderHandle || !selectedClient || !rawFileName) return;
+    if (!selectedClient || !rawFileName) return;
     try {
-      const clientsDir = await baseFolderHandle.getDirectoryHandle("Clients", { create: false });
-      const clientDir = await clientsDir.getDirectoryHandle(selectedClient, { create: false });
-      const rawDir = await clientDir.getDirectoryHandle("raw", { create: false });
-      const metaHandle = await rawDir.getFileHandle(`${rawFileName}.meta.json`, { create: true });
-      const w = await metaHandle.createWritable();
-      await w.write(JSON.stringify(metaObj, null, 2));
-      await w.close();
+      await fetch(
+        `${API_URL}/raw-meta/${encodeURIComponent(selectedClient)}/${encodeURIComponent(rawFileName)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(metaObj || {}),
+          signal: AbortSignal.timeout(10000)
+        }
+      );
     } catch (e) {
       console.warn("Failed to update meta file:", e);
     }
   }
 
   async function writeGroupCompleteMarker(groupId) {
-    if (!baseFolderHandle || !selectedClient || !groupId) return;
+    if (!selectedClient || !groupId) return;
     try {
-      const clientsDir = await baseFolderHandle.getDirectoryHandle("Clients", { create: false });
-      const clientDir = await clientsDir.getDirectoryHandle(selectedClient, { create: false });
-      const rawDir = await clientDir.getDirectoryHandle("raw", { create: false });
-      const fh = await rawDir.getFileHandle(`${groupId}.group_complete`, { create: true });
-      const w = await fh.createWritable();
-      await w.write("");
-      await w.close();
+      await fetch(
+        `${API_URL}/raw-group-complete/${encodeURIComponent(selectedClient)}/${encodeURIComponent(groupId)}`,
+        { method: "POST", signal: AbortSignal.timeout(10000) }
+      );
     } catch (e) {
       console.warn("Failed to write group_complete marker:", e);
     }
@@ -2732,6 +2708,10 @@
 
   async function captureRescanReplace(blob) {
     if (!rescanItem || !selectedClient) return false;
+    if (blob && blob.name && /\.pdf$/i.test(blob.name)) {
+      showToast("Rescan replacement must be an image file", "error");
+      return false;
+    }
     const formData = new FormData();
     formData.append("image", blob, "rescan.jpeg");
     try {
@@ -2858,6 +2838,13 @@
     const pdfFrameWrap = document.getElementById("pdfFrameWrap");
     const pdfFrame = document.getElementById("previewPdfFrame");
 
+    if (doc.localPdfUrl) {
+      canvas.style.display = "none";
+      pdfFrameWrap.style.display = "block";
+      pdfFrame.src = doc.localPdfUrl;
+      return;
+    }
+
     if (doc.hasPdf && selectedClient) {
       // Show PDF in A4-proportioned wrapper so it doesn't stretch
       canvas.style.display = "none";
@@ -2888,6 +2875,11 @@
       img.src = doc.thumbUrl;
     } else if (doc.blob) {
       img.src = URL.createObjectURL(doc.blob);
+    } else if (doc.rawName && selectedClient && /\.pdf$/i.test(doc.rawName)) {
+      canvas.style.display = "none";
+      pdfFrameWrap.style.display = "block";
+      pdfFrame.src = `${API_URL}/raw-file/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.rawName)}#toolbar=0&navpanes=0&view=Fit`;
+      return;
     } else if (doc.rawName && selectedClient) {
       img.src = `${API_URL}/raw-image/${encodeURIComponent(selectedClient)}/${encodeURIComponent(doc.rawName)}`;
     } else {
@@ -3255,6 +3247,8 @@
         const now = new Date();
         const stamp = now.toTimeString().slice(0, 8);
         const id = "local-" + now.getTime() + "-" + Math.random().toString(36).slice(2, 8);
+        const lowerName = (f.name || "").toLowerCase();
+        const isPdf = lowerName.endsWith(".pdf") || (f.type || "").toLowerCase() === "application/pdf";
         const doc = {
           id,
           blob: f,
@@ -3267,7 +3261,9 @@
           contrast: 0,
           align: 0,
           qualityClass: "ok",
-          thumbUrl: URL.createObjectURL(f),
+          thumbUrl: isPdf ? null : URL.createObjectURL(f),
+          localPdfUrl: isPdf ? URL.createObjectURL(f) : null,
+          isPdf,
           docType: "Unknown",
           propertyAddress: getPropertyValue()
         };

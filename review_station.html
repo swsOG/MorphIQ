@@ -964,19 +964,25 @@
   let rescanDocIds = new Set();
   let selectedDocIds = new Set();
 
-  const REQUIRED_FIELDS = {
-    "Gas Safety Certificate": ["property_address", "engineer_name", "gas_safe_reg", "inspection_date", "expiry_date", "result"],
-    "EICR": ["property_address", "electrician_name", "inspection_date", "next_inspection_date", "result"],
-    "EPC": ["property_address", "current_rating", "assessment_date", "expiry_date"],
-    "Tenancy Agreement": ["property_address", "tenant_full_name", "start_date", "monthly_rent_amount"],
-    "Deposit Protection Certificate": ["property_address", "tenant_name", "deposit_amount", "protection_date"],
-    "Inventory": ["property_address", "inspection_date"],
-  };
+  function getRequiredFields(doc) {
+    const explicit = Array.isArray(doc.required_fields) ? doc.required_fields.filter(Boolean) : [];
+    if (explicit.length > 0) return explicit;
+    const defs = Array.isArray(doc.field_definitions) ? doc.field_definitions : [];
+    return defs.filter(field => field && field.is_required).map(field => field.field_key).filter(Boolean);
+  }
 
   function computeQuality(doc) {
-    const docType = (doc.doc_type || "").trim();
-    const required = REQUIRED_FIELDS[docType];
-    if (!required) {
+    const required = getRequiredFields(doc);
+    if (!required.length) {
+      const hasConfig = Array.isArray(doc.field_definitions) && doc.field_definitions.length > 0;
+      const fields = doc.fields || {};
+      const addr = (fields.property_address || "").toString().trim();
+      if (hasConfig) {
+        doc.completeness_score = addr ? 100 : 0;
+        doc.missing_fields = addr ? [] : ["property_address"];
+        doc.needs_attention = !addr;
+        return;
+      }
       doc.completeness_score = 0;
       doc.missing_fields = ["doc_type"];
       doc.needs_attention = true;
@@ -1404,7 +1410,7 @@
     const total = filteredDocs.length;
     const pos = currentDocIndex + 1;
     document.getElementById("reviewCounter").textContent = pos + " of " + total + (statusFilter ? " " + statusFilter : "");
-    renderFields(doc.fields || {}, doc.missing_fields);
+    renderFields(doc.fields || {}, doc.missing_fields, doc.field_definitions || []);
     document.getElementById("reviewedBy").value = (doc.review && doc.review.reviewed_by) || "Filip";
     document.getElementById("reviewNotes").value = (doc.review && doc.review.notes) || "";
     loadPdfPreview(doc);
@@ -1448,12 +1454,34 @@
     return key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  function renderFields(fields, missingFields) {
+  function renderFields(fields, missingFields, fieldDefinitions) {
     const container = document.getElementById("fieldsBody");
     container.innerHTML = "";
     const missing = Array.isArray(missingFields) ? missingFields : [];
-    for (const [key, value] of Object.entries(fields)) {
-      const label = labelFromKey(key);
+    const defs = Array.isArray(fieldDefinitions) ? fieldDefinitions.slice() : [];
+    const orderedKeys = [];
+    const labelByKey = {};
+
+    defs
+      .sort((a, b) => (Number(a.field_order || 0) - Number(b.field_order || 0)))
+      .forEach(field => {
+        if (!field || !field.field_key) return;
+        orderedKeys.push(field.field_key);
+        labelByKey[field.field_key] = field.field_label || labelFromKey(field.field_key);
+      });
+
+    Object.keys(fields || {}).forEach(key => {
+      if (!orderedKeys.includes(key)) {
+        orderedKeys.push(key);
+      }
+      if (!labelByKey[key]) {
+        labelByKey[key] = labelFromKey(key);
+      }
+    });
+
+    for (const key of orderedKeys) {
+      const value = fields[key];
+      const label = labelByKey[key] || labelFromKey(key);
       const div = document.createElement("div");
       const isMissing = missing.includes(key);
       div.className = "field-group" + (isMissing ? " field-attention" : "");

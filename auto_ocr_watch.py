@@ -196,6 +196,7 @@ def process_group(group_id: str, members: list[tuple[Path, dict]],
             "files": {
                 "pdf": output_pdf.name,
                 "raw_image": archived_names[0],
+                "raw_source": archived_names[0],
                 "raw_images": archived_names,
             },
             "fields": {},
@@ -348,8 +349,16 @@ def get_next_doc_id(batch_folder: Path) -> str:
     next_num = max(existing, default=0) + 1
     return f"DOC-{next_num:05d}"
 
-def write_review_json(doc_folder: Path, doc_id: str, pdf_name: str, image_name: str, template: dict,
-                     doc_name: str | None = None, initial_fields: dict | None = None):
+def write_review_json(
+    doc_folder: Path,
+    doc_id: str,
+    pdf_name: str,
+    image_name: str,
+    template: dict,
+    doc_name: str | None = None,
+    initial_fields: dict | None = None,
+    raw_source_name: str | None = None,
+):
     scanned_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     fields = dict(initial_fields or {})
     review = {
@@ -361,7 +370,11 @@ def write_review_json(doc_folder: Path, doc_id: str, pdf_name: str, image_name: 
         "doc_type_template": "",
         "status": "New",
         "quality_score": "",
-        "files": {"pdf": pdf_name, "raw_image": image_name},
+        "files": {
+            "pdf": pdf_name,
+            "raw_image": image_name,
+            "raw_source": raw_source_name or image_name or pdf_name,
+        },
         # Preserve any metadata captured at scan time before AI prefill augments it.
         "fields": fields,
         "review": {
@@ -489,7 +502,11 @@ def check_reprocess_triggers(client_name: str, client_dir: Path) -> None:
                     with review_path.open("r", encoding="utf-8") as f:
                         review_data = json.load(f)
                     review_data["status"] = "New"
-                    review_data["files"] = {"pdf": pdf_filename, "raw_image": image_filename}
+                    review_data["files"] = {
+                        "pdf": pdf_filename,
+                        "raw_image": image_filename,
+                        "raw_source": image_filename,
+                    }
                     review_data.setdefault("review", {})["scanned_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     with review_path.open("w", encoding="utf-8") as f:
                         json.dump(review_data, f, indent=2, ensure_ascii=False)
@@ -545,19 +562,34 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
     doc_folder.mkdir(parents=True, exist_ok=True)
     log(f"  DocID: {doc_id} -> {doc_folder}", client_name)
 
+    input_suffix = image_path.suffix.lower()
+    is_pdf_input = input_suffix == ".pdf"
     output_pdf = doc_folder / (image_path.stem + ".pdf")
     temp_png = TEMP / (f"{client_name}_{image_path.stem}_ocr.png")
 
     try:
-        preprocess_for_ocr(image_path, temp_png, client_name)
-        ocr_to_pdf(temp_png, output_pdf, client_name)
+        archived_image_name = ""
+        raw_source_name = image_path.name
+        if is_pdf_input:
+            ocr_to_pdf(image_path, output_pdf, client_name)
+            image_path.unlink(missing_ok=True)
+        else:
+            preprocess_for_ocr(image_path, temp_png, client_name)
+            ocr_to_pdf(temp_png, output_pdf, client_name)
 
-        archived_image = doc_folder / image_path.name
-        shutil.move(str(image_path), str(archived_image))
+            archived_image = doc_folder / image_path.name
+            shutil.move(str(image_path), str(archived_image))
+            archived_image_name = archived_image.name
 
         review_path = write_review_json(
-            doc_folder, doc_id, output_pdf.name, archived_image.name, {},
-            doc_name=doc_name, initial_fields=initial_fields or None
+            doc_folder,
+            doc_id,
+            output_pdf.name,
+            archived_image_name,
+            {},
+            doc_name=doc_name,
+            initial_fields=initial_fields or None,
+            raw_source_name=raw_source_name,
         )
 
         # Trigger AI pre-fill (best-effort, non-blocking for the main pipeline).
@@ -574,7 +606,8 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
 
         log(f"SUCCESS: {image_path.name} -> {doc_id}", client_name)
         log(f"  PDF:    {output_pdf}", client_name)
-        log(f"  Image:  {archived_image}", client_name)
+        if archived_image_name:
+            log(f"  Image:  {doc_folder / archived_image_name}", client_name)
         log(f"  Review: {review_path}", client_name)
 
     except Exception as e:
@@ -620,7 +653,7 @@ def main():
             for file in raw_folder.glob("*"):
                 if file.name.startswith("_"):
                     continue
-                if file.suffix.lower() in [".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp"]:
+                if file.suffix.lower() in [".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".pdf"]:
                     group_id = peek_meta_group_id(file, raw_folder)
                     if group_id is not None:
                         continue

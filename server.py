@@ -33,7 +33,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, UTC
 from urllib.parse import quote
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
@@ -42,6 +42,7 @@ from pypdf import PdfReader, PdfWriter
 
 from export_client import run_export
 from sync_to_portal import sync_portal_for_clients, sync_single_doc
+from portal_new import document_config
 
 # ──────────────────────────────────────────────
 # CONFIGURATION
@@ -71,6 +72,8 @@ DOC_TYPE_TO_TEMPLATE = {
     "epc": "epc",
     "general document": "general_document",
 }
+
+ALLOWED_RAW_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".pdf"}
 
 
 # ──────────────────────────────────────────────
@@ -106,6 +109,35 @@ def _run_ai_prefill(doc_folder: Path) -> None:
         )
     except Exception as e:
         app.logger.warning(f"AI prefill error for {doc_folder.name}: {e}")
+
+
+def _clients_dir() -> Path:
+    return BASE / "Clients"
+
+
+def _client_dir(client_name: str) -> Path:
+    return _clients_dir() / client_name
+
+
+def _raw_dir(client_name: str) -> Path:
+    raw_dir = _client_dir(client_name) / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    return raw_dir
+
+
+def _sanitize_raw_filename(filename: str) -> str:
+    ext = (Path(filename or "").suffix or "").lower()
+    if ext not in ALLOWED_RAW_EXTENSIONS:
+        ext = ".jpg"
+    ts = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
+    rand = os.urandom(2).hex()
+    return f"scan_{ts}_{rand}{ext}"
+
+
+def _write_raw_meta(raw_dir: Path, raw_name: str, meta: dict) -> None:
+    meta_path = raw_dir / f"{raw_name}.meta.json"
+    with meta_path.open("w", encoding="utf-8") as handle:
+        json.dump(meta, handle, indent=2, ensure_ascii=False)
 
 
 def _remove_doc_from_portal(client_name: str, doc_id: str) -> None:
@@ -162,7 +194,7 @@ def health():
 @app.route("/clients", methods=["GET"])
 def list_clients():
     """List all client folders."""
-    clients_dir = BASE / "Clients"
+    clients_dir = _clients_dir()
     if not clients_dir.exists():
         return jsonify({"clients": []})
 
@@ -171,6 +203,126 @@ def list_clients():
         if d.is_dir()
     ]
     return jsonify({"clients": clients})
+
+
+@app.route("/station-config", methods=["GET"])
+def station_config():
+    """Expose backend-driven station settings to keep UI and pipeline aligned."""
+    database_url = os.environ.get("DATABASE_URL", str(BASE / "portal.db"))
+    configs = document_config.get_document_configs(database_url)
+    return jsonify(
+        {
+            "base_path": str(BASE),
+            "clients_path": str(_clients_dir()),
+            "allowed_upload_extensions": sorted(ALLOWED_RAW_EXTENSIONS),
+            "document_types": [
+                {
+                    "label": config["label"],
+                    "document_key": config["document_key"],
+                    "required_fields": config["required_fields"],
+                    "field_definitions": config["extraction_fields"],
+                    "show_in_upload": config["show_in_upload"],
+                    "show_in_detection": config["show_in_detection"],
+                }
+                for config in configs
+            ],
+        }
+    )
+
+
+@app.route("/intake/<client_name>", methods=["POST"])
+def intake_file(client_name: str):
+    """
+    Accept a scanned/imported file and write it into the canonical raw folder that
+    the watcher and review pipeline already use.
+    """
+    upload = request.files.get("file")
+    if upload is None or not upload.filename:
+        return jsonify({"success": False, "error": "No file provided"}), 400
+
+    ext = (Path(upload.filename).suffix or "").lower()
+    if ext not in ALLOWED_RAW_EXTENSIONS:
+        return jsonify({"success": False, "error": f"Unsupported file type: {ext or 'unknown'}"}), 400
+
+    raw_dir = _raw_dir(client_name)
+    raw_name = _sanitize_raw_filename(upload.filename)
+    raw_path = raw_dir / raw_name
+
+    try:
+        upload.save(str(raw_path))
+    except Exception as exc:
+        return jsonify({"success": False, "error": f"Failed to save upload: {exc}"}), 500
+
+    meta = {
+        "doc_name": (request.form.get("doc_name") or "").strip() or None,
+        "property_address": (request.form.get("property_address") or "").strip() or None,
+    }
+    group_id = (request.form.get("group_id") or "").strip()
+    if group_id:
+        meta["group_id"] = group_id
+    for key in ("page_number", "total_pages_so_far"):
+        raw_value = (request.form.get(key) or "").strip()
+        if raw_value:
+            try:
+                meta[key] = int(raw_value)
+            except ValueError:
+                meta[key] = raw_value
+
+    try:
+        _write_raw_meta(raw_dir, raw_name, meta)
+    except Exception as exc:
+        try:
+            if raw_path.exists():
+                raw_path.unlink()
+        except Exception:
+            pass
+        return jsonify({"success": False, "error": f"Failed to save metadata: {exc}"}), 500
+
+    return jsonify(
+        {
+            "success": True,
+            "client": client_name,
+            "raw_name": raw_name,
+            "raw_path": str(raw_path),
+            "kind": "pdf" if ext == ".pdf" else "image",
+        }
+    )
+
+
+@app.route("/raw-meta/<client_name>/<raw_name>", methods=["POST"])
+def update_raw_meta(client_name: str, raw_name: str):
+    """Update the sidecar metadata for a raw file already saved in canonical intake."""
+    raw_dir = _raw_dir(client_name)
+    raw_path = raw_dir / raw_name
+    if not raw_path.exists():
+        return jsonify({"success": False, "error": "Raw file not found"}), 404
+
+    payload = request.get_json(silent=True) or {}
+    meta = {
+        "doc_name": (payload.get("doc_name") or "").strip() or None,
+        "property_address": (payload.get("property_address") or "").strip() or None,
+    }
+    if payload.get("group_id"):
+        meta["group_id"] = str(payload["group_id"]).strip()
+    for key in ("page_number", "total_pages_so_far"):
+        if payload.get(key) is not None:
+            meta[key] = payload[key]
+    try:
+        _write_raw_meta(raw_dir, raw_name, meta)
+    except Exception as exc:
+        return jsonify({"success": False, "error": f"Failed to update metadata: {exc}"}), 500
+    return jsonify({"success": True, "raw_name": raw_name})
+
+
+@app.route("/raw-group-complete/<client_name>/<group_id>", methods=["POST"])
+def mark_raw_group_complete(client_name: str, group_id: str):
+    raw_dir = _raw_dir(client_name)
+    marker_path = raw_dir / f"{group_id}.group_complete"
+    try:
+        marker_path.write_text("", encoding="utf-8")
+    except Exception as exc:
+        return jsonify({"success": False, "error": f"Failed to mark group complete: {exc}"}), 500
+    return jsonify({"success": True, "group_id": group_id})
 
 
 @app.route("/export", methods=["POST"])
@@ -321,12 +473,14 @@ def _find_doc_folder(client_name: str, doc_id: str):
 @app.route("/docs/<client_name>", methods=["GET"])
 def list_docs(client_name: str):
     """Return all documents for a client with review.json data and status counts."""
-    batches_path = BASE / "Clients" / client_name / "Batches"
+    batches_path = _client_dir(client_name) / "Batches"
     if not batches_path.exists():
         return jsonify({"error": f"Client not found: {client_name}"}), 404
 
     docs = []
     counts = {"total": 0, "New": 0, "Verified": 0, "Needs Review": 0, "Failed": 0}
+    database_url = os.environ.get("DATABASE_URL", str(BASE / "portal.db"))
+    config_cache: dict[str, dict] = {}
 
     for date_folder in sorted(batches_path.iterdir(), reverse=True):
         if not date_folder.is_dir():
@@ -345,6 +499,15 @@ def list_docs(client_name: str):
                 continue
             status = data.get("status", "New")
             review_meta = data.get("review", {}) or {}
+            doc_type = data.get("doc_type", "Unknown")
+            config = None
+            if doc_type:
+                config = config_cache.get(doc_type)
+                if config is None:
+                    config = document_config.find_document_config(doc_type, database_url)
+                    config_cache[doc_type] = config or {}
+                if config == {}:
+                    config = None
             counts["total"] += 1
             if status in counts:
                 counts[status] += 1
@@ -353,7 +516,7 @@ def list_docs(client_name: str):
             docs.append({
                 "doc_id": data.get("doc_id", doc_folder.name),
                 "doc_name": data.get("doc_name"),
-                "doc_type": data.get("doc_type", "Unknown"),
+                "doc_type": doc_type,
                 "status": status,
                 "batch_date": batch_date,
                 "scanned_at": review_meta.get("scanned_at", ""),
@@ -363,6 +526,8 @@ def list_docs(client_name: str):
                 "fields": data.get("fields", {}),
                 "review": data.get("review", {}),
                 "page_count": data.get("page_count", 1),
+                "required_fields": (config or {}).get("required_fields", []),
+                "field_definitions": (config or {}).get("extraction_fields", []),
             })
 
     return jsonify({"docs": docs, "counts": counts})
@@ -432,14 +597,15 @@ def serve_pdf(client_name: str, doc_id: str):
 
 
 @app.route("/raw-image/<client_name>/<filename>", methods=["GET"])
+@app.route("/raw-file/<client_name>/<filename>", methods=["GET"])
 def serve_raw_image(client_name: str, filename: str):
     """
-    Serve a raw image file from Clients/<client_name>/raw for ScanStation preview.
-    This lets the capture UI re-show images from a previous session.
+    Serve a raw source file from Clients/<client_name>/raw for ScanStation preview.
+    This lets the capture UI re-show images or PDFs from a previous session.
     """
-    raw_path = BASE / "Clients" / client_name / "raw" / filename
+    raw_path = _raw_dir(client_name) / filename
     if not raw_path.exists() or not raw_path.is_file():
-        return jsonify({"error": f"Raw image not found: {client_name} / {filename}"}), 404
+        return jsonify({"error": f"Raw file not found: {client_name} / {filename}"}), 404
 
     return send_file(raw_path, as_attachment=False, download_name=raw_path.name)
 
@@ -447,14 +613,14 @@ def serve_raw_image(client_name: str, filename: str):
 @app.route("/raw-list/<client_name>", methods=["GET"])
 def list_raw_images(client_name: str):
     """
-    List raw image files for a client so ScanStation can rebuild
+    List raw source files for a client so ScanStation can rebuild
     its session queue after a restart purely from the filesystem.
     """
-    raw_dir = BASE / "Clients" / client_name / "raw"
+    raw_dir = _client_dir(client_name) / "raw"
     if not raw_dir.exists() or not raw_dir.is_dir():
         return jsonify({"files": []})
 
-    exts = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
+    exts = ALLOWED_RAW_EXTENSIONS
     files = [
         f.name
         for f in sorted(raw_dir.iterdir())
@@ -539,22 +705,30 @@ def rescan_replace(client_name: str, doc_id: str):
     except Exception as e:
         return jsonify({"error": f"Failed to save image: {e}"}), 500
 
-    # Build empty fields from template (fields is array of { key, label, type })
-    doc_type_raw = (review_data.get("doc_type") or "").strip().lower()
-    doc_type_template = DOC_TYPE_TO_TEMPLATE.get(doc_type_raw) or (review_data.get("doc_type_template") or "tenancy_agreement").strip().lower().replace(" ", "_").replace("(", "").replace(")", "")
-    if doc_type_template not in ("tenancy_agreement", "gas_safety_certificate", "eicr", "epc", "general_document"):
-        doc_type_template = "tenancy_agreement"
-    template_path = BASE / "Templates" / f"{doc_type_template}.json"
     empty_fields = {}
-    if template_path.exists():
-        try:
-            with template_path.open("r", encoding="utf-8") as f:
-                template = json.load(f)
-            for item in template.get("fields", []):
-                if isinstance(item, dict) and "key" in item:
-                    empty_fields[item["key"]] = ""
-        except Exception:
-            pass
+    database_url = os.environ.get("DATABASE_URL", str(BASE / "portal.db"))
+    config = document_config.find_document_config((review_data.get("doc_type") or "").strip(), database_url)
+    if config:
+        for item in config.get("extraction_fields") or []:
+            key = item.get("field_key")
+            if key:
+                empty_fields[key] = ""
+    else:
+        # Fallback for legacy template-based documents.
+        doc_type_raw = (review_data.get("doc_type") or "").strip().lower()
+        doc_type_template = DOC_TYPE_TO_TEMPLATE.get(doc_type_raw) or (review_data.get("doc_type_template") or "tenancy_agreement").strip().lower().replace(" ", "_").replace("(", "").replace(")", "")
+        if doc_type_template not in ("tenancy_agreement", "gas_safety_certificate", "eicr", "epc", "general_document"):
+            doc_type_template = "tenancy_agreement"
+        template_path = BASE / "Templates" / f"{doc_type_template}.json"
+        if template_path.exists():
+            try:
+                with template_path.open("r", encoding="utf-8") as f:
+                    template = json.load(f)
+                for item in template.get("fields", []):
+                    if isinstance(item, dict) and "key" in item:
+                        empty_fields[item["key"]] = ""
+            except Exception:
+                pass
     old_property = (review_data.get("fields") or {}).get("property_address", "")
     if old_property:
         empty_fields["property_address"] = old_property
@@ -562,7 +736,7 @@ def rescan_replace(client_name: str, doc_id: str):
     review_meta = review_data.get("review") or {}
     review_data["status"] = "Reprocessing"
     review_data["fields"] = empty_fields
-    review_data["files"] = {"raw_image": new_image_name, "pdf": ""}
+    review_data["files"] = {"raw_image": new_image_name, "raw_source": new_image_name, "pdf": ""}
     review_data["review"] = {
         "reviewed_by": review_meta.get("reviewed_by", ""),
         "reviewed_at": review_meta.get("reviewed_at", ""),
