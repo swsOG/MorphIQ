@@ -747,6 +747,10 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _utc_now_datetime() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 def _truthy(value) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -995,7 +999,7 @@ def _save_issue_attachment(issue: dict, file_storage) -> dict | None:
     attachment_dir.mkdir(parents=True, exist_ok=True)
     original_name = file_storage.filename or "attachment"
     safe_name = _sanitize_filename(original_name)
-    stored_name = f"{int(datetime.utcnow().timestamp())}_{safe_name}"
+    stored_name = f"{int(_utc_now_datetime().timestamp())}_{safe_name}"
     dest = attachment_dir / stored_name
     file_storage.save(dest)
     relative_path = str(dest.relative_to(Path(get_clients_dir())))
@@ -1283,7 +1287,7 @@ def log_chat_audit(
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                _utc_now_iso(),
                 user_id,
                 client_id,
                 question_hash,
@@ -1679,7 +1683,7 @@ def login_post():
         login_user(user)
 
         # Update last_login timestamp
-        now = datetime.utcnow().isoformat(timespec="seconds")
+        now = _utc_now_datetime().isoformat(timespec="seconds")
         conn.execute(
             "UPDATE users SET last_login = ? WHERE id = ?",
             (now, row["id"]),
@@ -5956,7 +5960,7 @@ def api_compliance_resolve():
         if client_scope and _norm_client_name(client_name) != _norm_client_name(client_scope):
             return jsonify({"error": "Property not found"}), 404
 
-        now_iso = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        now_iso = _utc_now_iso()
         resolved_by = getattr(current_user, "full_name", None) or ""
 
         cur.execute(
@@ -6037,7 +6041,7 @@ def api_compliance_snooze():
 
         today = date.today()
         snoozed_until = (today + timedelta(days=days)).isoformat()
-        now_iso = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        now_iso = _utc_now_iso()
 
         cur.execute(
             """
