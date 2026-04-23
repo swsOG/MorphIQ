@@ -107,6 +107,30 @@ def seed_config_db(db_path: Path):
 
 
 class ScanStationWiringTests(unittest.TestCase):
+    def test_scanstation_html_matches_simplified_camera_first_contract(self):
+        html = (PROJECT_ROOT / "scan_station.html").read_text(encoding="utf-8")
+
+        self.assertIn("Import Document", html)
+        self.assertIn("Review Before Save", html)
+        self.assertIn("Intake Summary", html)
+        self.assertIn("Current client", html)
+        self.assertNotIn("Select Folder", html)
+        self.assertNotIn("Export Verified", html)
+        self.assertNotIn("Quality Dashboard", html)
+        self.assertNotIn("Session progress", html)
+        self.assertNotIn("Live Session Summary", html)
+        self.assertNotIn("Quick</button>", html)
+        self.assertNotIn("Careful</button>", html)
+
+    def test_scanstation_guide_matches_camera_first_fallback_import_model(self):
+        guide = (PROJECT_ROOT / "docs" / "User_Guide" / "01_ScanStation.md").read_text(encoding="utf-8")
+
+        self.assertIn("camera-first", guide.lower())
+        self.assertIn("Import Document", guide)
+        self.assertIn("Review Before Save", guide)
+        self.assertNotIn("Select Folder", guide)
+        self.assertNotIn("Export Verified", guide)
+
     def test_backend_intake_saves_uploaded_pdf_into_canonical_raw_folder(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
