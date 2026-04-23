@@ -43,10 +43,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 try:
     from .ai_runtime import generate_gemini_text, get_chat_model_name, get_required_env, load_project_env  # type: ignore[import]
     from . import compliance_engine  # type: ignore[import]
+    from . import document_config  # type: ignore[import]
     from . import soft_delete  # type: ignore[import]
 except ImportError:
     from ai_runtime import generate_gemini_text, get_chat_model_name, get_required_env, load_project_env  # type: ignore[no-redef]
     import compliance_engine  # type: ignore[no-redef]
+    import document_config  # type: ignore[no-redef]
     import soft_delete  # type: ignore[no-redef]
 
 try:
@@ -720,6 +722,27 @@ def ensure_issue_tables():
         conn.close()
 
 
+def ensure_document_config_tables():
+    """Create and seed DB-backed document configuration tables if they do not exist."""
+    document_config.ensure_document_config(DATABASE_URL)
+
+
+def _get_compliance_rule_map() -> dict[str, dict]:
+    return document_config.get_compliance_rule_map(DATABASE_URL)
+
+
+def _get_compliance_type_meta() -> dict[str, dict]:
+    return {
+        rule_name: {"slug": rule["slug"], "label": rule["label"]}
+        for rule_name, rule in _get_compliance_rule_map().items()
+    }
+
+
+def _get_upload_document_types() -> set[str]:
+    labels = document_config.get_upload_document_labels(DATABASE_URL)
+    return set(labels or {"Gas Safety Certificate", "EICR", "EPC", "Deposit Protection Certificate", "Tenancy Agreement", "Other"})
+
+
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -1305,38 +1328,6 @@ def _parse_date(value: str):
         return None
 
 
-# Document types and their expiry field priorities for per-document compliance.
-COMPLIANCE_EXPIRY_FIELDS = {
-    "gas-safety-certificate": ["expiry_date", "next_inspection_date"],
-    "gas_safety_certificate": ["expiry_date", "next_inspection_date"],
-    "eicr": ["next_inspection_date", "expiry_date"],
-    "epc": ["valid_until", "expiry_date"],
-    "deposit-protection": ["expiry_date", "valid_until"],
-    "deposit-protection-certificate": ["expiry_date", "valid_until"],
-    "deposit_protection_certificate": ["expiry_date", "valid_until"],
-}
-
-# Mapping from compliance engine keys to document_types.key + labels.
-COMPLIANCE_TYPE_META = {
-    "gas_safety": {
-        "slug": "gas-safety-certificate",
-        "label": "Gas Safety Certificate",
-    },
-    "eicr": {
-        "slug": "eicr",
-        "label": "EICR",
-    },
-    "epc": {
-        "slug": "epc",
-        "label": "EPC",
-    },
-    "deposit": {
-        "slug": "deposit-protection-certificate",
-        "label": "Deposit Protection Certificate",
-    },
-}
-
-
 def get_compliance_status_for_doc(doc_type_key: str, fields_dict: dict[str, str]):
     """
     Given a document type key and its fields, return per-document compliance status.
@@ -1348,12 +1339,12 @@ def get_compliance_status_for_doc(doc_type_key: str, fields_dict: dict[str, str]
     """
     key_lower = (doc_type_key or "").strip().lower().replace(" ", "_").replace("-", "_")
 
-    # Find matching compliance config (supports slight key variations).
     expiry_fields = None
-    for config_key, field_list in COMPLIANCE_EXPIRY_FIELDS.items():
+    for rule in _get_compliance_rule_map().values():
+        config_key = (rule.get("slug") or "").strip()
         config_normalized = config_key.lower().replace(" ", "_").replace("-", "_")
         if config_normalized in key_lower or key_lower in config_normalized:
-            expiry_fields = field_list
+            expiry_fields = list(rule.get("expiry_field_candidates") or [])
             break
 
     if not expiry_fields:
@@ -1447,7 +1438,7 @@ def _build_property_compliance_and_deadlines(docs: list[dict]) -> tuple[dict, li
             return f"{days} days remaining"
         return None
 
-    for type_key, meta in COMPLIANCE_TYPE_META.items():
+    for type_key, meta in _get_compliance_type_meta().items():
         slug = meta["slug"]
         label = meta["label"]
         candidates = docs_by_slug.get(slug, [])
@@ -2170,28 +2161,16 @@ def api_properties():
       - tenant_name: from the latest tenancy-agreement document fields, or null
     All queries are batched — no per-property round-trips.
     """
-    # Cert rules mirror compliance_engine.COMPLIANCE_RULES; kept inline so
-    # this endpoint does NOT call compliance_engine (avoids N+1 and a second
-    # DB connection for the full-portfolio scan).
-    _CERT_RULES: dict = {
-        "gas-safety-certificate": {
-            "name": "gas_safety",
-            "expiry_field_candidates": ["expiry_date", "next_inspection_date"],
-        },
-        "eicr": {
-            "name": "eicr",
-            "expiry_field_candidates": ["next_inspection_date", "expiry_date"],
-        },
-        "epc": {
-            "name": "epc",
-            "expiry_field_candidates": ["valid_until", "expiry_date"],
-        },
-        "deposit-protection-certificate": {
-            "name": "deposit",
-            "expiry_field_candidates": ["expiry_date"],
-        },
+    _CERT_RULES = {
+        rule["slug"]: {
+            "name": rule_name,
+            "mandatory": rule.get("mandatory", True),
+            "track_expiry": rule.get("track_expiry", True),
+            "expiry_field_candidates": list(rule.get("expiry_field_candidates") or []),
+            "expiry_warning_days": int(rule.get("expiry_warning_days") or 30),
+        }
+        for rule_name, rule in _get_compliance_rule_map().items()
     }
-    _EXPIRING_DAYS = 30
 
     client = get_current_client() or ""
     client_id = get_current_client_id()
@@ -2355,8 +2334,6 @@ def api_properties():
 
     # ── 6. Build enriched property objects ───────────────────────────────────
     today = date.today()
-    expiring_cutoff = today + timedelta(days=_EXPIRING_DAYS)
-
     postcode_re = re.compile(r"^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$", re.IGNORECASE)
 
     def extract_area_from_address(address: str | None) -> str:
@@ -2391,23 +2368,27 @@ def api_properties():
             doc_id = latest_map.get((pid, type_key))
 
             if not doc_id:
-                compliance[field_name] = {"status": "missing", "expiry_date": None}
+                compliance[field_name] = {
+                    "status": "missing" if rule.get("mandatory", True) else "valid",
+                    "expiry_date": None,
+                }
                 continue
 
             fields = fields_by_doc.get(doc_id, {})
             expiry_date = None
-            for candidate in rule["expiry_field_candidates"]:
-                raw = fields.get(candidate)
-                if raw:
-                    expiry_date = _parse_date(raw)
-                    if expiry_date:
-                        break
+            if rule.get("track_expiry", True):
+                for candidate in rule["expiry_field_candidates"]:
+                    raw = fields.get(candidate)
+                    if raw:
+                        expiry_date = _parse_date(raw)
+                        if expiry_date:
+                            break
 
             if expiry_date is None:
                 status = "valid"   # doc present but no expiry recorded → treat as valid
             elif expiry_date < today:
                 status = "expired"
-            elif expiry_date <= expiring_cutoff:
+            elif expiry_date <= today + timedelta(days=rule.get("expiry_warning_days", 30)):
                 status = "expiring"
             else:
                 status = "valid"
@@ -2507,6 +2488,27 @@ def api_settings_users():
         """
     )
     return jsonify({"users": users})
+
+
+@app.route("/api/settings/document-config")
+@login_required
+def api_settings_document_config():
+    if getattr(current_user, "role", None) != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    return jsonify({"document_types": document_config.get_document_configs(DATABASE_URL, include_inactive=True)})
+
+
+@app.route("/api/settings/document-config", methods=["POST"])
+@login_required
+def api_settings_document_config_save():
+    if getattr(current_user, "role", None) != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    payload = request.get_json(silent=True) or {}
+    try:
+        saved = document_config.save_document_config(payload, DATABASE_URL)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"document_type": saved}), 200
 
 
 @app.route("/api/activity")
@@ -4144,14 +4146,6 @@ def serve_document_pdf_by_source(source_doc_id: str):
 
 ALLOWED_UPLOAD_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".tiff"}
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20MB
-ALLOWED_DOCUMENT_TYPES = {
-    "Gas Safety Certificate",
-    "EICR",
-    "EPC",
-    "Deposit Protection Certificate",
-    "Tenancy Agreement",
-    "Other",
-}
 
 
 @app.route("/api/documents/upload", methods=["POST"])
@@ -4175,8 +4169,9 @@ def api_documents_upload():
         return jsonify({"error": "Invalid property_id"}), 400
 
     document_type = (request.form.get("document_type") or "").strip()
-    if document_type not in ALLOWED_DOCUMENT_TYPES:
-        return jsonify({"error": "Invalid document_type. Must be one of: " + ", ".join(sorted(ALLOWED_DOCUMENT_TYPES))}), 400
+    allowed_document_types = _get_upload_document_types()
+    if document_type not in allowed_document_types:
+        return jsonify({"error": "Invalid document_type. Must be one of: " + ", ".join(sorted(allowed_document_types))}), 400
 
     notes = (request.form.get("notes") or "").strip()
 
@@ -4998,7 +4993,7 @@ def _compute_compliance_snapshot(client_name: str) -> dict:
             if key in expiry_cache:
                 return expiry_cache[key]
  
-            meta = COMPLIANCE_TYPE_META.get(comp_type)
+            meta = _get_compliance_type_meta().get(comp_type)
             if not meta:
                 expiry_cache[key] = (None, None)
                 return None, None
@@ -5658,7 +5653,7 @@ def _build_compliance_report_data(client_name: str):
             key = (property_id, comp_type)
             if key in expiry_cache:
                 return expiry_cache[key]
-            meta = COMPLIANCE_TYPE_META.get(comp_type)
+            meta = _get_compliance_type_meta().get(comp_type)
             if not meta:
                 expiry_cache[key] = (None, None)
                 return None, None
@@ -6385,7 +6380,7 @@ def api_chat():
             if key in expiry_cache:
                 return expiry_cache[key]
 
-            meta = COMPLIANCE_TYPE_META.get(comp_type)
+            meta = _get_compliance_type_meta().get(comp_type)
             if not meta:
                 expiry_cache[key] = (None, None)
                 return None, None
@@ -6561,6 +6556,10 @@ def api_chat():
 
 # ── Run ──────────────────────────────────────────────────────────────────────
 with app.app_context():
+    try:
+        ensure_document_config_tables()
+    except Exception as e:
+        print(f"Startup document config warning: {e}")
     try:
         ensure_compliance_actions_table()
     except Exception as e:
