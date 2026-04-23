@@ -196,6 +196,7 @@ def portal_app(tmp_path, monkeypatch):
         PORTAL_DIR / "app.py",
     )
     module.app.config.update(TESTING=True)
+    module.validate_csrf = lambda: True
     return module
 
 
@@ -503,3 +504,29 @@ def test_manager_cannot_snooze_compliance_for_other_client_property(portal_app):
 
     assert response.status_code == 404
     assert response.get_json() == {"error": "Property not found"}
+
+
+def test_manager_cannot_modify_document_config(portal_app):
+    client = portal_app.app.test_client()
+    login_as(client, 2)
+    with client.session_transaction() as session:
+        session["_csrf_token"] = "test-csrf-token"
+
+    response = client.post(
+        "/api/settings/document-config",
+        json={
+            "document_type": {
+                "key": "fire-door-certificate",
+                "label": "Fire Door Certificate",
+            },
+            "extraction_fields": [
+                {"field_key": "door_location", "field_label": "Door Location", "is_required": True},
+            ],
+            "compliance_rules": [],
+            "dashboard": {"show_in_dashboard": True},
+        },
+        headers={"X-CSRF-Token": "test-csrf-token"},
+    )
+
+    assert response.status_code == 403
+    assert response.get_json() == {"error": "Forbidden"}

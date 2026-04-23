@@ -218,6 +218,7 @@ def portal_app(tmp_path, monkeypatch):
         PORTAL_DIR / "app.py",
     )
     module.app.config.update(TESTING=True)
+    module.validate_csrf = lambda: True
     module._test_db_path = db_path
     return module
 

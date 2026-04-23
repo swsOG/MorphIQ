@@ -11,43 +11,27 @@ import sqlite3
 from datetime import datetime, timedelta, date
 from typing import Dict, List, Any, Set
 
+try:
+    from . import document_config  # type: ignore[import]
+except ImportError:
+    import document_config  # type: ignore[no-redef]
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_URL = os.environ.get("DATABASE_URL", os.path.join(BASE_DIR, "..", "portal.db"))
-
-
-# Which document types we care about for compliance and how to interpret them.
-#
-# The keys here are document_types.key values in the database; the name field
-# is how they will appear in the output structure.
-#
-# expiry_field_candidates is ordered by preference; the first populated field
-# on the latest document is treated as the expiry date.
-COMPLIANCE_RULES = {
-    "gas-safety-certificate": {
-        "name": "gas_safety",
-        "expiry_field_candidates": ["expiry_date", "next_inspection_date"],
-    },
-    "eicr": {
-        "name": "eicr",
-        "expiry_field_candidates": ["next_inspection_date", "expiry_date"],
-    },
-    "epc": {
-        "name": "epc",
-        "expiry_field_candidates": ["valid_until", "expiry_date"],
-    },
-    "deposit-protection-certificate": {
-        "name": "deposit",
-        "expiry_field_candidates": ["expiry_date"],
-    },
-}
-
-EXPIRING_SOON_DAYS = 30
 
 
 def _get_db() -> sqlite3.Connection:
     conn = sqlite3.connect(DATABASE_URL)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _get_compliance_rules() -> dict[str, dict[str, Any]]:
+    rule_map = document_config.get_compliance_rule_map(DATABASE_URL)
+    rules: dict[str, dict[str, Any]] = {}
+    for rule in rule_map.values():
+        rules[rule["slug"]] = rule
+    return rules
 
 
 def _parse_date(value: str) -> date | None:
@@ -71,7 +55,7 @@ def _parse_date(value: str) -> date | None:
         return None
 
 
-def _status_from_expiry(expiry: date | None, today: date | None = None) -> str:
+def _status_from_expiry(expiry: date | None, today: date | None = None, warning_days: int = 30) -> str:
     """Map an expiry date to one of: valid, expiring_soon, expired."""
     if today is None:
         today = date.today()
@@ -80,7 +64,7 @@ def _status_from_expiry(expiry: date | None, today: date | None = None) -> str:
         return "valid"
     if expiry < today:
         return "expired"
-    if expiry <= today + timedelta(days=EXPIRING_SOON_DAYS):
+    if expiry <= today + timedelta(days=warning_days):
         return "expiring_soon"
     return "valid"
 
@@ -101,6 +85,7 @@ def evaluate_compliance(client_id: int | None = None) -> List[Dict[str, Any]]:
       ...
     ]
     """
+    compliance_rules = _get_compliance_rules()
     conn = _get_db()
     try:
         # Fetch all properties (including the client name for context).
@@ -136,7 +121,7 @@ def evaluate_compliance(client_id: int | None = None) -> List[Dict[str, Any]]:
         # For each property and compliance doc type, find the latest document id.
         property_ids = [row["property_id"] for row in props]
         placeholders = ",".join("?" for _ in property_ids)
-        type_keys = list(COMPLIANCE_RULES.keys())
+        type_keys = list(compliance_rules.keys())
         type_placeholders = ",".join("?" for _ in type_keys)
 
         latest_docs_sql = f"""
@@ -194,23 +179,27 @@ def evaluate_compliance(client_id: int | None = None) -> List[Dict[str, Any]]:
                 "client": prop["client_name"],
             }
 
-            for type_key, rule in COMPLIANCE_RULES.items():
+            for type_key, rule in compliance_rules.items():
                 field_name = rule["name"]
                 doc_id = latest_map.get((prop_id, type_key))
                 if not doc_id:
-                    entry[field_name] = "missing"
+                    entry[field_name] = "missing" if rule.get("mandatory", True) else "valid"
                     continue
 
                 fields = fields_by_doc.get(doc_id, {})
                 expiry_value = None
-                for candidate in rule["expiry_field_candidates"]:
-                    raw = fields.get(candidate)
-                    if raw:
-                        expiry_value = _parse_date(raw)
-                        if expiry_value:
-                            break
-
-                entry[field_name] = _status_from_expiry(expiry_value, today=today)
+                if rule.get("track_expiry", True):
+                    for candidate in rule.get("expiry_field_candidates") or []:
+                        raw = fields.get(candidate)
+                        if raw:
+                            expiry_value = _parse_date(raw)
+                            if expiry_value:
+                                break
+                entry[field_name] = _status_from_expiry(
+                    expiry_value,
+                    today=today,
+                    warning_days=int(rule.get("expiry_warning_days") or 30),
+                )
 
             results.append(entry)
 
@@ -252,7 +241,7 @@ def count_properties_with_other_present(conn: sqlite3.Connection, property_ids: 
     """
     if not property_ids:
         return 0
-    required_keys = tuple(COMPLIANCE_RULES.keys())
+    required_keys = tuple(_get_compliance_rules().keys())
     placeholders = ",".join("?" * len(property_ids))
     req_ph = ",".join("?" * len(required_keys))
     cur = conn.execute(
