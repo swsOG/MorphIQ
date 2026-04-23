@@ -109,6 +109,34 @@ def get_model_name(task_type: str) -> str:
     return get_prefill_model_name(task_type)
 
 
+def get_ai_provider() -> str:
+    return "gemini"
+
+
+def call_gemini_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str, model: str | None = None) -> str:
+    return generate_gemini_text(
+        model=model or get_model_name("extraction"),
+        prompt=f"{system_prompt}\n\n{user_prompt}".strip(),
+        inline_pdf_b64=pdf_b64,
+    )
+
+
+def call_claude_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str, model: str | None = None) -> str:
+    raise RuntimeError("Claude provider is no longer supported")
+
+
+def call_model_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str) -> str:
+    provider = get_ai_provider()
+    if provider == "gemini":
+        return call_gemini_with_pdf(
+            pdf_b64,
+            system_prompt,
+            user_prompt,
+            model=get_model_name("extraction"),
+        )
+    return call_claude_with_pdf(pdf_b64, system_prompt, user_prompt)
+
+
 def call_ai_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str, task_type: str) -> str:
     model = get_model_name(task_type)
     prompt = f"{system_prompt}\n\n{user_prompt}".strip()
