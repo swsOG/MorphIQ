@@ -189,7 +189,7 @@ def portal_app(tmp_path, monkeypatch):
 
     monkeypatch.setenv("DATABASE_URL", str(db_path))
     monkeypatch.setenv("MORPHIQ_CLIENTS_DIR", str(clients_dir))
-    monkeypatch.setenv("PORTAL_SECRET_KEY", "test-secret")
+    monkeypatch.setenv("PORTAL_SECRET_KEY", "unit-test-secret-key-0123456789abcdef0123456789")
 
     fake_sync = types.ModuleType("sync_to_portal")
 

@@ -13,7 +13,7 @@ class PortalSecurityHelperTests(unittest.TestCase):
         with mock.patch.object(ai_runtime, "load_project_env", return_value=None):
             with mock.patch.dict(
                 os.environ,
-                {"PORTAL_SECRET_KEY": "secret", "GEMINI_API_KEY": "test-key"},
+                {"PORTAL_SECRET_KEY": "unit-test-secret-key-0123456789abcdef0123456789", "GEMINI_API_KEY": "test-key"},
                 clear=True,
             ):
                 return importlib.import_module("portal_new.app")

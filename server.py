@@ -35,7 +35,7 @@ import sys
 from pathlib import Path
 from datetime import datetime, UTC
 from urllib.parse import quote
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, abort
 from flask_cors import CORS
 from pdfminer.high_level import extract_text
 from pypdf import PdfReader, PdfWriter
@@ -74,6 +74,51 @@ DOC_TYPE_TO_TEMPLATE = {
 }
 
 ALLOWED_RAW_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".pdf"}
+
+
+# ──────────────────────────────────────────────
+# SECURITY HARDENING (pre-launch)
+# ──────────────────────────────────────────────
+# This API is a LOCAL desktop companion bound to 127.0.0.1. Two server-side
+# controls neutralise the high-risk findings without any UI change:
+#   1. Loopback-only Host guard  -> defeats DNS-rebinding / off-host access.
+#   2. Path-segment sanitisation -> defeats path traversal (arbitrary file
+#      read/write) on every route that builds a filesystem path from the URL.
+
+_LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1", "[::1]"}
+_PATH_SEGMENT_ARGS = {"client_name", "doc_id", "filename", "raw_name", "group_id", "export_folder"}
+_SEGMENT_BLOCKLIST = set('/\\\x00:*?"<>|')
+
+
+def _safe_segment(value) -> bool:
+    """True only if value is a single, traversal-free path segment."""
+    if not isinstance(value, str) or not value.strip():
+        return False
+    if ".." in value:
+        return False
+    return not any(ch in _SEGMENT_BLOCKLIST for ch in value)
+
+
+@app.before_request
+def _enforce_local_and_safe_paths():
+    # 1) Loopback-only. The Host header must address the local machine; this
+    #    blocks DNS-rebinding (which presents an attacker hostname) and any
+    #    accidental network exposure.
+    host = (request.host or "").rsplit(":", 1)[0].strip().lower()
+    if host not in _LOOPBACK_HOSTS:
+        abort(403)
+    # 2) Reject cross-site state-changing requests (CSRF / rebind hardening).
+    if request.method not in ("GET", "HEAD", "OPTIONS"):
+        origin = (request.headers.get("Origin") or "").strip().lower()
+        if origin and origin != "null":
+            from urllib.parse import urlsplit
+            if (urlsplit(origin).hostname or "").lower() not in _LOOPBACK_HOSTS:
+                abort(403)
+    # 3) Every URL path component used to build a filesystem path must be a
+    #    safe single segment (no "/", "\\", "..", drive letters, etc).
+    for name, value in (request.view_args or {}).items():
+        if name in _PATH_SEGMENT_ARGS and not _safe_segment(value):
+            abort(400)
 
 
 # ──────────────────────────────────────────────
@@ -334,11 +379,13 @@ def export():
         return jsonify({"success": False, "error": "Missing 'client' in request body"}), 400
 
     client_name = data["client"].strip()
+    if not _safe_segment(client_name):
+        return jsonify({"success": False, "error": "Invalid client name"}), 400
 
     # Validate client exists
     client_dir = BASE / "Clients" / client_name
     if not client_dir.exists():
-        return jsonify({"success": False, "error": f"Client folder not found: {client_name}"}), 404
+        return jsonify({"success": False, "error": "Client not found"}), 404
 
     # Prevent concurrent exports
     if not export_lock.acquire(blocking=False):
@@ -360,8 +407,9 @@ def export():
             # will still work even if it ignores this parameter.
             result["viewer_url"] = f"http://127.0.0.1:5000/?client={quote(client_name)}"
         return jsonify(result)
-    except Exception as e:
-        return jsonify({"success": False, "error": f"Server error: {e}"}), 500
+    except Exception:
+        app.logger.exception("Export failed")
+        return jsonify({"success": False, "error": "Export failed"}), 500
     finally:
         export_lock.release()
 
@@ -390,8 +438,9 @@ def open_folder():
         else:
             subprocess.run(["xdg-open", str(folder)], check=False)
         return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+    except Exception:
+        app.logger.exception("open-folder failed")
+        return jsonify({"success": False, "error": "Could not open folder"}), 500
 
 
 @app.route("/delivery/<client_name>/<export_folder>/", defaults={"filepath": ""})

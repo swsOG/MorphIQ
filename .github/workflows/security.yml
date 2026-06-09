@@ -1,0 +1,28 @@
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  audit-and-test:
+    runs-on: ubuntu-latest
+    env:
+      # Tests run with a throwaway secret; never use this anywhere real.
+      PORTAL_SECRET_KEY: ci-unit-test-secret-key-0123456789abcdef0123456789
+      GEMINI_API_KEY: ci-test-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pip-audit
+      - name: Dependency vulnerability scan
+        run: pip-audit -r requirements.txt
+      - name: Run tests
+        run: pytest -q

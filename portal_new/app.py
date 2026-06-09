@@ -65,7 +65,32 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 load_project_env(Path(PROJECT_ROOT))
 DATABASE_URL = os.environ.get("DATABASE_URL", os.path.normpath(os.path.join(BASE_DIR, "..", "portal.db")))
-PORTAL_SECRET_KEY = get_required_env("PORTAL_SECRET_KEY")
+
+_WEAK_SECRET_VALUES = {
+    "replace_with_a_long_random_secret", "change_me", "changeme",
+    "secret", "test-secret", "dev", "development", "morphiq-smoke-secret",
+}
+
+
+def _require_strong_secret(value: str) -> str:
+    """Refuse to boot on a weak/placeholder PORTAL_SECRET_KEY — it signs every session.
+
+    A leaked or guessable key lets an attacker forge admin sessions (finding C-4).
+    Set MORPHIQ_ALLOW_WEAK_SECRET=1 for local/test runs only.
+    """
+    candidate = (value or "").strip()
+    if os.environ.get("MORPHIQ_ALLOW_WEAK_SECRET", "").strip().lower() in {"1", "true", "yes", "on"}:
+        return candidate
+    if candidate.lower() in _WEAK_SECRET_VALUES or len(candidate) < 32:
+        raise RuntimeError(
+            "PORTAL_SECRET_KEY is weak or a placeholder. Set a strong, unique value of at "
+            "least 32 characters, e.g. `python -c \"import secrets; print(secrets.token_urlsafe(48))\"`. "
+            "For local/test runs only you may set MORPHIQ_ALLOW_WEAK_SECRET=1."
+        )
+    return candidate
+
+
+PORTAL_SECRET_KEY = _require_strong_secret(get_required_env("PORTAL_SECRET_KEY"))
 GEMINI_API_KEY = get_required_env("GEMINI_API_KEY")
 CHAT_MAX_MESSAGE_CHARS = int((os.getenv("CHAT_MAX_MESSAGE_CHARS") or "5000").strip() or "5000")
 CHAT_MAX_RESPONSE_CHARS = int((os.getenv("CHAT_MAX_RESPONSE_CHARS") or "10000").strip() or "10000")
@@ -97,10 +122,18 @@ def init_sentry() -> None:
     sentry_sdk.init(dsn=dsn, integrations=[FlaskIntegration()], send_default_pii=False)
 
 
+def _trust_proxy_headers() -> bool:
+    return os.environ.get("TRUST_PROXY", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _client_ip() -> str:
-    forwarded = (request.headers.get("X-Forwarded-For") or "").strip()
-    if forwarded:
-        return forwarded.split(",")[0].strip()
+    # SECURITY (H-1): only honour X-Forwarded-For when explicitly running behind a
+    # trusted reverse proxy. Otherwise a client can spoof the header to rotate its
+    # apparent IP and bypass IP-based rate limiting.
+    if _trust_proxy_headers():
+        forwarded = (request.headers.get("X-Forwarded-For") or "").strip()
+        if forwarded:
+            return forwarded.split(",")[0].strip()
     return request.remote_addr or "unknown"
 
 
@@ -248,6 +281,17 @@ def enforce_csrf_for_mutations():
     return None
 
 
+_CSP_POLICY = (
+    "default-src 'self'; "
+    "img-src 'self' data:; "
+    "style-src 'self' 'unsafe-inline'; "
+    "script-src 'self' 'unsafe-inline'; "
+    "frame-ancestors 'none'; "
+    "base-uri 'self'; "
+    "object-src 'none'"
+)
+
+
 @app.after_request
 def write_csrf_cookie(response):
     response.set_cookie(
@@ -257,6 +301,21 @@ def write_csrf_cookie(response):
         httponly=False,
         samesite=app.config.get("SESSION_COOKIE_SAMESITE", "Lax"),
     )
+    return response
+
+
+@app.after_request
+def set_security_headers(response):
+    # SECURITY (M-1): defence-in-depth HTTP headers — clickjacking, MIME
+    # sniffing, referrer leakage, and (over HTTPS) transport enforcement.
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    response.headers.setdefault("Content-Security-Policy", _CSP_POLICY)
+    if request.is_secure:
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
     return response
 
 
@@ -399,6 +458,28 @@ def get_current_client_id() -> int | None:
 def _norm_client_name(name: str | None) -> str:
     """Case- and whitespace-insensitive client name comparison (portal vs DB)."""
     return " ".join((name or "").split()).casefold()
+
+
+# Sentinel that can never equal a real client name, used to fail closed.
+_NO_TENANT_SENTINEL = "\x00__no_tenant_scope__"
+
+
+def _tenant_scope_or_block() -> str:
+    """Resolve the caller's client scope, failing CLOSED (L-1).
+
+    - Admin: returns "" (no selection => may see all clients — unchanged).
+    - Non-admin with a resolved client: returns that client name.
+    - Non-admin whose client cannot be resolved (e.g. client soft-deleted
+      mid-session, or an unexpected role): returns a sentinel that matches no
+      real client, so every downstream tenant check denies access instead of
+      silently skipping (the previous `if client_scope and ...` behaviour).
+    """
+    scope = get_current_client() or ""
+    if scope:
+        return scope
+    if getattr(current_user, "role", None) == "admin":
+        return ""
+    return _NO_TENANT_SENTINEL
 
 
 def raw_scanstation_doc_id(source_doc_id: str | None) -> str:
@@ -1618,6 +1699,59 @@ def _build_tenant_snapshot(docs: list[dict]) -> dict | None:
 
 
 # ── UI Routes ────────────────────────────────────────────────────────────────
+# ── Login brute-force protection (H-1) ───────────────────────────────────────
+LOGIN_MAX_FAILURES = int((os.getenv("LOGIN_MAX_FAILURES") or "10").strip() or "10")
+LOGIN_LOCKOUT_MINUTES = int((os.getenv("LOGIN_LOCKOUT_MINUTES") or "15").strip() or "15")
+
+
+def ensure_login_security_schema():
+    """Add per-account brute-force columns to users (inline migration at startup)."""
+    conn = get_db()
+    try:
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(users)").fetchall()}
+        if "failed_login_count" not in cols:
+            conn.execute("ALTER TABLE users ADD COLUMN failed_login_count INTEGER DEFAULT 0")
+        if "locked_until" not in cols:
+            conn.execute("ALTER TABLE users ADD COLUMN locked_until TEXT")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _account_lock_remaining(locked_until: str | None) -> int:
+    """Seconds remaining on an account lock, else 0. Survives restarts & IP rotation."""
+    if not locked_until:
+        return 0
+    try:
+        until = datetime.fromisoformat(locked_until)
+    except (ValueError, TypeError):
+        return 0
+    if until.tzinfo is None:
+        until = until.replace(tzinfo=timezone.utc)
+    return max(0, int((until - _utc_now_datetime()).total_seconds()))
+
+
+def _register_login_failure(conn, user_id: int) -> None:
+    row = conn.execute("SELECT failed_login_count FROM users WHERE id = ?", (user_id,)).fetchone()
+    prior = (row["failed_login_count"] if row and row["failed_login_count"] is not None else 0)
+    count = int(prior) + 1
+    locked_until = None
+    if count >= LOGIN_MAX_FAILURES:
+        locked_until = (_utc_now_datetime() + timedelta(minutes=LOGIN_LOCKOUT_MINUTES)).isoformat(timespec="seconds")
+    conn.execute(
+        "UPDATE users SET failed_login_count = ?, locked_until = ? WHERE id = ?",
+        (count, locked_until, user_id),
+    )
+    conn.commit()
+
+
+def _reset_login_failures(conn, user_id: int) -> None:
+    conn.execute(
+        "UPDATE users SET failed_login_count = 0, locked_until = NULL WHERE id = ?",
+        (user_id,),
+    )
+
+
 @app.route("/login", methods=["GET"])
 def login():
     if current_user.is_authenticated:
@@ -1645,7 +1779,8 @@ def login_post():
     try:
         cur = conn.execute(
             """
-            SELECT id, email, full_name, role, client_id, password_hash, is_active
+            SELECT id, email, full_name, role, client_id, password_hash, is_active,
+                   failed_login_count, locked_until
             FROM users
             WHERE LOWER(email) = ? AND deleted_at IS NULL
             """,
@@ -1658,8 +1793,21 @@ def login_post():
         if not row["is_active"]:
             return render_template("login.html", error="Account is disabled.")
 
+        # SECURITY (H-1): per-account lockout. Survives restarts and cannot be
+        # bypassed by rotating source IPs / X-Forwarded-For.
+        lock_remaining = _account_lock_remaining(row["locked_until"])
+        if lock_remaining > 0:
+            minutes = max(1, (lock_remaining + 59) // 60)
+            return render_template(
+                "login.html",
+                error=f"Account temporarily locked due to repeated failures. Try again in {minutes} minute(s).",
+            ), 429
+
         if not check_password_hash(row["password_hash"], password):
+            _register_login_failure(conn, row["id"])
             return render_template("login.html", error="Invalid email or password.")
+
+        _reset_login_failures(conn, row["id"])
 
         if row["client_id"] and (row["role"] or "") == "manager":
             cr = conn.execute(
@@ -1825,12 +1973,13 @@ def compliance_dashboard():
 
     try:
         data = compliance_engine.evaluate_compliance_for_client(client_id) if client_id else compliance_engine.evaluate_compliance()
-    except Exception as e:
+    except Exception:
         # Render a minimal error page rather than crashing the server.
+        app.logger.exception("Compliance page failed to render")
         return (
-            f"<h1 style='color:#f87171;font-family:sans-serif'>Compliance error</h1>"
-            f"<p style='font-family:sans-serif;color:#e5e7eb;background:#020617'>"
-            f"{type(e).__name__}: {str(e)}</p>",
+            "<h1 style='color:#f87171;font-family:sans-serif'>Compliance error</h1>"
+            "<p style='font-family:sans-serif;color:#e5e7eb;background:#020617'>"
+            "Something went wrong loading compliance. Please try again.</p>",
             500,
         )
 
@@ -1988,7 +2137,7 @@ def document_view_by_id(doc_id: int):
     if not row:
         abort(404, description="Document not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     cn = (row.get("client_name") or "").strip()
     if client_scope and _norm_client_name(cn) != _norm_client_name(client_scope):
         abort(404, description="Document not found")
@@ -2024,7 +2173,7 @@ def document_view_page(source_doc_id: str):
     if not row:
         abort(404, description="Document not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     cn = (row.get("client_name") or "").strip()
     if client_scope and _norm_client_name(cn) != _norm_client_name(client_scope):
         abort(404, description="Document not found")
@@ -2092,7 +2241,7 @@ def serve_pdf(pdf_path):
     if not doc:
         abort(404, description="PDF not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
         abort(404, description="PDF not found")
 
@@ -2126,7 +2275,7 @@ def serve_pdf_by_id(source_doc_id: str):
     if not doc:
         abort(404, description="Document not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
         abort(404, description="Document not found")
 
@@ -2654,10 +2803,12 @@ def admin_soft_delete_client(client_id: int):
         conn.commit()
     except ValueError as e:
         conn.rollback()
-        return jsonify({"error": str(e)}), 404
+        app.logger.exception("Request failed")
+        return jsonify({"error": "Operation failed"}), 404
     except Exception as e:
         conn.rollback()
-        return jsonify({"error": str(e)}), 500
+        app.logger.exception("Request failed")
+        return jsonify({"error": "Operation failed"}), 500
     finally:
         conn.close()
     return jsonify(
@@ -2693,7 +2844,8 @@ def admin_create_client():
         return jsonify({"success": True, "id": cur.lastrowid, "name": name}), 201
     except Exception as e:
         conn.rollback()
-        return jsonify({"error": str(e)}), 500
+        app.logger.exception("Request failed")
+        return jsonify({"error": "Operation failed"}), 500
     finally:
         conn.close()
 
@@ -2740,7 +2892,8 @@ def admin_create_user():
         return jsonify({"success": True, "id": cur.lastrowid, "email": email}), 201
     except Exception as e:
         conn.rollback()
-        return jsonify({"error": str(e)}), 500
+        app.logger.exception("Request failed")
+        return jsonify({"error": "Operation failed"}), 500
     finally:
         conn.close()
 
@@ -2774,7 +2927,8 @@ def api_change_password():
         return jsonify({"success": True})
     except Exception as e:
         conn.rollback()
-        return jsonify({"error": str(e)}), 500
+        app.logger.exception("Request failed")
+        return jsonify({"error": "Operation failed"}), 500
     finally:
         conn.close()
 
@@ -2810,7 +2964,7 @@ def api_property_detail(property_id: int):
     if not prop:
         abort(404, description="Property not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and (prop.get("client_name") or "").strip() != client_scope:
         abort(404, description="Property not found")
 
@@ -3091,7 +3245,7 @@ def api_property_report(property_id: int):
     )
     if not prop:
         abort(404, description="Property not found")
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and (prop.get("client_name") or "").strip() != client_scope:
         abort(404, description="Property not found")
     docs = query_db(
@@ -3166,7 +3320,7 @@ def api_property_download_pack(property_id: int):
     if not prop:
         return jsonify({"error": "Property not found"}), 404
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and (prop.get("client_name") or "").strip() != client_scope:
         return jsonify({"error": "Property not found"}), 404
 
@@ -3258,7 +3412,7 @@ def api_documents():
     except ValueError:
         limit = 200
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
 
     # Compliance statuses require Python-side evaluation after field fetch;
     # review statuses can be pushed straight to SQL.
@@ -3450,7 +3604,7 @@ def api_document_detail_by_id(doc_id: int):
     if not doc:
         abort(404, description="Document not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
         abort(404, description="Document not found")
 
@@ -3494,7 +3648,7 @@ def api_document_verify_by_id(doc_id: int):
     if not doc:
         abort(404, description="Document not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
         abort(404, description="Document not found")
 
@@ -3599,7 +3753,7 @@ def api_document_detail(source_doc_id):
     if not doc:
         abort(404, description="Document not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
         abort(404, description="Document not found")
 
@@ -4095,7 +4249,7 @@ def serve_document_pdf_by_id(doc_id: int):
     if not doc:
         abort(404, description="Document not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
         abort(404, description="Document not found")
 
@@ -4132,7 +4286,7 @@ def serve_document_pdf_by_source(source_doc_id: str):
     if not doc:
         abort(404, description="Document not found")
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and _norm_client_name(doc.get("client_name")) != _norm_client_name(client_scope):
         abort(404, description="Document not found")
 
@@ -4205,7 +4359,7 @@ def api_documents_upload():
     if not prop:
         return jsonify({"error": "Property not found"}), 404
 
-    client_scope = get_current_client() or ""
+    client_scope = _tenant_scope_or_block()
     if client_scope and _norm_client_name(prop.get("client_name")) != _norm_client_name(client_scope):
         return jsonify({"error": "Property not found"}), 404
 
@@ -4917,8 +5071,9 @@ def _compute_compliance_snapshot(client_name: str) -> dict:
     client_id = get_current_client_id()
     try:
         raw = compliance_engine.evaluate_compliance_for_client(client_id) if client_id else compliance_engine.evaluate_compliance()
-    except Exception as e:
-        return {"error": "Failed to evaluate compliance", "details": str(e)}
+    except Exception:
+        app.logger.exception("Compliance evaluation failed")
+        return {"error": "Failed to evaluate compliance"}
 
     if client_name:
         raw = [r for r in raw if (r.get("client") or "").strip() == client_name]
@@ -5956,7 +6111,7 @@ def api_compliance_resolve():
         client_id = row[0] if isinstance(row, (tuple, list)) else row["client_id"]
         client_name = row[1] if isinstance(row, (tuple, list)) else row["client_name"]
 
-        client_scope = get_current_client() or ""
+        client_scope = _tenant_scope_or_block()
         if client_scope and _norm_client_name(client_name) != _norm_client_name(client_scope):
             return jsonify({"error": "Property not found"}), 404
 
@@ -6035,7 +6190,7 @@ def api_compliance_snooze():
         client_id = row[0] if isinstance(row, (tuple, list)) else row["client_id"]
         client_name = row[1] if isinstance(row, (tuple, list)) else row["client_name"]
 
-        client_scope = get_current_client() or ""
+        client_scope = _tenant_scope_or_block()
         if client_scope and _norm_client_name(client_name) != _norm_client_name(client_scope):
             return jsonify({"error": "Property not found"}), 404
 
@@ -6573,6 +6728,10 @@ with app.app_context():
     except Exception as e:
         print(f"Startup activity_log table warning: {e}")
     try:
+        ensure_login_security_schema()
+    except Exception as e:
+        print(f"Startup login security schema warning: {e}")
+    try:
         ensure_chat_audit_log_table()
     except Exception as e:
         print(f"Startup chat_audit_log table warning: {e}")
@@ -6614,5 +6773,12 @@ if __name__ == "__main__":
     print(f"  Database: {DATABASE_URL}")
     print(f"  Clients:  {get_clients_dir()}")
     print(f"  Open: http://127.0.0.1:5000\n")
-    _debug = os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true", "yes", "on")
+    _debug = _is_debug_enabled()
+    if _debug and os.environ.get("MORPHIQ_ALLOW_DEBUG", "").strip().lower() not in {"1", "true", "yes", "on"}:
+        # SECURITY (M-3): the Werkzeug debugger is remote code execution. Require an
+        # explicit opt-in so FLASK_DEBUG can never silently enable it in production.
+        print("  FLASK_DEBUG is set but MORPHIQ_ALLOW_DEBUG is not — starting WITHOUT debug.")
+        _debug = False
+    # NOTE: this dev server is for local use only. In production serve via a WSGI
+    # server (see wsgi.py): `gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app`.
     app.run(host="127.0.0.1", port=5000, debug=_debug, use_reloader=False)
