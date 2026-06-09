@@ -1,0 +1,3563 @@
+{
+  "version": 1,
+  "doc_types": [
+    "Gas Safety Certificate",
+    "EICR",
+    "EPC",
+    "Deposit Protection Certificate",
+    "Tenancy Agreement",
+    "Inventory"
+  ],
+  "count": 132,
+  "cases": [
+    {
+      "id": "gas_safety_001",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_001.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "193 Example Street, Stubton, ZX3 2CF",
+          "engineer_name": "Grace Brennan",
+          "gas_safe_reg": "610824",
+          "inspection_date": "2025-03-27",
+          "expiry_date": "2026-12-26",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"193 Example Street, Stubton, ZX3 2CF\", \"engineer_name\": \"Grace Brennan\", \"gas_safe_reg\": \"610824\", \"inspection_date\": \"2025-03-27\", \"expiry_date\": \"2026-12-26\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"Pxss\"}"
+      }
+    },
+    {
+      "id": "gas_safety_002",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_002.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "113 Testing Close, Stubton, ZX9 5EG",
+          "engineer_name": "Kevin Nair",
+          "gas_safe_reg": "362747",
+          "inspection_date": "2021-09-20",
+          "expiry_date": "2025-10-23",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"113 Testing Close, Stubton, ZX9 5EG\", \"engineer_name\": \"Kevin Nair\", \"gas_safe_reg\": \"362747\", \"inspection_date\": \"2021-09-20\", \"expiry_date\": \"2025-10-23\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "gas_safety_003",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_003.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "277 Mock Crescent, Fakeham, ZX8 5FE",
+          "engineer_name": "Priya Clarke",
+          "gas_safe_reg": "377645",
+          "inspection_date": "2027-05-17",
+          "expiry_date": "2025-05-05",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"277 Mock Crescent, Fakeham, ZX8 5FE\", \"engineer_name\": \"Priya Clarke\", \"gas_safe_reg\": \"377645\", \"inspection_date\": \"2027-05-17\", \"expiry_date\": \"2025-05-05\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "gas_safety_004",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_004.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "248 Synthetic Lane, Testham, ZX8 2EF",
+          "engineer_name": "Kevin Clarke",
+          "gas_safe_reg": "137513",
+          "inspection_date": "2022-03-24",
+          "expiry_date": "2026-09-08",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"248 Synthetic Lane, Testham, ZX8 2EF\", \"engineer_name\": \"Kevin Clarke\", \"gas_safe_reg\": \"137513\", \"inspection_date\": \"2022-03-24\", \"expiry_date\": \"2026-09-08\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "gas_safety_005",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_005.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "348 Placeholder Drive, Demochester, ZX6 5DB",
+          "engineer_name": "Omar Brennan",
+          "gas_safe_reg": "571029",
+          "inspection_date": "2023-02-11",
+          "expiry_date": "2024-03-02",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"348 Placeholder Drive, Demochester, ZX6 5DB\", \"engineer_name\": \"Omar Brennan\", \"gas_safe_reg\": \"571029\", \"inspection_date\": \"2023-02-11\", \"expiry_date\": \"2024-03-02\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "gas_safety_006",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_006.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "239 Demo Avenue, Stubton, ZX4 9FA",
+          "engineer_name": "Kevin Obi",
+          "gas_safe_reg": "389484",
+          "inspection_date": "2027-02-09",
+          "expiry_date": "2023-01-01",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"239 Demo Avenue, Stubton, ZX4 9FA\", \"engineer_name\": \"Kevin Obi\", \"gas_safe_reg\": \"389484\", \"inspection_date\": \"2027-02-09\", \"expiry_date\": \"2023-01-01\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "gas_safety_007",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_007.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "188 Placeholder Drive, Demochester, ZX1 3FE",
+          "engineer_name": "Hannah Obi",
+          "gas_safe_reg": "362364",
+          "inspection_date": "2024-04-28",
+          "expiry_date": "2021-07-25",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"188 Placeholder Drive, Demochester, ZX1 3FE\", \"engineer_name\": \"Hannah Obi\", \"gas_safe_reg\": \"362364\", \"inspection_date\": \"2024-04-28\", \"expiry_date\": \"2021-07-25\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "gas_safety_008",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_008.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "146 Fixture Road, Fakeham, ZX4 5AA",
+          "engineer_name": "Irene Patel",
+          "gas_safe_reg": "490510",
+          "inspection_date": "2023-09-21",
+          "expiry_date": "2025-12-02",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "SATISFACTORY"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"146 Fixture Road, Fakeham, ZX4 5AA\", \"engineer_name\": \"Irene Patel\", \"gas_safe_reg\": \"490510\", \"inspection_date\": \"\", \"expiry_date\": \"2025-12-20\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"SATISFACTORY\"}"
+      }
+    },
+    {
+      "id": "gas_safety_009",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_009.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "161 Mock Crescent, Mockford, ZX7 4GE",
+          "engineer_name": "Liam Whitfield",
+          "gas_safe_reg": "425113",
+          "inspection_date": "2022-08-08",
+          "expiry_date": "2027-12-24",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"161 Mock Crescent, Mockford, ZX7\", \"engineer_name\": \"Liam Whitfield\", \"gas_safe_reg\": \"425113\", \"inspection_date\": \"2022-08-08\", \"expiry_date\": \"2027-12-24\", \"appliances_tested\": \"Boiler, Gas Hob, Gas\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "gas_safety_010",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_010.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "203 Fixture Road, Fakeham, ZX3 8GA",
+          "engineer_name": "Tomasz Andersen",
+          "gas_safe_reg": "815553",
+          "inspection_date": "2027-01-20",
+          "expiry_date": "2027-08-14",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"203 Fixture Road, Fakeham, ZX3 8GA\", \"engineer_name\": \"Tomasz Andersen\", \"gas_safe_reg\": \"815x53\", \"inspection_date\": \"2027-01-20\", \"expiry_date\": \"2027-08-14\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "gas_safety_011",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_011.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "268 Demo Avenue, Sampletown, ZX7 6CG",
+          "engineer_name": "Hannah Whitfield",
+          "gas_safe_reg": "946119",
+          "inspection_date": "2022-07-16",
+          "expiry_date": "2022-04-21",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"268 Demo Avenue, Sampletown, ZX7 6CG\", \"engineer_name\": \"Hannah Whitfield\", \"gas_safe_reg\": \"946119\", \"inspection_date\": \"2022-07-16\", \"expiry_date\": \"2022-04-21\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "gas_safety_012",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_012.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "4 Mock Crescent, Mockford, ZX6 7BH",
+          "engineer_name": "Irene Andersen",
+          "gas_safe_reg": "247852",
+          "inspection_date": "2022-05-12",
+          "expiry_date": "2026-03-26",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"4 Mock Crescent, Mockford, ZX6 7BH\", \"engineer_name\": \"Irene Andersen\", \"gas_safe_reg\": \"247852\", \"inspection_date\": \"2052-02-12\", \"expiry_date\": \"2026-03-26\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "gas_safety_013",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_013.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "140 Example Street, Testham, ZX4 2DB",
+          "engineer_name": "Grace Nair",
+          "gas_safe_reg": "472738",
+          "inspection_date": "2024-05-23",
+          "expiry_date": "2024-10-07",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"140 Example Street, Testham, ZX4 2DB\", \"engineer_name\": \"Grace\", \"gas_safe_reg\": \"\", \"inspection_date\": \"2024-05-23\", \"expiry_date\": \"2024-17-00\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "gas_safety_014",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": "detection_error",
+      "pdf_path": "pdfs/gas_safety_014.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "158 Placeholder Drive, Sampletown, ZX5 6DB",
+          "engineer_name": "Omar Al-Rashid",
+          "gas_safe_reg": "334854",
+          "inspection_date": "2022-12-06",
+          "expiry_date": "2024-04-26",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"158 Placeholder Drive, Sampletown, ZX5 6DB\", \"engineer_name\": \"Omar Al-Rashid\", \"gas_safe_reg\": \"334854\", \"inspection_date\": \"2022-12-06\", \"expiry_date\": \"2024-04-26\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "gas_safety_015",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/gas_safety_015.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "344 Placeholder Drive, Stubton, ZX8 2CG",
+          "engineer_name": "Tomasz Al-Rashid",
+          "gas_safe_reg": "532820",
+          "inspection_date": "2023-04-18",
+          "expiry_date": "2027-04-23",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"344 Placeholder Drive, Stubton, ZX8 2CG\", \"engineer_name\": \"Tomasz\", \"gas_safe_reg\": \"532820\", \"inspection_date\": \"2023-04-18\", \"expiry_date\": \"2027-04-23\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "gas_safety_016",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": "rotated",
+      "pdf_path": "pdfs/gas_safety_016.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "280 Synthetic Lane, Testham, ZX9 3DD",
+          "engineer_name": "Mohammed Foster",
+          "gas_safe_reg": "223082",
+          "inspection_date": "2023-08-26",
+          "expiry_date": "2024-03-15",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"280 Synthetic Lane, Testham, ZX9 3DD\", \"engineer_name\": \"Mohammed Foster\", \"gas_safe_reg\": \"223082\", \"inspection_date\": \"2023-08-26\", \"expiry_date\": \"2024-03-15\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "gas_safety_017",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": "multi_page",
+      "pdf_path": "pdfs/gas_safety_017.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "103 Mock Crescent, Sampletown, ZX1 9EH",
+          "engineer_name": "James Patel",
+          "gas_safe_reg": "166484",
+          "inspection_date": "2023-08-18",
+          "expiry_date": "2023-12-16",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "SATISFACTORY"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"103 Mock Crescent, Sampletown, ZX1 9EH\", \"engineer_name\": \"James Patel\", \"gas_safe_reg\": \"1664x4\", \"inspection_date\": \"2023-08-18\", \"expiry_date\": \"2023-12-16\", \"appliances_tested\": \"Boiler, Gas Hob, Gas\", \"result\": \"SATISFACTORY\"}"
+      }
+    },
+    {
+      "id": "gas_safety_018",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/gas_safety_018.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "292 Mock Crescent, Demochester, ZX4 9FE",
+          "engineer_name": "Hannah Obi",
+          "gas_safe_reg": "",
+          "inspection_date": "",
+          "expiry_date": "2024-03-13",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"292 Mock Crescent, Demochester, ZX4 9FE\", \"engineer_name\": \"Hannah\", \"gas_safe_reg\": \"\", \"inspection_date\": \"\", \"expiry_date\": \"2024-03-13\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "gas_safety_019",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/gas_safety_019.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "266 Fixture Road, Sampletown, ZX1 2EB",
+          "engineer_name": "Claire Clarke",
+          "gas_safe_reg": "230320",
+          "inspection_date": "",
+          "expiry_date": "2027-02-25",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": ""
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"266 Fixture Road, Sampletown, ZX1 2EB\", \"engineer_name\": \"Claire Clarke\", \"gas_safe_reg\": \"230320\", \"inspection_date\": \"\", \"expiry_date\": \"2027-02-25\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"\"}"
+      }
+    },
+    {
+      "id": "gas_safety_020",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/gas_safety_020.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "260 Example Street, Testham, ZX5 5FB",
+          "engineer_name": "George Andersen",
+          "gas_safe_reg": "979061",
+          "inspection_date": "2023-03-23",
+          "expiry_date": "2024-03-06",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"260 Example Street, Testham, ZX5 5FB\", \"engineer_name\": \"George\", \"gas_safe_reg\": \"979061\", \"inspection_date\": \"0023-23-23\", \"expiry_date\": \"2024-03-06\", \"appliances_tested\": \"Boiler, Gas Hob, Gas Fire\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "gas_safety_021",
+      "doc_type": "Gas Safety Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/gas_safety_021.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "98 Fixture Road, Mockford, ZX5 7EG",
+          "engineer_name": "Liam Hendry",
+          "gas_safe_reg": "701525",
+          "inspection_date": "2023-03-18",
+          "expiry_date": "2026-11-06",
+          "appliances_tested": "Boiler, Gas Hob, Gas Fire",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "engineer_name",
+          "gas_safe_reg",
+          "inspection_date",
+          "expiry_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"98 Fixture Road, Mockford, ZX5 7EG\", \"engineer_name\": \"Liam Hendry\", \"gas_safe_reg\": \"701525\", \"inspection_date\": \"2023-03-18\", \"expiry_date\": \"2026-11-06\", \"appliances_tested\": \"Boiler, Gas Hob, Gas\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "eicr_001",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_001.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "153 Fixture Road, Demochester, ZX2 7DE",
+          "electrician_name": "Hannah Nowak",
+          "company_name": "HomeSurvey Ltd",
+          "registration_number": "695741",
+          "inspection_date": "2023-04-27",
+          "next_inspection_date": "2022-01-24",
+          "overall_result": "SATISFACTORY",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "SATISFACTORY"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"153 Fixture Road, Demochester, ZX2 7DE\", \"electrician_name\": \"Hannah Nowak\", \"company_name\": \"HomeSurvey Ltd\", \"registration_number\": \"\", \"inspection_date\": \"\", \"next_inspection_date\": \"2022-01-24\", \"overall_result\": \"SATISFACTORY\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"SATISFACTORY\"}"
+      }
+    },
+    {
+      "id": "eicr_002",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_002.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "335 Mock Crescent, Testham, ZX8 2HH",
+          "electrician_name": "Liam Whitfield",
+          "company_name": "Premier Gas",
+          "registration_number": "405216",
+          "inspection_date": "2023-12-21",
+          "next_inspection_date": "2026-08-10",
+          "overall_result": "PASS",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"335 Mock Crescent, Testham, ZX8 2HH\", \"electrician_name\": \"Liam Whitfield\", \"company_name\": \"Premier Gas\", \"registration_number\": \"405216\", \"inspection_date\": \"2023-12-21\", \"next_inspection_date\": \"2026-08-10\", \"overall_result\": \"\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_003",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_003.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "154 Sample Way, Mockford, ZX5 2EC",
+          "electrician_name": "George Nair",
+          "company_name": "SafeGas Essex",
+          "registration_number": "678966",
+          "inspection_date": "2025-04-11",
+          "next_inspection_date": "2026-08-21",
+          "overall_result": "Pass",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"154 Sample Way, Mockford, ZX5 2EC\", \"electrician_name\": \"George Nair\", \"company_name\": \"SafeGas Essex\", \"registration_number\": \"678966\", \"inspection_date\": \"4025-02-11\", \"next_inspection_date\": \"2026-08-21\", \"overall_result\": \"Pass\", \"observations\": \"C3 recommendation noted, no immediate action\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_004",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_004.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "125 Sample Way, Fakeham, ZX5 5HH",
+          "electrician_name": "Claire Nair",
+          "company_name": "Premier Gas",
+          "registration_number": "960715",
+          "inspection_date": "2027-08-05",
+          "next_inspection_date": "2026-09-07",
+          "overall_result": "SATISFACTORY",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"125 Sample Way, Fakeham, ZX5 5HH\", \"electrician_name\": \"Claire Nair\", \"company_name\": \"Premier Gas\", \"registration_number\": \"960715\", \"inspection_date\": \"2027-08-05\", \"next_inspection_date\": \"2026-09-07\", \"overall_result\": \"SATISFACTORY\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_005",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_005.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "6 Testing Close, Demochester, ZX6 9BB",
+          "electrician_name": "Kevin Al-Rashid",
+          "company_name": "Voltex Electrical",
+          "registration_number": "101127",
+          "inspection_date": "2023-07-12",
+          "next_inspection_date": "2026-03-27",
+          "overall_result": "SATISFACTORY",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"6 Testing Close, Demochester, ZX6 9BB\", \"electrician_name\": \"Kevin Al-Rashid\", \"company_name\": \"Voltex Electrical\", \"registration_number\": \"101127\", \"inspection_date\": \"2023-07-12\", \"next_inspection_date\": \"\", \"overall_result\": \"SATISFACTORY\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "eicr_006",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_006.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "325 Mock Crescent, Demochester, ZX1 6AH",
+          "electrician_name": "Kevin Nowak",
+          "company_name": "Bright Spark Ltd",
+          "registration_number": "576086",
+          "inspection_date": "2025-11-23",
+          "next_inspection_date": "2027-05-18",
+          "overall_result": "Pass",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"325 Mock Crescent, Demochester, ZX1 6AH\", \"electrician_name\": \"Kevin Nowak\", \"company_name\": \"Bright Spark Ltd\", \"registration_number\": \"576086\", \"inspection_date\": \"2025-11-23\", \"next_inspection_date\": \"2027-05-18\", \"overall_result\": \"Pass\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_007",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_007.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "38 Placeholder Drive, Fakeham, ZX2 9BG",
+          "electrician_name": "Sandra Clarke",
+          "company_name": "GreenRate Surveys",
+          "registration_number": "345203",
+          "inspection_date": "2021-03-10",
+          "next_inspection_date": "2022-06-26",
+          "overall_result": "PASS",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"38 Placeholder Drive, Fakeham, ZX2 9BG\", \"electrician_name\": \"Sandra Clarke\", \"company_name\": \"GreenRate Surveys\", \"registration_number\": \"345203\", \"inspection_date\": \"2021-03-10\", \"next_inspection_date\": \"2022-06-26\", \"overall_result\": \"PASS\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "eicr_008",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_008.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "45 Demo Avenue, Testham, ZX2 2GG",
+          "electrician_name": "Tomasz Obi",
+          "company_name": "Voltex Electrical",
+          "registration_number": "270415",
+          "inspection_date": "2026-07-13",
+          "next_inspection_date": "2025-09-27",
+          "overall_result": "PASS",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"45 Demo Avenue, Testham, ZX2\", \"electrician_name\": \"Tomasz Obi\", \"company_name\": \"Voltex Electrical\", \"registration_number\": \"270415\", \"inspection_date\": \"2026-07-13\", \"next_inspection_date\": \"2025-09-27\", \"overall_result\": \"PASS\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "eicr_009",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_009.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "217 Mock Crescent, Stubton, ZX3 6AH",
+          "electrician_name": "Irene Brennan",
+          "company_name": "SafeGas Essex",
+          "registration_number": "958662",
+          "inspection_date": "2024-03-06",
+          "next_inspection_date": "2027-05-27",
+          "overall_result": "Pass",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"217 Mock Crescent, Stubton, ZX3 6AH\", \"electrician_name\": \"Irene Brennan\", \"company_name\": \"SafeGas Essex\", \"registration_number\": \"958662\", \"inspection_date\": \"2024-03-06\", \"next_inspection_date\": \"2027-05-27\", \"overall_result\": \"Pass\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_010",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_010.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "102 Mock Crescent, Sampletown, ZX8 9GA",
+          "electrician_name": "Sandra Okafor",
+          "company_name": "EcoAssess UK",
+          "registration_number": "390892",
+          "inspection_date": "2024-11-11",
+          "next_inspection_date": "2021-12-05",
+          "overall_result": "Pass",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "SATISFACTORY"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"102 Mock Crescent, Sampletown, ZX8 9GA\", \"electrician_name\": \"Sandra Okafor\", \"company_name\": \"EcoAssess UK\", \"registration_number\": \"390892\", \"inspection_date\": \"2024-11-11\", \"next_inspection_date\": \"2021-12-05\", \"overall_result\": \"Pass\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"SATISFACTORY\"}"
+      }
+    },
+    {
+      "id": "eicr_011",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_011.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "141 Synthetic Lane, Demochester, ZX1 1FH",
+          "electrician_name": "Grace Nair",
+          "company_name": "HomeSurvey Ltd",
+          "registration_number": "488464",
+          "inspection_date": "2026-02-26",
+          "next_inspection_date": "2022-08-28",
+          "overall_result": "SATISFACTORY",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"141 Synthetic Lane, Demochester, ZX1 1FH\", \"electrician_name\": \"Grace Nair\", \"company_name\": \"HomeSurvey Ltd\", \"registration_number\": \"488464\", \"inspection_date\": \"2026-02-26\", \"next_inspection_date\": \"2022-08-28\", \"overall_result\": \"SATISFACTORY\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "eicr_012",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_012.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "165 Placeholder Drive, Sampletown, ZX3 2HC",
+          "electrician_name": "George Whitfield",
+          "company_name": "HomeSurvey Ltd",
+          "registration_number": "987196",
+          "inspection_date": "2025-06-26",
+          "next_inspection_date": "2022-01-20",
+          "overall_result": "PASS",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"165 Placeholder Drive, Sampletown, ZX3 2HC\", \"electrician_name\": \"George Whitfield\", \"company_name\": \"\", \"registration_number\": \"9871x6\", \"inspection_date\": \"2025-06-26\", \"next_inspection_date\": \"2022-01-20\", \"overall_result\": \"PASS\", \"observations\": \"\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_013",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_013.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "216 Synthetic Lane, Fakeham, ZX9 5HD",
+          "electrician_name": "Priya Foster",
+          "company_name": "Bright Spark Ltd",
+          "registration_number": "587948",
+          "inspection_date": "2023-02-09",
+          "next_inspection_date": "2023-02-28",
+          "overall_result": "SATISFACTORY",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"216 Synthetic Lane, Fakeham, ZX9 5HD\", \"electrician_name\": \"Priya Foster\", \"company_name\": \"Bright Spark Ltd\", \"registration_number\": \"587948\", \"inspection_date\": \"2023-02-09\", \"next_inspection_date\": \"2023-02-28\", \"overall_result\": \"SATISFACTORY\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_014",
+      "doc_type": "EICR",
+      "edge_case": "detection_error",
+      "pdf_path": "pdfs/eicr_014.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "186 Testing Close, Stubton, ZX1 2AD",
+          "electrician_name": "Aisha Foster",
+          "company_name": "Bright Spark Ltd",
+          "registration_number": "920449",
+          "inspection_date": "2024-04-03",
+          "next_inspection_date": "2026-11-03",
+          "overall_result": "PASS",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"186 Testing Close, Stubton, ZX1 2AD\", \"electrician_name\": \"Aisha Foster\", \"company_name\": \"Bright Spark Ltd\", \"registration_number\": \"920449\", \"inspection_date\": \"2024-04-03\", \"next_inspection_date\": \"2026-11-03\", \"overall_result\": \"PASS\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_015",
+      "doc_type": "EICR",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/eicr_015.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "185 Demo Avenue, Mockford, ZX9 6CC",
+          "electrician_name": "Hannah Andersen",
+          "company_name": "Premier Gas",
+          "registration_number": "162528",
+          "inspection_date": "2021-05-18",
+          "next_inspection_date": "2025-08-13",
+          "overall_result": "Pass",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"185 Demo Avenue, Mockford, ZX9\", \"electrician_name\": \"Hannah Andersen\", \"company_name\": \"\", \"registration_number\": \"162528\", \"inspection_date\": \"\", \"next_inspection_date\": \"2015-08-23\", \"overall_result\": \"Pass\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "eicr_016",
+      "doc_type": "EICR",
+      "edge_case": "rotated",
+      "pdf_path": "pdfs/eicr_016.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "203 Fixture Road, Stubton, ZX7 7HG",
+          "electrician_name": "Omar Andersen",
+          "company_name": "EcoAssess UK",
+          "registration_number": "886861",
+          "inspection_date": "2023-12-02",
+          "next_inspection_date": "2022-02-09",
+          "overall_result": "PASS",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"203 Fixture Road, Stubton, ZX7 7HG\", \"electrician_name\": \"Omar Andersen\", \"company_name\": \"EcoAssess UK\", \"registration_number\": \"886861\", \"inspection_date\": \"2023-12-02\", \"next_inspection_date\": \"2022-02-09\", \"overall_result\": \"PASS\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_017",
+      "doc_type": "EICR",
+      "edge_case": "multi_page",
+      "pdf_path": "pdfs/eicr_017.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "86 Demo Avenue, Mockford, ZX4 2CD",
+          "electrician_name": "Aisha Obi",
+          "company_name": "Premier Gas",
+          "registration_number": "678047",
+          "inspection_date": "2027-12-23",
+          "next_inspection_date": "2022-11-06",
+          "overall_result": "PASS",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"86 Demo Avenue, Mockford, ZX4 2CD\", \"electrician_name\": \"Aisha Obi\", \"company_name\": \"Premier Gas\", \"registration_number\": \"678047\", \"inspection_date\": \"2017-22-23\", \"next_inspection_date\": \"2022-11-06\", \"overall_result\": \"PASS\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "eicr_018",
+      "doc_type": "EICR",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/eicr_018.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "52 Mock Crescent, Testham, ZX5 7AA",
+          "electrician_name": "George Obi",
+          "company_name": "SafeGas Essex",
+          "registration_number": "481294",
+          "inspection_date": "",
+          "next_inspection_date": "2027-03-09",
+          "overall_result": "SATISFACTORY",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": ""
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"52 Mock Crescent, Testham, ZX5 7AA\", \"electrician_name\": \"George\", \"company_name\": \"SafeGas Essex\", \"registration_number\": \"481294\", \"inspection_date\": \"\", \"next_inspection_date\": \"2027-03-09\", \"overall_result\": \"SATISFACTORY\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"\"}"
+      }
+    },
+    {
+      "id": "eicr_019",
+      "doc_type": "EICR",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/eicr_019.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "21 Placeholder Drive, Demochester, ZX1 5FC",
+          "electrician_name": "Omar Al-Rashid",
+          "company_name": "SafeGas Essex",
+          "registration_number": "887369",
+          "inspection_date": "",
+          "next_inspection_date": "",
+          "overall_result": "Pass",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "PASS"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"21 Placeholder Drive, Demochester, ZX1 5FC\", \"electrician_name\": \"Omar Al-Rashid\", \"company_name\": \"SafeGas Essex\", \"registration_number\": \"x87369\", \"inspection_date\": \"\", \"next_inspection_date\": \"\", \"overall_result\": \"Pass\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"PASS\"}"
+      }
+    },
+    {
+      "id": "eicr_020",
+      "doc_type": "EICR",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/eicr_020.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "187 Placeholder Drive, Stubton, ZX6 9EE",
+          "electrician_name": "Irene Clarke",
+          "company_name": "Voltex Electrical",
+          "registration_number": "676085",
+          "inspection_date": "2023-04-08",
+          "next_inspection_date": "2021-08-01",
+          "overall_result": "Pass",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "Pass"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"187 Placeholder Drive, Stubton, ZX6 9EE\", \"electrician_name\": \"Irene Clarke\", \"company_name\": \"Voltex Electrical\", \"registration_number\": \"676085\", \"inspection_date\": \"\", \"next_inspection_date\": \"2021-00-81\", \"overall_result\": \"Paxs\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"Pass\"}"
+      }
+    },
+    {
+      "id": "eicr_021",
+      "doc_type": "EICR",
+      "edge_case": null,
+      "pdf_path": "pdfs/eicr_021.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "197 Placeholder Drive, Testham, ZX4 3EA",
+          "electrician_name": "Irene Foster",
+          "company_name": "HomeSurvey Ltd",
+          "registration_number": "389588",
+          "inspection_date": "2022-06-16",
+          "next_inspection_date": "2024-01-24",
+          "overall_result": "PASS",
+          "observations": "C3 recommendation noted, no immediate action required",
+          "result": "SATISFACTORY"
+        },
+        "required_fields": [
+          "property_address",
+          "electrician_name",
+          "inspection_date",
+          "next_inspection_date",
+          "result"
+        ]
+      },
+      "recording": {
+        "detection": "EICR",
+        "extraction": "{\"property_address\": \"197 Placeholder Drive, Testham, ZX4 3EA\", \"electrician_name\": \"Irene Foster\", \"company_name\": \"HomeSurvey Ltd\", \"registration_number\": \"389588\", \"inspection_date\": \"2022-06-16\", \"next_inspection_date\": \"2024-01-24\", \"overall_result\": \"PASS\", \"observations\": \"C3 recommendation noted, no immediate action required\", \"result\": \"SATISFACTORY\"}"
+      }
+    },
+    {
+      "id": "epc_001",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_001.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "17 Mock Crescent, Sampletown, ZX4 3GG",
+          "epc_rating": "E",
+          "current_rating": "D",
+          "assessor_name": "James Foster",
+          "assessment_date": "2022-09-22",
+          "expiry_date": "2026-07-01",
+          "valid_until": "2024-02-23"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"17 Mock Crescent, Sampletown, ZX4 3GG\", \"epc_rating\": \"E\", \"current_rating\": \"D\", \"assessor_name\": \"James Foster\", \"assessment_date\": \"2022-09-22\", \"expiry_date\": \"2026-07-01\", \"valid_until\": \"2024-02-23\"}"
+      }
+    },
+    {
+      "id": "epc_002",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_002.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "307 Example Street, Fakeham, ZX9 6FE",
+          "epc_rating": "E",
+          "current_rating": "D",
+          "assessor_name": "Irene Kowalski",
+          "assessment_date": "2022-06-13",
+          "expiry_date": "2026-01-21",
+          "valid_until": "2021-03-14"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"307 Example Street, Fakeham, ZX9 6FE\", \"epc_rating\": \"E\", \"current_rating\": \"D\", \"assessor_name\": \"Irene Kowalski\", \"assessment_date\": \"2022-06-13\", \"expiry_date\": \"2020-61-21\", \"valid_until\": \"2021-03-14\"}"
+      }
+    },
+    {
+      "id": "epc_003",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_003.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "166 Sample Way, Demochester, ZX8 4BB",
+          "epc_rating": "B",
+          "current_rating": "D",
+          "assessor_name": "Sandra Kowalski",
+          "assessment_date": "2024-05-09",
+          "expiry_date": "2026-09-19",
+          "valid_until": "2024-04-06"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"166 Sample Way, Demochester, ZX8 4BB\", \"epc_rating\": \"B\", \"current_rating\": \"x\", \"assessor_name\": \"Sandra Kowalski\", \"assessment_date\": \"2024-05-09\", \"expiry_date\": \"2026-09-19\", \"valid_until\": \"2024-04-06\"}"
+      }
+    },
+    {
+      "id": "epc_004",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_004.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "5 Mock Crescent, Testham, ZX9 3FC",
+          "epc_rating": "B",
+          "current_rating": "A",
+          "assessor_name": "Omar Nowak",
+          "assessment_date": "2027-06-06",
+          "expiry_date": "2024-10-17",
+          "valid_until": "2021-06-04"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"5 Mock Crescent, Testham, ZX9\", \"epc_rating\": \"B\", \"current_rating\": \"A\", \"assessor_name\": \"Omar\", \"assessment_date\": \"2027-06-06\", \"expiry_date\": \"2024-10-17\", \"valid_until\": \"2021-06-04\"}"
+      }
+    },
+    {
+      "id": "epc_005",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_005.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "303 Mock Crescent, Sampletown, ZX9 1EC",
+          "epc_rating": "A",
+          "current_rating": "B",
+          "assessor_name": "Priya Patel",
+          "assessment_date": "2025-04-12",
+          "expiry_date": "2024-09-26",
+          "valid_until": "2024-11-23"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"303 Mock Crescent, Sampletown, ZX9 1EC\", \"epc_rating\": \"A\", \"current_rating\": \"B\", \"assessor_name\": \"Priya Patel\", \"assessment_date\": \"2025-04-12\", \"expiry_date\": \"2024-09-26\", \"valid_until\": \"2024-11-23\"}"
+      }
+    },
+    {
+      "id": "epc_006",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_006.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "52 Mock Crescent, Stubton, ZX1 5CF",
+          "epc_rating": "B",
+          "current_rating": "D",
+          "assessor_name": "Hannah Bennett",
+          "assessment_date": "2027-07-15",
+          "expiry_date": "2024-02-09",
+          "valid_until": "2026-01-07"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"52 Mock Crescent, Stubton, ZX1 5CF\", \"epc_rating\": \"B\", \"current_rating\": \"\", \"assessor_name\": \"Hannah Bennett\", \"assessment_date\": \"2027-07-15\", \"expiry_date\": \"2024-02-09\", \"valid_until\": \"2026-01-07\"}"
+      }
+    },
+    {
+      "id": "epc_007",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_007.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "208 Example Street, Stubton, ZX6 9EB",
+          "epc_rating": "E",
+          "current_rating": "E",
+          "assessor_name": "Hannah Al-Rashid",
+          "assessment_date": "2025-10-10",
+          "expiry_date": "2021-02-11",
+          "valid_until": "2027-06-06"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"208 Example Street, Stubton, ZX6 9EB\", \"epc_rating\": \"\", \"current_rating\": \"E\", \"assessor_name\": \"Hannah Al-Rashid\", \"assessment_date\": \"2025-10-10\", \"expiry_date\": \"2021-02-11\", \"valid_until\": \"2027-06-06\"}"
+      }
+    },
+    {
+      "id": "epc_008",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_008.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "274 Sample Way, Sampletown, ZX9 3CH",
+          "epc_rating": "B",
+          "current_rating": "A",
+          "assessor_name": "James Whitfield",
+          "assessment_date": "2024-03-14",
+          "expiry_date": "2024-05-25",
+          "valid_until": "2026-07-14"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"274 Sample Way, Sampletown, ZX9 3CH\", \"epc_rating\": \"B\", \"current_rating\": \"A\", \"assessor_name\": \"James Whitfield\", \"assessment_date\": \"2024-03-14\", \"expiry_date\": \"2024-05-25\", \"valid_until\": \"2026-07-14\"}"
+      }
+    },
+    {
+      "id": "epc_009",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_009.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "346 Placeholder Drive, Mockford, ZX1 7BE",
+          "epc_rating": "C",
+          "current_rating": "A",
+          "assessor_name": "Grace Andersen",
+          "assessment_date": "2027-12-23",
+          "expiry_date": "2021-04-08",
+          "valid_until": "2022-03-14"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"346 Placeholder Drive, Mockford, ZX1 7BE\", \"epc_rating\": \"C\", \"current_rating\": \"A\", \"assessor_name\": \"Grace Andersen\", \"assessment_date\": \"2027-12-23\", \"expiry_date\": \"2021-04-08\", \"valid_until\": \"2022-03-14\"}"
+      }
+    },
+    {
+      "id": "epc_010",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_010.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "184 Fixture Road, Mockford, ZX4 3AC",
+          "epc_rating": "D",
+          "current_rating": "A",
+          "assessor_name": "Tomasz Patel",
+          "assessment_date": "2026-12-11",
+          "expiry_date": "2024-04-19",
+          "valid_until": "2022-09-02"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"184 Fixture Road, Mockford, ZX4 3AC\", \"epc_rating\": \"D\", \"current_rating\": \"A\", \"assessor_name\": \"Tomasz Patel\", \"assessment_date\": \"2026-12-11\", \"expiry_date\": \"2024-04-19\", \"valid_until\": \"2022-09-02\"}"
+      }
+    },
+    {
+      "id": "epc_011",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_011.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "63 Demo Avenue, Stubton, ZX9 9FB",
+          "epc_rating": "A",
+          "current_rating": "E",
+          "assessor_name": "James Brennan",
+          "assessment_date": "2023-03-26",
+          "expiry_date": "2024-01-11",
+          "valid_until": "2023-07-04"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"63 Demo Avenue, Stubton, ZX9 9FB\", \"epc_rating\": \"A\", \"current_rating\": \"E\", \"assessor_name\": \"James Brennan\", \"assessment_date\": \"2023-03-26\", \"expiry_date\": \"2024-01-11\", \"valid_until\": \"2023-07-04\"}"
+      }
+    },
+    {
+      "id": "epc_012",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_012.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "146 Demo Avenue, Stubton, ZX5 6BF",
+          "epc_rating": "E",
+          "current_rating": "E",
+          "assessor_name": "George Foster",
+          "assessment_date": "2027-05-16",
+          "expiry_date": "2026-08-05",
+          "valid_until": "2023-05-05"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"146 Demo Avenue, Stubton, ZX5 6BF\", \"epc_rating\": \"E\", \"current_rating\": \"E\", \"assessor_name\": \"George Foster\", \"assessment_date\": \"2027-05-16\", \"expiry_date\": \"2026-08-05\", \"valid_until\": \"2023-05-05\"}"
+      }
+    },
+    {
+      "id": "epc_013",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_013.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "335 Mock Crescent, Fakeham, ZX2 9GE",
+          "epc_rating": "E",
+          "current_rating": "B",
+          "assessor_name": "Mohammed Foster",
+          "assessment_date": "2021-08-03",
+          "expiry_date": "2024-08-08",
+          "valid_until": "2026-09-21"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"335 Mock Crescent, Fakeham, ZX2 9GE\", \"epc_rating\": \"E\", \"current_rating\": \"B\", \"assessor_name\": \"Mohammed Foster\", \"assessment_date\": \"2201-08-03\", \"expiry_date\": \"2024-08-08\", \"valid_until\": \"2026-09-21\"}"
+      }
+    },
+    {
+      "id": "epc_014",
+      "doc_type": "EPC",
+      "edge_case": "detection_error",
+      "pdf_path": "pdfs/epc_014.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "164 Fixture Road, Sampletown, ZX4 9FD",
+          "epc_rating": "D",
+          "current_rating": "A",
+          "assessor_name": "Tomasz Andersen",
+          "assessment_date": "2021-10-21",
+          "expiry_date": "2025-12-28",
+          "valid_until": "2021-09-07"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"164 Fixture Road, Sampletown, ZX4 9FD\", \"epc_rating\": \"D\", \"current_rating\": \"A\", \"assessor_name\": \"Tomasz Andersen\", \"assessment_date\": \"2021-10-21\", \"expiry_date\": \"2025-12-28\", \"valid_until\": \"2021-09-07\"}"
+      }
+    },
+    {
+      "id": "epc_015",
+      "doc_type": "EPC",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/epc_015.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "240 Synthetic Lane, Sampletown, ZX8 9HB",
+          "epc_rating": "D",
+          "current_rating": "C",
+          "assessor_name": "Omar Okafor",
+          "assessment_date": "2025-04-21",
+          "expiry_date": "2023-06-01",
+          "valid_until": "2025-03-26"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"240 Synthetic Lane, Sampletown, ZX8 9HB\", \"epc_rating\": \"D\", \"current_rating\": \"C\", \"assessor_name\": \"Omar Okafor\", \"assessment_date\": \"2025-04-21\", \"expiry_date\": \"3022-06-01\", \"valid_until\": \"2025-03-26\"}"
+      }
+    },
+    {
+      "id": "epc_016",
+      "doc_type": "EPC",
+      "edge_case": "rotated",
+      "pdf_path": "pdfs/epc_016.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "303 Fixture Road, Stubton, ZX5 1GG",
+          "epc_rating": "A",
+          "current_rating": "D",
+          "assessor_name": "James Bennett",
+          "assessment_date": "2026-05-20",
+          "expiry_date": "2021-04-11",
+          "valid_until": "2023-07-14"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"303 Fixture Road, Stubton, ZX5\", \"epc_rating\": \"A\", \"current_rating\": \"D\", \"assessor_name\": \"James Bennett\", \"assessment_date\": \"2026-05-20\", \"expiry_date\": \"2021-04-11\", \"valid_until\": \"2023-07-14\"}"
+      }
+    },
+    {
+      "id": "epc_017",
+      "doc_type": "EPC",
+      "edge_case": "multi_page",
+      "pdf_path": "pdfs/epc_017.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "140 Sample Way, Mockford, ZX6 5EG",
+          "epc_rating": "D",
+          "current_rating": "E",
+          "assessor_name": "Priya Whitfield",
+          "assessment_date": "2025-12-02",
+          "expiry_date": "2025-08-12",
+          "valid_until": "2027-05-09"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"140 Sample Way, Mockford, ZX6 5EG\", \"epc_rating\": \"D\", \"current_rating\": \"E\", \"assessor_name\": \"Priya Whitfield\", \"assessment_date\": \"2020-12-52\", \"expiry_date\": \"2025-08-12\", \"valid_until\": \"2027-05-09\"}"
+      }
+    },
+    {
+      "id": "epc_018",
+      "doc_type": "EPC",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/epc_018.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "211 Demo Avenue, Sampletown, ZX1 8EA",
+          "epc_rating": "B",
+          "current_rating": "",
+          "assessor_name": "Kevin Brennan",
+          "assessment_date": "",
+          "expiry_date": "2022-11-03",
+          "valid_until": "2025-04-26"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"211 Demo Avenue, Sampletown, ZX1 8EA\", \"epc_rating\": \"B\", \"current_rating\": \"\", \"assessor_name\": \"Kevin Brennan\", \"assessment_date\": \"\", \"expiry_date\": \"2022-11-03\", \"valid_until\": \"2025-04-26\"}"
+      }
+    },
+    {
+      "id": "epc_019",
+      "doc_type": "EPC",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/epc_019.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "57 Placeholder Drive, Demochester, ZX4 2BD",
+          "epc_rating": "B",
+          "current_rating": "D",
+          "assessor_name": "Aisha Bennett",
+          "assessment_date": "",
+          "expiry_date": "",
+          "valid_until": "2027-04-16"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"57 Placeholder Drive, Demochester, ZX4 2BD\", \"epc_rating\": \"B\", \"current_rating\": \"D\", \"assessor_name\": \"Aisha Bennett\", \"assessment_date\": \"\", \"expiry_date\": \"\", \"valid_until\": \"2027-04-16\"}"
+      }
+    },
+    {
+      "id": "epc_020",
+      "doc_type": "EPC",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/epc_020.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "94 Demo Avenue, Demochester, ZX4 7HD",
+          "epc_rating": "C",
+          "current_rating": "B",
+          "assessor_name": "Sandra Kowalski",
+          "assessment_date": "2025-08-12",
+          "expiry_date": "2027-08-01",
+          "valid_until": "2026-12-14"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"\", \"epc_rating\": \"C\", \"current_rating\": \"B\", \"assessor_name\": \"Sandra Kowalski\", \"assessment_date\": \"2025-08-12\", \"expiry_date\": \"2027-08-01\", \"valid_until\": \"2026-12-14\"}"
+      }
+    },
+    {
+      "id": "epc_021",
+      "doc_type": "EPC",
+      "edge_case": null,
+      "pdf_path": "pdfs/epc_021.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "166 Synthetic Lane, Mockford, ZX8 4HB",
+          "epc_rating": "C",
+          "current_rating": "E",
+          "assessor_name": "Mohammed Bennett",
+          "assessment_date": "2025-03-06",
+          "expiry_date": "2025-04-08",
+          "valid_until": "2026-09-10"
+        },
+        "required_fields": [
+          "property_address",
+          "current_rating",
+          "assessment_date",
+          "expiry_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"166 Synthetic Lane, Mockford, ZX8 4HB\", \"epc_rating\": \"C\", \"current_rating\": \"E\", \"assessor_name\": \"Mohammed Bennett\", \"assessment_date\": \"2025-03-06\", \"expiry_date\": \"2025-04-08\", \"valid_until\": \"2026-09-10\"}"
+      }
+    },
+    {
+      "id": "deposit_001",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_001.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "162 Sample Way, Mockford, ZX8 5EC",
+          "tenant_full_name": "Omar Hendry",
+          "tenant_name": "Liam Brennan",
+          "deposit_amount": "£1,500",
+          "scheme_name": "MyDeposits",
+          "certificate_number": "197590",
+          "protection_date": "2024-04-12",
+          "expiry_date": "2023-08-06",
+          "valid_until": "2026-07-24"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"162 Sample Way, Mockford, ZX8 5EC\", \"tenant_full_name\": \"Omar Hendry\", \"tenant_name\": \"Liam Brennan\", \"deposit_amount\": \"£1,500\", \"scheme_name\": \"MyDeposits\", \"certificate_number\": \"197590\", \"protection_date\": \"2024-04-12\", \"expiry_date\": \"2023-08-06\", \"valid_until\": \"2026-07-24\"}"
+      }
+    },
+    {
+      "id": "deposit_002",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_002.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "302 Placeholder Drive, Sampletown, ZX9 1FD",
+          "tenant_full_name": "Kevin Patel",
+          "tenant_name": "Omar Andersen",
+          "deposit_amount": "£1,500",
+          "scheme_name": "TDS (Tenancy Deposit Scheme)",
+          "certificate_number": "957907",
+          "protection_date": "2025-12-17",
+          "expiry_date": "2021-04-12",
+          "valid_until": "2026-11-28"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"302 Placeholder Drive, Sampletown, ZX9 1FD\", \"tenant_full_name\": \"Kevin Patel\", \"tenant_name\": \"Omar Andersen\", \"deposit_amount\": \"£1,500\", \"scheme_name\": \"TDS (Tenancy Deposit Scheme)\", \"certificate_number\": \"957907\", \"protection_date\": \"2025-12-17\", \"expiry_date\": \"2021-04-12\", \"valid_until\": \"2026-11-28\"}"
+      }
+    },
+    {
+      "id": "deposit_003",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_003.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "7 Example Street, Fakeham, ZX1 1HG",
+          "tenant_full_name": "Tomasz Foster",
+          "tenant_name": "Grace Whitfield",
+          "deposit_amount": "£1,500",
+          "scheme_name": "TDS (Tenancy Deposit Scheme)",
+          "certificate_number": "794302",
+          "protection_date": "2022-12-04",
+          "expiry_date": "2021-10-16",
+          "valid_until": "2024-05-15"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"7 Example Street, Fakeham, ZX1 1HG\", \"tenant_full_name\": \"Tomasz Foster\", \"tenant_name\": \"Grace Whitfield\", \"deposit_amount\": \"£1,500\", \"scheme_name\": \"TDS (Tenancy Deposit Scheme)\", \"certificate_number\": \"794302\", \"protection_date\": \"2022-12-04\", \"expiry_date\": \"2021-10-16\", \"valid_until\": \"2024-05-15\"}"
+      }
+    },
+    {
+      "id": "deposit_004",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_004.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "266 Placeholder Drive, Sampletown, ZX1 5FC",
+          "tenant_full_name": "James Andersen",
+          "tenant_name": "Hannah Patel",
+          "deposit_amount": "£1,375",
+          "scheme_name": "DPS (Deposit Protection Service)",
+          "certificate_number": "105774",
+          "protection_date": "2022-05-14",
+          "expiry_date": "2022-02-16",
+          "valid_until": "2027-10-25"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"266 Placeholder Drive, Sampletown, ZX1\", \"tenant_full_name\": \"\", \"tenant_name\": \"Hannah Patel\", \"deposit_amount\": \"£1,375\", \"scheme_name\": \"DPS (Deposit Protection Service)\", \"certificate_number\": \"105774\", \"protection_date\": \"2022-05-14\", \"expiry_date\": \"2022-02-16\", \"valid_until\": \"2027-10-25\"}"
+      }
+    },
+    {
+      "id": "deposit_005",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_005.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "162 Testing Close, Mockford, ZX9 7CD",
+          "tenant_full_name": "Grace Obi",
+          "tenant_name": "James Bennett",
+          "deposit_amount": "£1,050",
+          "scheme_name": "TDS (Tenancy Deposit Scheme)",
+          "certificate_number": "229568",
+          "protection_date": "2021-11-23",
+          "expiry_date": "2027-12-15",
+          "valid_until": "2025-01-16"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"162 Testing Close, Mockford, ZX9 7CD\", \"tenant_full_name\": \"Grace Obi\", \"tenant_name\": \"James Bennett\", \"deposit_amount\": \"£1,050\", \"scheme_name\": \"TDS (Tenancy Deposit Scheme)\", \"certificate_number\": \"229568\", \"protection_date\": \"2021-11-23\", \"expiry_date\": \"2027-12-15\", \"valid_until\": \"2025-01-16\"}"
+      }
+    },
+    {
+      "id": "deposit_006",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_006.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "32 Example Street, Demochester, ZX8 1DA",
+          "tenant_full_name": "George Brennan",
+          "tenant_name": "George Obi",
+          "deposit_amount": "£1,375",
+          "scheme_name": "DPS (Deposit Protection Service)",
+          "certificate_number": "168867",
+          "protection_date": "2024-02-19",
+          "expiry_date": "2027-12-12",
+          "valid_until": "2026-06-08"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"32 Example Street, Demochester, ZX8 1DA\", \"tenant_full_name\": \"George Brennan\", \"tenant_name\": \"George Obi\", \"deposit_amount\": \"£1,375\", \"scheme_name\": \"DPS (Deposit Protection Service)\", \"certificate_number\": \"168867\", \"protection_date\": \"2024-02-19\", \"expiry_date\": \"2027-12-12\", \"valid_until\": \"2026-06-08\"}"
+      }
+    },
+    {
+      "id": "deposit_007",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_007.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "350 Mock Crescent, Fakeham, ZX4 1DF",
+          "tenant_full_name": "James Hendry",
+          "tenant_name": "Omar Whitfield",
+          "deposit_amount": "£1,200",
+          "scheme_name": "MyDeposits",
+          "certificate_number": "323422",
+          "protection_date": "2024-11-16",
+          "expiry_date": "2025-11-23",
+          "valid_until": "2022-10-22"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"350 Mock Crescent, Fakeham, ZX4 1DF\", \"tenant_full_name\": \"\", \"tenant_name\": \"\", \"deposit_amount\": \"£1,200\", \"scheme_name\": \"MyDeposits\", \"certificate_number\": \"323422\", \"protection_date\": \"2024-11-16\", \"expiry_date\": \"2025-11-23\", \"valid_until\": \"2022-10-22\"}"
+      }
+    },
+    {
+      "id": "deposit_008",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_008.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "235 Placeholder Drive, Stubton, ZX1 5HG",
+          "tenant_full_name": "Liam Clarke",
+          "tenant_name": "Liam Obi",
+          "deposit_amount": "£1,050",
+          "scheme_name": "TDS (Tenancy Deposit Scheme)",
+          "certificate_number": "590954",
+          "protection_date": "2027-02-25",
+          "expiry_date": "2022-03-09",
+          "valid_until": "2026-02-08"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"235 Placeholder Drive, Stubton, ZX1 5HG\", \"tenant_full_name\": \"Liam Clarke\", \"tenant_name\": \"Liam Obi\", \"deposit_amount\": \"£1,050\", \"scheme_name\": \"TDS (Tenancy Deposit Scheme)\", \"certificate_number\": \"590954\", \"protection_date\": \"2027-02-25\", \"expiry_date\": \"2022-03-09\", \"valid_until\": \"2026-02-08\"}"
+      }
+    },
+    {
+      "id": "deposit_009",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_009.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "62 Example Street, Stubton, ZX1 4DG",
+          "tenant_full_name": "Claire Obi",
+          "tenant_name": "George Nair",
+          "deposit_amount": "£950",
+          "scheme_name": "TDS (Tenancy Deposit Scheme)",
+          "certificate_number": "503304",
+          "protection_date": "2024-01-03",
+          "expiry_date": "2027-07-10",
+          "valid_until": "2027-05-21"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"62 Example Street, Stubton, ZX1 4DG\", \"tenant_full_name\": \"Claire Obi\", \"tenant_name\": \"George Nair\", \"deposit_amount\": \"£950\", \"scheme_name\": \"TDS (Tenancy Deposit Scheme)\", \"certificate_number\": \"503304\", \"protection_date\": \"2024-01-03\", \"expiry_date\": \"2027-07-10\", \"valid_until\": \"2027-05-21\"}"
+      }
+    },
+    {
+      "id": "deposit_010",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_010.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "206 Sample Way, Stubton, ZX7 9EH",
+          "tenant_full_name": "Grace Nair",
+          "tenant_name": "James Okafor",
+          "deposit_amount": "£1,200",
+          "scheme_name": "MyDeposits",
+          "certificate_number": "400355",
+          "protection_date": "2022-08-13",
+          "expiry_date": "2021-12-17",
+          "valid_until": "2026-12-16"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"206 Sample Way, Stubton, ZX7 9EH\", \"tenant_full_name\": \"Grace Nair\", \"tenant_name\": \"James Okafor\", \"deposit_amount\": \"£1,200\", \"scheme_name\": \"MyDeposits\", \"certificate_number\": \"400355\", \"protection_date\": \"2022-08-13\", \"expiry_date\": \"2021-12-17\", \"valid_until\": \"2026-12-16\"}"
+      }
+    },
+    {
+      "id": "deposit_011",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_011.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "186 Example Street, Testham, ZX4 8DE",
+          "tenant_full_name": "Hannah Okafor",
+          "tenant_name": "George Al-Rashid",
+          "deposit_amount": "£1,500",
+          "scheme_name": "TDS (Tenancy Deposit Scheme)",
+          "certificate_number": "800899",
+          "protection_date": "2023-03-05",
+          "expiry_date": "2023-02-20",
+          "valid_until": "2021-12-11"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"186 Example Street, Testham, ZX4 8DE\", \"tenant_full_name\": \"Hannah Okafor\", \"tenant_name\": \"George Al-Rashid\", \"deposit_amount\": \"£1,500\", \"scheme_name\": \"TDS (Tenancy Deposit Scheme)\", \"certificate_number\": \"800899\", \"protection_date\": \"2023-03-05\", \"expiry_date\": \"2023-02-20\", \"valid_until\": \"2021-12-11\"}"
+      }
+    },
+    {
+      "id": "deposit_012",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_012.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "140 Example Street, Stubton, ZX2 1GH",
+          "tenant_full_name": "Mohammed Whitfield",
+          "tenant_name": "Mohammed Patel",
+          "deposit_amount": "£1,500",
+          "scheme_name": "DPS (Deposit Protection Service)",
+          "certificate_number": "879595",
+          "protection_date": "2024-06-11",
+          "expiry_date": "2027-12-08",
+          "valid_until": "2025-04-18"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"140 Example Street, Stubton, ZX2 1GH\", \"tenant_full_name\": \"Mohammed Whitfield\", \"tenant_name\": \"Mohammed Patel\", \"deposit_amount\": \"£1,500\", \"scheme_name\": \"DPS (Deposit Protection Service)\", \"certificate_number\": \"879595\", \"protection_date\": \"2024-06-11\", \"expiry_date\": \"2027-12-08\", \"valid_until\": \"2025-04-18\"}"
+      }
+    },
+    {
+      "id": "deposit_013",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_013.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "173 Example Street, Demochester, ZX7 6FD",
+          "tenant_full_name": "Claire Andersen",
+          "tenant_name": "James Bennett",
+          "deposit_amount": "£1,100",
+          "scheme_name": "DPS (Deposit Protection Service)",
+          "certificate_number": "889504",
+          "protection_date": "2024-03-21",
+          "expiry_date": "2023-09-27",
+          "valid_until": "2027-04-11"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"173 Example Street, Demochester, ZX7 6FD\", \"tenant_full_name\": \"Claire Andersen\", \"tenant_name\": \"James Bennett\", \"deposit_amount\": \"£1,100\", \"scheme_name\": \"DPS (Deposit Protection Service)\", \"certificate_number\": \"88x504\", \"protection_date\": \"2024-03-21\", \"expiry_date\": \"2023-09-27\", \"valid_until\": \"2027-04-11\"}"
+      }
+    },
+    {
+      "id": "deposit_014",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": "detection_error",
+      "pdf_path": "pdfs/deposit_014.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "289 Mock Crescent, Fakeham, ZX4 2DH",
+          "tenant_full_name": "Sandra Hendry",
+          "tenant_name": "Hannah Brennan",
+          "deposit_amount": "£950",
+          "scheme_name": "TDS (Tenancy Deposit Scheme)",
+          "certificate_number": "567481",
+          "protection_date": "2025-02-07",
+          "expiry_date": "2026-09-07",
+          "valid_until": "2027-02-12"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"289 Mock Crescent, Fakeham, ZX4 2DH\", \"tenant_full_name\": \"Sandra Hendry\", \"tenant_name\": \"Hannah Brennan\", \"deposit_amount\": \"£950\", \"scheme_name\": \"TDS (Tenancy Deposit Scheme)\", \"certificate_number\": \"567481\", \"protection_date\": \"2025-02-07\", \"expiry_date\": \"2026-09-07\", \"valid_until\": \"2027-02-12\"}"
+      }
+    },
+    {
+      "id": "deposit_015",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/deposit_015.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "83 Demo Avenue, Fakeham, ZX2 8HH",
+          "tenant_full_name": "Grace Foster",
+          "tenant_name": "Tomasz Whitfield",
+          "deposit_amount": "£1,500",
+          "scheme_name": "DPS (Deposit Protection Service)",
+          "certificate_number": "998687",
+          "protection_date": "2027-10-10",
+          "expiry_date": "2022-03-10",
+          "valid_until": "2027-03-14"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"83 Demo Avenue, Fakeham, ZX2 8HH\", \"tenant_full_name\": \"Grace Foster\", \"tenant_name\": \"Tomasz Whitfield\", \"deposit_amount\": \"£1x500\", \"scheme_name\": \"DPS (Deposit Protection Service)\", \"certificate_number\": \"998687\", \"protection_date\": \"2027-11-00\", \"expiry_date\": \"2022-03-10\", \"valid_until\": \"2027-03-14\"}"
+      }
+    },
+    {
+      "id": "deposit_016",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": "rotated",
+      "pdf_path": "pdfs/deposit_016.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "159 Sample Way, Testham, ZX2 5BF",
+          "tenant_full_name": "Tomasz Kowalski",
+          "tenant_name": "Liam Patel",
+          "deposit_amount": "£950",
+          "scheme_name": "TDS (Tenancy Deposit Scheme)",
+          "certificate_number": "667418",
+          "protection_date": "2027-05-21",
+          "expiry_date": "2021-01-13",
+          "valid_until": "2022-01-08"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"159 Sample Way, Testham, ZX2 5BF\", \"tenant_full_name\": \"Tomasz Kowalski\", \"tenant_name\": \"Liam Patel\", \"deposit_amount\": \"£950\", \"scheme_name\": \"TDS (Tenancy Deposit Scheme)\", \"certificate_number\": \"\", \"protection_date\": \"2027-05-21\", \"expiry_date\": \"2021-01-13\", \"valid_until\": \"2022-01-08\"}"
+      }
+    },
+    {
+      "id": "deposit_017",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": "multi_page",
+      "pdf_path": "pdfs/deposit_017.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "318 Fixture Road, Stubton, ZX4 3BD",
+          "tenant_full_name": "Mohammed Nair",
+          "tenant_name": "Mohammed Al-Rashid",
+          "deposit_amount": "£1,375",
+          "scheme_name": "DPS (Deposit Protection Service)",
+          "certificate_number": "741978",
+          "protection_date": "2026-03-18",
+          "expiry_date": "2022-03-02",
+          "valid_until": "2021-09-12"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"318 Fixture Road, Stubton, ZX4 3BD\", \"tenant_full_name\": \"Mohammed Nair\", \"tenant_name\": \"Mohammed Al-Rashid\", \"deposit_amount\": \"£1,375\", \"scheme_name\": \"DPS (Deposit Protection Service)\", \"certificate_number\": \"741978\", \"protection_date\": \"2620-03-18\", \"expiry_date\": \"2022-03-02\", \"valid_until\": \"2021-09-12\"}"
+      }
+    },
+    {
+      "id": "deposit_018",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/deposit_018.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "165 Example Street, Sampletown, ZX2 6ED",
+          "tenant_full_name": "Omar Brennan",
+          "tenant_name": "",
+          "deposit_amount": "",
+          "scheme_name": "MyDeposits",
+          "certificate_number": "172493",
+          "protection_date": "2025-03-10",
+          "expiry_date": "2027-11-09",
+          "valid_until": "2021-02-12"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"165 Example Street, Sampletown, ZX2\", \"tenant_full_name\": \"Omar Brennan\", \"tenant_name\": \"\", \"deposit_amount\": \"\", \"scheme_name\": \"MyDeposits\", \"certificate_number\": \"172493\", \"protection_date\": \"2025-03-10\", \"expiry_date\": \"2027-11-09\", \"valid_until\": \"\"}"
+      }
+    },
+    {
+      "id": "deposit_019",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/deposit_019.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "254 Mock Crescent, Stubton, ZX6 2EC",
+          "tenant_full_name": "Irene Nowak",
+          "tenant_name": "",
+          "deposit_amount": "",
+          "scheme_name": "MyDeposits",
+          "certificate_number": "640023",
+          "protection_date": "2021-09-12",
+          "expiry_date": "2022-09-26",
+          "valid_until": "2025-09-08"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"254 Mock Crescent, Stubton, ZX6 2EC\", \"tenant_full_name\": \"Irene Nowak\", \"tenant_name\": \"\", \"deposit_amount\": \"\", \"scheme_name\": \"MyDeposits\", \"certificate_number\": \"640023\", \"protection_date\": \"2021-09-12\", \"expiry_date\": \"2022-09-26\", \"valid_until\": \"2025-09-08\"}"
+      }
+    },
+    {
+      "id": "deposit_020",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/deposit_020.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "261 Mock Crescent, Demochester, ZX9 6CC",
+          "tenant_full_name": "Omar Andersen",
+          "tenant_name": "Tomasz Obi",
+          "deposit_amount": "£1,050",
+          "scheme_name": "MyDeposits",
+          "certificate_number": "472440",
+          "protection_date": "2025-11-18",
+          "expiry_date": "2022-12-18",
+          "valid_until": "2021-10-18"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"261 Mock Crescent, Demochester, ZX9 6CC\", \"tenant_full_name\": \"Omar\", \"tenant_name\": \"Tomasz Obi\", \"deposit_amount\": \"£1,0x0\", \"scheme_name\": \"MyDeposits\", \"certificate_number\": \"4724x0\", \"protection_date\": \"2025-11-18\", \"expiry_date\": \"2022-12-18\", \"valid_until\": \"\"}"
+      }
+    },
+    {
+      "id": "deposit_021",
+      "doc_type": "Deposit Protection Certificate",
+      "edge_case": null,
+      "pdf_path": "pdfs/deposit_021.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "148 Fixture Road, Fakeham, ZX6 3FF",
+          "tenant_full_name": "James Nowak",
+          "tenant_name": "Omar Clarke",
+          "deposit_amount": "£950",
+          "scheme_name": "TDS (Tenancy Deposit Scheme)",
+          "certificate_number": "428940",
+          "protection_date": "2022-09-14",
+          "expiry_date": "2026-08-14",
+          "valid_until": "2023-03-22"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_name",
+          "deposit_amount",
+          "protection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"148 Fixture Road, Fakeham, ZX6\", \"tenant_full_name\": \"James Nowak\", \"tenant_name\": \"Omar\", \"deposit_amount\": \"£950\", \"scheme_name\": \"TDS (Tenancy Deposit Scheme)\", \"certificate_number\": \"428940\", \"protection_date\": \"2022-09-14\", \"expiry_date\": \"2026-08-14\", \"valid_until\": \"2023-03-22\"}"
+      }
+    },
+    {
+      "id": "tenancy_001",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_001.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "104 Fixture Road, Stubton, ZX7 3DB",
+          "tenant_full_name": "Mohammed Clarke",
+          "landlord_name": "Mohammed Bennett",
+          "start_date": "2024-03-26",
+          "end_date": "2024-05-09",
+          "monthly_rent_amount": "£1,500",
+          "deposit_amount": "£1,295",
+          "agreement_date": "2025-09-26"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"104 Fixture Road, Stubton, ZX7 3DB\", \"tenant_full_name\": \"Mohammed Clarke\", \"landlord_name\": \"Mohammed Bennett\", \"start_date\": \"2024-03-26\", \"end_date\": \"4022-05-09\", \"monthly_rent_amount\": \"£1,500\", \"deposit_amount\": \"£1,295\", \"agreement_date\": \"2025-09-26\"}"
+      }
+    },
+    {
+      "id": "tenancy_002",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_002.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "137 Fixture Road, Stubton, ZX8 5HF",
+          "tenant_full_name": "Aisha Foster",
+          "landlord_name": "Sandra Nowak",
+          "start_date": "2023-03-07",
+          "end_date": "2026-05-26",
+          "monthly_rent_amount": "£950",
+          "deposit_amount": "£1,400",
+          "agreement_date": "2022-04-19"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"\", \"tenant_full_name\": \"Aisha Foster\", \"landlord_name\": \"Sandra Nowak\", \"start_date\": \"2023-03-07\", \"end_date\": \"2026-05-26\", \"monthly_rent_amount\": \"£950\", \"deposit_amount\": \"£1,400\", \"agreement_date\": \"2022-04-19\"}"
+      }
+    },
+    {
+      "id": "tenancy_003",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_003.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "157 Example Street, Mockford, ZX2 4FC",
+          "tenant_full_name": "Grace Okafor",
+          "landlord_name": "Aisha Nowak",
+          "start_date": "2023-12-11",
+          "end_date": "2024-07-14",
+          "monthly_rent_amount": "£1,200",
+          "deposit_amount": "£1,100",
+          "agreement_date": "2023-06-21"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"157 Example Street, Mockford, ZX2 4FC\", \"tenant_full_name\": \"Grace Okafor\", \"landlord_name\": \"Aisha Nowak\", \"start_date\": \"2023-12-11\", \"end_date\": \"2024-07-14\", \"monthly_rent_amount\": \"£1,200\", \"deposit_amount\": \"£1,100\", \"agreement_date\": \"2023-06-21\"}"
+      }
+    },
+    {
+      "id": "tenancy_004",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_004.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "274 Sample Way, Sampletown, ZX2 6HE",
+          "tenant_full_name": "George Kowalski",
+          "landlord_name": "James Al-Rashid",
+          "start_date": "2021-02-14",
+          "end_date": "2021-06-14",
+          "monthly_rent_amount": "£1,400",
+          "deposit_amount": "£1,100",
+          "agreement_date": "2025-04-11"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"274 Sample Way, Sampletown, ZX2 6HE\", \"tenant_full_name\": \"George Kowalski\", \"landlord_name\": \"James Al-Rashid\", \"start_date\": \"2021-02-14\", \"end_date\": \"2021-06-14\", \"monthly_rent_amount\": \"£1,400\", \"deposit_amount\": \"£1,100\", \"agreement_date\": \"2025-04-11\"}"
+      }
+    },
+    {
+      "id": "tenancy_005",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_005.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "120 Mock Crescent, Stubton, ZX3 9HD",
+          "tenant_full_name": "Irene Clarke",
+          "landlord_name": "Kevin Kowalski",
+          "start_date": "2022-05-25",
+          "end_date": "2023-04-14",
+          "monthly_rent_amount": "£1,050",
+          "deposit_amount": "£1,295",
+          "agreement_date": "2021-01-18"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"\", \"tenant_full_name\": \"Irene Clarke\", \"landlord_name\": \"Kevin Kowalski\", \"start_date\": \"2022-05-25\", \"end_date\": \"2023-04-14\", \"monthly_rent_amount\": \"£1,050\", \"deposit_amount\": \"£1,295\", \"agreement_date\": \"2021-01-18\"}"
+      }
+    },
+    {
+      "id": "tenancy_006",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_006.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "216 Example Street, Fakeham, ZX5 6HG",
+          "tenant_full_name": "James Bennett",
+          "landlord_name": "Claire Andersen",
+          "start_date": "2022-01-06",
+          "end_date": "2024-06-14",
+          "monthly_rent_amount": "£1,050",
+          "deposit_amount": "£1,050",
+          "agreement_date": "2021-04-16"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"\", \"tenant_full_name\": \"James Bennett\", \"landlord_name\": \"Claire Andersen\", \"start_date\": \"2022-01-06\", \"end_date\": \"\", \"monthly_rent_amount\": \"£1,050\", \"deposit_amount\": \"£1,050\", \"agreement_date\": \"2021-04-16\"}"
+      }
+    },
+    {
+      "id": "tenancy_007",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_007.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "190 Placeholder Drive, Fakeham, ZX4 6HA",
+          "tenant_full_name": "Claire Obi",
+          "landlord_name": "George Brennan",
+          "start_date": "2022-03-11",
+          "end_date": "2021-06-27",
+          "monthly_rent_amount": "£1,200",
+          "deposit_amount": "£1,200",
+          "agreement_date": "2021-10-14"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"190 Placeholder Drive, Fakeham, ZX4\", \"tenant_full_name\": \"Claire Obi\", \"landlord_name\": \"George Brennan\", \"start_date\": \"2022-03-11\", \"end_date\": \"2021-06-27\", \"monthly_rent_amount\": \"£1,200\", \"deposit_amount\": \"£1,200\", \"agreement_date\": \"2021-10-14\"}"
+      }
+    },
+    {
+      "id": "tenancy_008",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_008.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "164 Testing Close, Stubton, ZX2 6FB",
+          "tenant_full_name": "Kevin Patel",
+          "landlord_name": "Priya Okafor",
+          "start_date": "2022-06-21",
+          "end_date": "2027-09-09",
+          "monthly_rent_amount": "£950",
+          "deposit_amount": "£1,400",
+          "agreement_date": "2027-06-27"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"\", \"tenant_full_name\": \"Kevin Patel\", \"landlord_name\": \"Priya Okafor\", \"start_date\": \"2022-06-21\", \"end_date\": \"2027-09-09\", \"monthly_rent_amount\": \"£950\", \"deposit_amount\": \"£1,400\", \"agreement_date\": \"2027-06-27\"}"
+      }
+    },
+    {
+      "id": "tenancy_009",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_009.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "33 Testing Close, Testham, ZX2 9CB",
+          "tenant_full_name": "Sandra Al-Rashid",
+          "landlord_name": "Mohammed Hendry",
+          "start_date": "2024-03-07",
+          "end_date": "2025-04-22",
+          "monthly_rent_amount": "£1,200",
+          "deposit_amount": "£1,375",
+          "agreement_date": "2026-07-20"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"33 Testing Close, Testham, ZX2 9CB\", \"tenant_full_name\": \"Sandra Al-Rashid\", \"landlord_name\": \"Mohammed Hendry\", \"start_date\": \"2024-03-07\", \"end_date\": \"2025-04-22\", \"monthly_rent_amount\": \"£1,200\", \"deposit_amount\": \"£1,375\", \"agreement_date\": \"2026-07-20\"}"
+      }
+    },
+    {
+      "id": "tenancy_010",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_010.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "17 Placeholder Drive, Stubton, ZX3 5CE",
+          "tenant_full_name": "Sandra Obi",
+          "landlord_name": "Aisha Patel",
+          "start_date": "2021-06-05",
+          "end_date": "2025-05-18",
+          "monthly_rent_amount": "£1,500",
+          "deposit_amount": "£1,400",
+          "agreement_date": "2023-02-09"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"17 Placeholder Drive, Stubton, ZX3 5CE\", \"tenant_full_name\": \"Sandra Obi\", \"landlord_name\": \"Aisha Patel\", \"start_date\": \"2021-06-05\", \"end_date\": \"2025-05-18\", \"monthly_rent_amount\": \"£1,500\", \"deposit_amount\": \"£1,400\", \"agreement_date\": \"2023-02-09\"}"
+      }
+    },
+    {
+      "id": "tenancy_011",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_011.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "164 Sample Way, Testham, ZX2 7BH",
+          "tenant_full_name": "Mohammed Bennett",
+          "landlord_name": "Claire Obi",
+          "start_date": "2025-07-09",
+          "end_date": "2026-08-06",
+          "monthly_rent_amount": "£1,500",
+          "deposit_amount": "£1,050",
+          "agreement_date": "2025-12-06"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"164 Sample Way, Testham, ZX2 7BH\", \"tenant_full_name\": \"Mohammed Bennett\", \"landlord_name\": \"\", \"start_date\": \"2025-07-09\", \"end_date\": \"2026-08-06\", \"monthly_rent_amount\": \"£1,500\", \"deposit_amount\": \"£1,050\", \"agreement_date\": \"2025-12-06\"}"
+      }
+    },
+    {
+      "id": "tenancy_012",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_012.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "49 Demo Avenue, Fakeham, ZX2 5EE",
+          "tenant_full_name": "Sandra Whitfield",
+          "landlord_name": "Liam Whitfield",
+          "start_date": "2025-01-19",
+          "end_date": "2025-07-16",
+          "monthly_rent_amount": "£1,375",
+          "deposit_amount": "£1,050",
+          "agreement_date": "2027-11-03"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"49 Demo Avenue, Fakeham, ZX2 5EE\", \"tenant_full_name\": \"Sandra Whitfield\", \"landlord_name\": \"Liam Whitfield\", \"start_date\": \"2025-01-19\", \"end_date\": \"2025-07-16\", \"monthly_rent_amount\": \"£1,375\", \"deposit_amount\": \"£1,050\", \"agreement_date\": \"2027-11-03\"}"
+      }
+    },
+    {
+      "id": "tenancy_013",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_013.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "19 Fixture Road, Demochester, ZX3 8AC",
+          "tenant_full_name": "Omar Brennan",
+          "landlord_name": "George Whitfield",
+          "start_date": "2022-05-25",
+          "end_date": "2021-03-17",
+          "monthly_rent_amount": "£1,500",
+          "deposit_amount": "£1,050",
+          "agreement_date": "2025-04-24"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"19 Fixture Road, Demochester, ZX3 8AC\", \"tenant_full_name\": \"Omar Brennan\", \"landlord_name\": \"George Whitfield\", \"start_date\": \"2022-05-25\", \"end_date\": \"2021-03-17\", \"monthly_rent_amount\": \"£1,500\", \"deposit_amount\": \"£1,050\", \"agreement_date\": \"2025-04-24\"}"
+      }
+    },
+    {
+      "id": "tenancy_014",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": "detection_error",
+      "pdf_path": "pdfs/tenancy_014.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "292 Demo Avenue, Stubton, ZX8 3HB",
+          "tenant_full_name": "Sandra Hendry",
+          "landlord_name": "Grace Foster",
+          "start_date": "2023-11-06",
+          "end_date": "2021-08-05",
+          "monthly_rent_amount": "£1,100",
+          "deposit_amount": "£950",
+          "agreement_date": "2023-02-09"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Deposit Protection Certificate",
+        "extraction": "{\"property_address\": \"292 Demo Avenue, Stubton, ZX8 3HB\", \"tenant_full_name\": \"Sandra Hendry\", \"landlord_name\": \"\", \"start_date\": \"2023-11-06\", \"end_date\": \"2021-08-05\", \"monthly_rent_amount\": \"£1,100\", \"deposit_amount\": \"£950\", \"agreement_date\": \"0023-22-09\"}"
+      }
+    },
+    {
+      "id": "tenancy_015",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/tenancy_015.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "112 Fixture Road, Mockford, ZX7 1BF",
+          "tenant_full_name": "Tomasz Nair",
+          "landlord_name": "Tomasz Obi",
+          "start_date": "2021-09-16",
+          "end_date": "2021-08-07",
+          "monthly_rent_amount": "£1,400",
+          "deposit_amount": "£1,295",
+          "agreement_date": "2022-04-27"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"112 Fixture Road, Mockford, ZX7 1BF\", \"tenant_full_name\": \"Tomasz Nair\", \"landlord_name\": \"Tomasz\", \"start_date\": \"2021-09-16\", \"end_date\": \"2021-08-07\", \"monthly_rent_amount\": \"x1,400\", \"deposit_amount\": \"£1,29x\", \"agreement_date\": \"2022-04-27\"}"
+      }
+    },
+    {
+      "id": "tenancy_016",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": "rotated",
+      "pdf_path": "pdfs/tenancy_016.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "61 Synthetic Lane, Stubton, ZX7 9BB",
+          "tenant_full_name": "Liam Nair",
+          "landlord_name": "Grace Foster",
+          "start_date": "2025-12-27",
+          "end_date": "2024-12-10",
+          "monthly_rent_amount": "£950",
+          "deposit_amount": "£1,295",
+          "agreement_date": "2026-01-15"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"61 Synthetic Lane, Stubton, ZX7 9BB\", \"tenant_full_name\": \"Liam Nair\", \"landlord_name\": \"Grace Foster\", \"start_date\": \"2025-12-27\", \"end_date\": \"\", \"monthly_rent_amount\": \"£950\", \"deposit_amount\": \"£1,295\", \"agreement_date\": \"2026-01-15\"}"
+      }
+    },
+    {
+      "id": "tenancy_017",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": "multi_page",
+      "pdf_path": "pdfs/tenancy_017.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "209 Example Street, Sampletown, ZX8 3DD",
+          "tenant_full_name": "Priya Obi",
+          "landlord_name": "Aisha Nowak",
+          "start_date": "2027-06-05",
+          "end_date": "2022-11-04",
+          "monthly_rent_amount": "£1,375",
+          "deposit_amount": "£1,375",
+          "agreement_date": "2024-12-25"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"209 Example Street, Sampletown, ZX8 3DD\", \"tenant_full_name\": \"Priya Obi\", \"landlord_name\": \"Aisha Nowak\", \"start_date\": \"2027-06-05\", \"end_date\": \"2022-11-04\", \"monthly_rent_amount\": \"£1,375\", \"deposit_amount\": \"£1,375\", \"agreement_date\": \"2024-12-25\"}"
+      }
+    },
+    {
+      "id": "tenancy_018",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/tenancy_018.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "102 Demo Avenue, Demochester, ZX2 6AH",
+          "tenant_full_name": "Sandra Foster",
+          "landlord_name": "Priya Clarke",
+          "start_date": "",
+          "end_date": "2024-09-14",
+          "monthly_rent_amount": "",
+          "deposit_amount": "£1,295",
+          "agreement_date": "2023-06-21"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"102 Demo Avenue, Demochester, ZX2 6AH\", \"tenant_full_name\": \"\", \"landlord_name\": \"Priya Clarke\", \"start_date\": \"\", \"end_date\": \"2024-09-14\", \"monthly_rent_amount\": \"\", \"deposit_amount\": \"£1,295\", \"agreement_date\": \"2023-06-21\"}"
+      }
+    },
+    {
+      "id": "tenancy_019",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/tenancy_019.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "309 Demo Avenue, Stubton, ZX1 7GA",
+          "tenant_full_name": "",
+          "landlord_name": "Irene Kowalski",
+          "start_date": "",
+          "end_date": "2023-11-20",
+          "monthly_rent_amount": "£950",
+          "deposit_amount": "£1,200",
+          "agreement_date": "2024-05-16"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"309 Demo Avenue, Stubton, ZX1 7GA\", \"tenant_full_name\": \"\", \"landlord_name\": \"Irene Kowalski\", \"start_date\": \"\", \"end_date\": \"2023-11-20\", \"monthly_rent_amount\": \"£950\", \"deposit_amount\": \"£1,200\", \"agreement_date\": \"2024-05-16\"}"
+      }
+    },
+    {
+      "id": "tenancy_020",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/tenancy_020.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "1 Example Street, Sampletown, ZX9 9FG",
+          "tenant_full_name": "Omar Bennett",
+          "landlord_name": "Aisha Clarke",
+          "start_date": "2022-02-03",
+          "end_date": "2022-11-16",
+          "monthly_rent_amount": "£1,400",
+          "deposit_amount": "£1,375",
+          "agreement_date": "2022-06-13"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Gas Safety Certificate",
+        "extraction": "{\"property_address\": \"1 Example Street, Sampletown, ZX9 9FG\", \"tenant_full_name\": \"Omar Bennett\", \"landlord_name\": \"Aisha Clarke\", \"start_date\": \"2022-02-03\", \"end_date\": \"2022-11-16\", \"monthly_rent_amount\": \"£1,400\", \"deposit_amount\": \"£1,375\", \"agreement_date\": \"2022-16-03\"}"
+      }
+    },
+    {
+      "id": "tenancy_021",
+      "doc_type": "Tenancy Agreement",
+      "edge_case": null,
+      "pdf_path": "pdfs/tenancy_021.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "38 Placeholder Drive, Fakeham, ZX2 8CH",
+          "tenant_full_name": "Irene Foster",
+          "landlord_name": "Claire Brennan",
+          "start_date": "2026-07-06",
+          "end_date": "2022-10-22",
+          "monthly_rent_amount": "£1,050",
+          "deposit_amount": "£1,375",
+          "agreement_date": "2021-02-12"
+        },
+        "required_fields": [
+          "property_address",
+          "tenant_full_name",
+          "start_date",
+          "monthly_rent_amount"
+        ]
+      },
+      "recording": {
+        "detection": "Tenancy Agreement",
+        "extraction": "{\"property_address\": \"38 Placeholder Drive, Fakeham, ZX2 8CH\", \"tenant_full_name\": \"Irene\", \"landlord_name\": \"Claire Brennan\", \"start_date\": \"2026-07-06\", \"end_date\": \"2022-10-22\", \"monthly_rent_amount\": \"£1,050\", \"deposit_amount\": \"£1,375\", \"agreement_date\": \"2021-02-12\"}"
+      }
+    },
+    {
+      "id": "inventory_001",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_001.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "306 Example Street, Testham, ZX5 4HG",
+          "clerk_name": "Tomasz Andersen",
+          "inspection_date": "2026-09-01",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"306 Example Street, Testham, ZX5 4HG\", \"clerk_name\": \"Tomasz Andersen\", \"inspection_date\": \"2026-09-01\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_002",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_002.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "348 Fixture Road, Testham, ZX9 4AG",
+          "clerk_name": "Liam Hendry",
+          "inspection_date": "2021-02-18",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"348 Fixture Road, Testham, ZX9 4AG\", \"clerk_name\": \"Liam\", \"inspection_date\": \"2021-02-18\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_003",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_003.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "209 Fixture Road, Demochester, ZX8 7HE",
+          "clerk_name": "Priya Nair",
+          "inspection_date": "2027-08-22",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"209 Fixture Road, Demochester, ZX8 7HE\", \"clerk_name\": \"Priya Nair\", \"inspection_date\": \"2027-08-22\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_004",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_004.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "304 Testing Close, Fakeham, ZX1 6FC",
+          "clerk_name": "Kevin Nowak",
+          "inspection_date": "2025-11-20",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"304 Testing Close, Fakeham, ZX1 6FC\", \"clerk_name\": \"Kevin Nowak\", \"inspection_date\": \"2025-11-20\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_005",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_005.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "329 Mock Crescent, Sampletown, ZX9 8BA",
+          "clerk_name": "Sandra Al-Rashid",
+          "inspection_date": "2026-08-06",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"329 Mock Crescent, Sampletown, ZX9\", \"clerk_name\": \"Sandra Al-Rashid\", \"inspection_date\": \"2026-08-06\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_006",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_006.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "205 Testing Close, Mockford, ZX4 5HA",
+          "clerk_name": "Tomasz Hendry",
+          "inspection_date": "2023-09-18",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"205 Testing Close, Mockford, ZX4\", \"clerk_name\": \"Tomasz Hendry\", \"inspection_date\": \"2023-09-18\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_007",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_007.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "148 Fixture Road, Testham, ZX2 3AA",
+          "clerk_name": "Kevin Nair",
+          "inspection_date": "2025-05-07",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"148 Fixture Road, Testham, ZX2\", \"clerk_name\": \"Kevin\", \"inspection_date\": \"2025-05-07\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_008",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_008.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "217 Testing Close, Fakeham, ZX2 3FD",
+          "clerk_name": "Tomasz Brennan",
+          "inspection_date": "2021-10-05",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"217 Testing Close, Fakeham, ZX2 3FD\", \"clerk_name\": \"Tomasz Brennan\", \"inspection_date\": \"2021-10-05\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_009",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_009.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "162 Testing Close, Fakeham, ZX5 1CE",
+          "clerk_name": "George Nair",
+          "inspection_date": "2022-08-24",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"162 Testing Close, Fakeham, ZX5 1CE\", \"clerk_name\": \"George Nair\", \"inspection_date\": \"2022-08-24\", \"property_condition_summary\": \"\"}"
+      }
+    },
+    {
+      "id": "inventory_010",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_010.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "64 Demo Avenue, Mockford, ZX6 4FB",
+          "clerk_name": "James Al-Rashid",
+          "inspection_date": "2022-01-17",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"64 Demo Avenue, Mockford, ZX6 4FB\", \"clerk_name\": \"James Al-Rashid\", \"inspection_date\": \"2022-01-17\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_011",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_011.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "143 Mock Crescent, Testham, ZX6 6HA",
+          "clerk_name": "Priya Okafor",
+          "inspection_date": "2024-11-24",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"143 Mock Crescent, Testham, ZX6 6HA\", \"clerk_name\": \"Priya Okafor\", \"inspection_date\": \"2024-11-24\", \"property_condition_summary\": \"Good condition throughout, no damage\"}"
+      }
+    },
+    {
+      "id": "inventory_012",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_012.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "164 Sample Way, Demochester, ZX2 9EB",
+          "clerk_name": "Sandra Nowak",
+          "inspection_date": "2026-06-05",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"164 Sample Way, Demochester, ZX2 9EB\", \"clerk_name\": \"\", \"inspection_date\": \"2026-06-05\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_013",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_013.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "59 Testing Close, Testham, ZX3 8CB",
+          "clerk_name": "Priya Obi",
+          "inspection_date": "2025-04-05",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"59 Testing Close, Testham, ZX3 8CB\", \"clerk_name\": \"Priya\", \"inspection_date\": \"2025-04-05\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_014",
+      "doc_type": "Inventory",
+      "edge_case": "detection_error",
+      "pdf_path": "pdfs/inventory_014.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "329 Testing Close, Demochester, ZX6 4BG",
+          "clerk_name": "Liam Whitfield",
+          "inspection_date": "2027-07-21",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "EPC",
+        "extraction": "{\"property_address\": \"329 Testing Close, Demochester, ZX6 4BG\", \"clerk_name\": \"Liam Whitfield\", \"inspection_date\": \"2027-07-21\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_015",
+      "doc_type": "Inventory",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/inventory_015.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "74 Placeholder Drive, Sampletown, ZX2 3EF",
+          "clerk_name": "Tomasz Bennett",
+          "inspection_date": "2027-04-17",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"74 Placeholder Drive, Sampletown, ZX2 3EF\", \"clerk_name\": \"Tomasz Bennett\", \"inspection_date\": \"\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_016",
+      "doc_type": "Inventory",
+      "edge_case": "rotated",
+      "pdf_path": "pdfs/inventory_016.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "334 Placeholder Drive, Testham, ZX8 6DE",
+          "clerk_name": "Mohammed Okafor",
+          "inspection_date": "2027-08-25",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"334 Placeholder Drive, Testham, ZX8 6DE\", \"clerk_name\": \"Mohammed Okafor\", \"inspection_date\": \"2027-08-25\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_017",
+      "doc_type": "Inventory",
+      "edge_case": "multi_page",
+      "pdf_path": "pdfs/inventory_017.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "10 Testing Close, Mockford, ZX1 7BD",
+          "clerk_name": "Sandra Brennan",
+          "inspection_date": "2023-03-26",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"10 Testing Close, Mockford, ZX1\", \"clerk_name\": \"Sandra Brennan\", \"inspection_date\": \"2023-03-26\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_018",
+      "doc_type": "Inventory",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/inventory_018.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "103 Placeholder Drive, Testham, ZX1 3CE",
+          "clerk_name": "Sandra Patel",
+          "inspection_date": "",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"103 Placeholder Drive, Testham, ZX1 3CE\", \"clerk_name\": \"Sandra Patel\", \"inspection_date\": \"\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_019",
+      "doc_type": "Inventory",
+      "edge_case": "missing_fields",
+      "pdf_path": "pdfs/inventory_019.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "26 Demo Avenue, Demochester, ZX9 7DH",
+          "clerk_name": "Omar Brennan",
+          "inspection_date": "",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"26 Demo Avenue, Demochester, ZX9 7DH\", \"clerk_name\": \"Omar Brennan\", \"inspection_date\": \"\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_020",
+      "doc_type": "Inventory",
+      "edge_case": "poor_ocr",
+      "pdf_path": "pdfs/inventory_020.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "179 Synthetic Lane, Demochester, ZX1 2AH",
+          "clerk_name": "Sandra Nair",
+          "inspection_date": "2022-08-07",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"179 Synthetic Lane, Demochester, ZX1 2AH\", \"clerk_name\": \"Sandra Nair\", \"inspection_date\": \"2022-08-07\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "inventory_021",
+      "doc_type": "Inventory",
+      "edge_case": null,
+      "pdf_path": "pdfs/inventory_021.pdf",
+      "ground_truth": {
+        "fields": {
+          "property_address": "99 Testing Close, Fakeham, ZX1 1GG",
+          "clerk_name": "Mohammed Foster",
+          "inspection_date": "2026-12-17",
+          "property_condition_summary": "Good condition throughout, no damage noted"
+        },
+        "required_fields": [
+          "property_address",
+          "inspection_date"
+        ]
+      },
+      "recording": {
+        "detection": "Inventory",
+        "extraction": "{\"property_address\": \"99 Testing Close, Fakeham, ZX1 1GG\", \"clerk_name\": \"Mohammed\", \"inspection_date\": \"2026-12-17\", \"property_condition_summary\": \"Good condition throughout, no damage noted\"}"
+      }
+    },
+    {
+      "id": "other_001",
+      "doc_type": "Other",
+      "edge_case": "other_type",
+      "pdf_path": "pdfs/other_001.pdf",
+      "ground_truth": {
+        "fields": {},
+        "required_fields": []
+      },
+      "recording": {
+        "detection": "Other",
+        "extraction": "{}"
+      }
+    },
+    {
+      "id": "other_002",
+      "doc_type": "Other",
+      "edge_case": "other_type",
+      "pdf_path": "pdfs/other_002.pdf",
+      "ground_truth": {
+        "fields": {},
+        "required_fields": []
+      },
+      "recording": {
+        "detection": "Other",
+        "extraction": "{}"
+      }
+    },
+    {
+      "id": "other_003",
+      "doc_type": "Other",
+      "edge_case": "other_type",
+      "pdf_path": "pdfs/other_003.pdf",
+      "ground_truth": {
+        "fields": {},
+        "required_fields": []
+      },
+      "recording": {
+        "detection": "Other",
+        "extraction": "{}"
+      }
+    },
+    {
+      "id": "other_004",
+      "doc_type": "Other",
+      "edge_case": "other_type",
+      "pdf_path": "pdfs/other_004.pdf",
+      "ground_truth": {
+        "fields": {},
+        "required_fields": []
+      },
+      "recording": {
+        "detection": "Other",
+        "extraction": "{}"
+      }
+    },
+    {
+      "id": "other_005",
+      "doc_type": "Other",
+      "edge_case": "other_type",
+      "pdf_path": "pdfs/other_005.pdf",
+      "ground_truth": {
+        "fields": {},
+        "required_fields": []
+      },
+      "recording": {
+        "detection": "Other",
+        "extraction": "{}"
+      }
+    },
+    {
+      "id": "other_006",
+      "doc_type": "Other",
+      "edge_case": "other_type",
+      "pdf_path": "pdfs/other_006.pdf",
+      "ground_truth": {
+        "fields": {},
+        "required_fields": []
+      },
+      "recording": {
+        "detection": "Other",
+        "extraction": "{}"
+      }
+    }
+  ]
+}

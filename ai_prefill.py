@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 from portal_new.ai_runtime import generate_gemini_text, get_prefill_model_name, load_project_env
 from portal_new import document_config
 
@@ -137,10 +137,24 @@ def call_model_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str) -> s
     return call_claude_with_pdf(pdf_b64, system_prompt, user_prompt)
 
 
-def call_ai_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str, task_type: str) -> str:
+# An AI client is any callable matching generate_gemini_text's keyword signature
+# and returning the model's text response. Tests/eval inject a recorded or
+# usage-tracking client; production passes None to use the real Gemini call.
+AiClient = Callable[..., str]
+
+
+def call_ai_with_pdf(
+    pdf_b64: str,
+    system_prompt: str,
+    user_prompt: str,
+    task_type: str,
+    *,
+    client: Optional[AiClient] = None,
+) -> str:
     model = get_model_name(task_type)
     prompt = f"{system_prompt}\n\n{user_prompt}".strip()
-    return generate_gemini_text(model=model, prompt=prompt, inline_pdf_b64=pdf_b64)
+    generate = client or generate_gemini_text
+    return generate(model=model, prompt=prompt, inline_pdf_b64=pdf_b64)
 
 
 def parse_json_from_ai(text: str) -> Dict[str, Any]:
@@ -223,7 +237,7 @@ def _normalize_doc_type(raw: str) -> str:
     return raw
 
 
-def detect_doc_type_from_pdf(pdf_b64: str) -> str:
+def detect_doc_type_from_pdf(pdf_b64: str, *, client: Optional[AiClient] = None) -> str:
     """Call Gemini to classify the document; returns one of RECOGNIZED_DOC_TYPES (or raw response)."""
     labels = get_recognized_doc_types()
     detection_user = (
@@ -231,11 +245,11 @@ def detect_doc_type_from_pdf(pdf_b64: str) -> str:
         "Reply with ONLY one of these exact labels, nothing else: "
         + ", ".join(labels)
     )
-    raw = call_ai_with_pdf(pdf_b64, DETECTION_SYSTEM, detection_user, "detection")
+    raw = call_ai_with_pdf(pdf_b64, DETECTION_SYSTEM, detection_user, "detection", client=client)
     return _normalize_doc_type(raw.strip())
 
 
-def prefill_doc(doc_folder: Path) -> None:
+def prefill_doc(doc_folder: Path, *, client: Optional[AiClient] = None) -> None:
     review = load_review(doc_folder)
     doc_type = (
         review.get("doc_type_template")
@@ -248,7 +262,7 @@ def prefill_doc(doc_folder: Path) -> None:
     if _needs_doc_type_detection(doc_type):
         log("Doc type empty or generic; running auto-detection", doc_folder)
         pdf_b64 = read_pdf_base64(doc_folder, review)
-        detected = detect_doc_type_from_pdf(pdf_b64)
+        detected = detect_doc_type_from_pdf(pdf_b64, client=client)
         if not detected:
             log("Auto-detection returned no type; marking as Unknown", doc_folder)
             review["doc_type"] = "Unknown"
@@ -277,7 +291,7 @@ def prefill_doc(doc_folder: Path) -> None:
     system_prompt = EXTRACTION_SYSTEM
     user_prompt = build_extraction_prompt(review, config)
 
-    model_raw = call_ai_with_pdf(pdf_b64, system_prompt, user_prompt, "extraction")
+    model_raw = call_ai_with_pdf(pdf_b64, system_prompt, user_prompt, "extraction", client=client)
     ai_fields = parse_json_from_ai(model_raw)
 
     fields = review.get("fields") or {}

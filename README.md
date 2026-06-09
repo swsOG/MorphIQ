@@ -107,6 +107,65 @@ MorphIQ/Product/
 
 ---
 
+## Running Evaluations
+
+The `eval/` package measures the AI pipeline (detection + extraction) against a
+synthetic golden dataset and gates merges on configurable quality thresholds.
+
+```bat
+make eval
+:: or, on Windows without make:
+python eval/golden/generate_golden.py
+python -m eval.run_eval
+```
+
+`run_eval` builds the dataset if needed, runs the tasks in parallel, writes a
+report to `eval/report/latest/` (open `index.html`), and exits non-zero if any
+threshold gate is breached.
+
+**Flags**
+
+```bat
+python -m eval.run_eval --only detection   :: run a single task (detection|extraction|pipeline)
+python -m eval.run_eval --live             :: call the real Gemini API (needs GEMINI_API_KEY)
+python -m eval.run_eval --workers 4        :: parallel worker threads
+python -m eval.run_eval --no-report        :: skip writing the HTML/MD/JSON report
+```
+
+**How it works.** The golden PDFs are synthetic, so the correct answer for every
+case is known. Recorded Gemini-style responses (with deterministic injected
+errors) are committed in `eval/golden/manifest.json`, letting CI replay them
+fully offline — no API key, identical results every run. `--live` swaps in the
+real model to measure actual quality. The PDFs themselves are generated on
+demand and gitignored.
+
+**Thresholds** (override via environment variables; CI fails on breach):
+
+| Metric | Env var | Default |
+|--------|---------|---------|
+| Detection accuracy | `EVAL_MIN_DETECTION_ACC` | 0.90 |
+| Required-field recall | `EVAL_MIN_FIELD_RECALL` | 0.85 |
+| Completeness Pearson r | `EVAL_MIN_COMPLETENESS_R` | 0.85 |
+| `needs_attention` F1 | `EVAL_MIN_ATTENTION_F1` | 0.80 |
+
+`python -m eval.ci_gate` re-applies the current env thresholds to the last
+`results.json` without re-running the eval.
+
+**Expanding the dataset.** Edit `eval/golden/generate_golden.py` (bump
+`CASES_PER_TYPE`, adjust `EDGE_LAYOUT`, or add value pools), then regenerate and
+commit the manifest:
+
+```bat
+python eval/golden/generate_golden.py
+git add eval/golden/manifest.json
+```
+
+CI (`.github/workflows/eval.yml`) runs this offline on every PR to `main` and
+nightly, uploads the HTML report as an artifact, and posts the summary as a PR
+comment.
+
+---
+
 ## Status
 
 **Active development - pre-launch.**

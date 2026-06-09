@@ -54,3 +54,8 @@ test-results/
 docs/internal/
 leaver.html
 test_doc_generator/
+
+# Eval harness — generated on demand; only manifest.json is committed
+eval/golden/pdfs/
+eval/report/
+eval/.cache/

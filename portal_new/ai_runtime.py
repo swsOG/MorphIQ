@@ -1,11 +1,21 @@
 import json
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 import urllib.error
 import urllib.request
 
 
 GEMINI_DEFAULT_MODEL = "gemini-2.5-flash"
+
+
+@dataclass
+class GeminiResult:
+    """Text plus token-usage metadata for a single Gemini generateContent call."""
+
+    text: str
+    usage: dict[str, Any] = field(default_factory=dict)
 
 
 def load_project_env(project_root: str | Path) -> None:
@@ -44,14 +54,19 @@ def get_prefill_model_name(task_type: str) -> str:
     return (os.getenv(env_name) or GEMINI_DEFAULT_MODEL).strip()
 
 
-def generate_gemini_text(
+def generate_gemini_response(
     *,
     api_key: str | None = None,
     model: str,
     prompt: str,
     inline_pdf_b64: str | None = None,
     timeout_seconds: int = 60,
-) -> str:
+) -> GeminiResult:
+    """Call Gemini generateContent and return text plus token-usage metadata.
+
+    ``usage`` mirrors the API's ``usageMetadata`` (promptTokenCount,
+    candidatesTokenCount, totalTokenCount, ...). Empty if the API omits it.
+    """
     key = api_key or get_required_env("GEMINI_API_KEY")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
 
@@ -93,4 +108,23 @@ def generate_gemini_text(
     text = "\n".join(text_parts).strip()
     if not text:
         raise RuntimeError("No text content returned from Gemini")
-    return text
+    usage = payload.get("usageMetadata") or {}
+    return GeminiResult(text=text, usage=dict(usage))
+
+
+def generate_gemini_text(
+    *,
+    api_key: str | None = None,
+    model: str,
+    prompt: str,
+    inline_pdf_b64: str | None = None,
+    timeout_seconds: int = 60,
+) -> str:
+    """Backward-compatible wrapper returning only the generated text."""
+    return generate_gemini_response(
+        api_key=api_key,
+        model=model,
+        prompt=prompt,
+        inline_pdf_b64=inline_pdf_b64,
+        timeout_seconds=timeout_seconds,
+    ).text
