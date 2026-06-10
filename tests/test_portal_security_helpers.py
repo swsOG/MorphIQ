@@ -1,19 +1,39 @@
 import importlib
 import os
+import shutil
 import sys
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
+
+from test_portal_auth import seed_portal_db
 
 
 class PortalSecurityHelperTests(unittest.TestCase):
+    def tearDown(self):
+        tmp = getattr(self, "_tmp_dir", None)
+        if tmp and os.path.isdir(tmp):
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def _import_app_module(self):
         from portal_new import ai_runtime
+
+        # Seed an isolated portal.db so these tests don't depend on an ambient
+        # database existing on the machine (which breaks in CI / on a fresh clone).
+        self._tmp_dir = tempfile.mkdtemp(prefix="portal_sec_helpers_")
+        db_path = Path(self._tmp_dir) / "portal.db"
+        seed_portal_db(db_path)
 
         sys.modules.pop("portal_new.app", None)
         with mock.patch.object(ai_runtime, "load_project_env", return_value=None):
             with mock.patch.dict(
                 os.environ,
-                {"PORTAL_SECRET_KEY": "unit-test-secret-key-0123456789abcdef0123456789", "GEMINI_API_KEY": "test-key"},
+                {
+                    "PORTAL_SECRET_KEY": "unit-test-secret-key-0123456789abcdef0123456789",
+                    "GEMINI_API_KEY": "test-key",
+                    "DATABASE_URL": str(db_path),
+                },
                 clear=True,
             ):
                 return importlib.import_module("portal_new.app")

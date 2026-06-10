@@ -2,7 +2,7 @@ import importlib.util
 from pathlib import Path
 
 
-MODULE_PATH = Path(r"C:\Users\user\Projects\MorphIQ\Product\portal_new\seed_admin.py")
+MODULE_PATH = Path(__file__).resolve().parents[1] / "portal_new" / "seed_admin.py"
 
 
 def load_seed_admin():

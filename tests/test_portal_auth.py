@@ -8,7 +8,7 @@ import pytest
 from flask_login import login_user
 
 
-PROJECT_ROOT = Path(r"C:\Users\user\Projects\MorphIQ\Product")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PORTAL_DIR = PROJECT_ROOT / "portal_new"
 
 
