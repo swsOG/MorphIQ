@@ -11,7 +11,6 @@ DO NOT TOUCH: portal_new/, auto_ocr_watch.py, ai_prefill.py, sync_to_portal.py,
 or any other existing client data.
 """
 
-import os
 import sqlite3
 import sys
 from datetime import datetime

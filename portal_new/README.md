@@ -1,70 +1,12 @@
-# MorphIQ Portal — Setup
+# MorphIQ Portal
 
-## What this is
-Search-first document archive viewer. Connects to your existing `portal.db` SQLite database and serves a clean retrieval interface for browsing, searching, and previewing scanned documents.
+The authenticated, tenant-scoped web portal: overview, properties, compliance, documents, packs, reports, issues and Ask AI.
 
-## Quick Start
+- `app.py` serves the pages and JSON APIs (Flask, Flask-Login, SQLite).
+- `schema.sql` holds the core tables; `scripts/init_portal_db.py` applies it.
+- `document_config.py` defines document types, extraction fields and compliance rules.
+- `compliance_engine.py` works out certificate status from extracted expiry dates.
+- `ai_runtime.py` wraps the Gemini calls used by Ask AI and extraction.
+- `seed_admin.py` creates the first admin user.
 
-### 1. Copy files
-Copy the entire `portal_new` folder into `C:\ScanSystem_v2\` so you have:
-
-```
-C:\ScanSystem_v2\
-├── portal_new\           ← NEW (this folder)
-│   ├── app.py
-│   ├── import_fields.py
-│   ├── templates\
-│   │   └── portal.html
-│   └── static\
-│       ├── portal.css
-│       └── portal.js
-├── portal\               ← OLD (keep for reference, not used)
-├── portal.db             ← YOUR DATABASE (unchanged)
-├── auto_ocr_watch.py
-└── ...
-```
-
-### 2. Run the portal
-
-```
-cd C:\ScanSystem_v2\portal_new
-python app.py
-```
-
-### 3. Open in browser
-
-```
-http://127.0.0.1:5000
-```
-
-That's it. You should see your 8 documents in the table.
-
-## Import verified fields (optional)
-
-If your DOC folders contain `review.json` files with filled-in fields, run:
-
-```
-cd C:\ScanSystem_v2\portal_new
-python import_fields.py
-```
-
-This reads every `review.json` under `Clients\` and populates the `document_fields` table in SQLite. Safe to run multiple times.
-
-## Notes
-
-- **No authentication** — the portal is open. Auth will be added when needed.
-- **PDF preview** works if the PDF files still exist at the paths stored in the database.
-- **Old portal** (`portal\` folder) is not used. Keep it for reference or delete it.
-- **Database** is not modified by the portal app (read-only). Only `import_fields.py` writes to it.
-- **Flask debug mode** is on by default. For production, set `debug=False` in `app.py`.
-
-## Keyboard shortcuts
-
-- **Escape** — close the document detail drawer
-
-## Dependencies
-
-- Python 3.x
-- Flask (`pip install flask`)
-
-No other dependencies required.
+See [docs/SETUP_GUIDE.md](../docs/SETUP_GUIDE.md) to run it, including a demo with synthetic data.

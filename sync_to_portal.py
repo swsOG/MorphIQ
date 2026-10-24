@@ -560,7 +560,7 @@ def find_all_doc_folders(clients_dir):
 
 def sync_portal_for_clients(target_clients=None):
     print(f"\n{'='*60}")
-    print(f"  MorphIQ — Sync Pipeline to Portal")
+    print("  MorphIQ — Sync Pipeline to Portal")
     print(f"{'='*60}")
     print(f"  Database: {DB_PATH}")
     print(f"  Clients:  {CLIENTS_DIR}")
@@ -715,7 +715,7 @@ def sync_portal_for_clients(target_clients=None):
     conn.close()
 
     print(f"\n{'='*60}")
-    print(f"  Results:")
+    print("  Results:")
     print(f"    New documents:     {new_docs}")
     print(f"    Updated documents: {updated_docs}")
     print(f"    New fields added:  {new_fields}")

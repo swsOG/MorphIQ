@@ -1,206 +1,100 @@
-# Morph IQ
+# MorphIQ
 
-**The operating system for document compliance workflows.**
+**Document AI for compliance-heavy work.** MorphIQ turns scanned and uploaded property documents into verified, structured records: OCR, AI classification and field extraction, a human sign-off step, then a tenant-scoped portal that tracks every certificate's compliance status.
 
-MorphIQ is a local-first document scanning and compliance platform. It takes uploaded or scanned documents, converts them into searchable PDFs, classifies them with AI, extracts structured fields, routes them through human verification, and presents approved records in a tenant-scoped portal with compliance tracking and issue handling.
+Built for UK letting agencies, who must keep gas safety certificates, EICRs, EPCs and deposit protection certificates in date for every property they manage.
+
+![Portfolio overview](docs/screenshots/03_portal_overview.png)
+
+> **Status:** pre-launch, development paused in June 2026. The full flow works end to end on synthetic data; it has not been deployed for real customers. Screenshots show the synthetic demo described below.
 
 ---
 
-## Architecture
+## What it does
 
-```text
-Capture -> OCR / AI Pipeline -> Review / Verification -> Portal / Compliance
+```mermaid
+flowchart LR
+    A[ScanStation<br/>camera or upload] --> B[OCR<br/>ImageMagick, Tesseract, OCRmyPDF]
+    B --> C[AI prefill<br/>Gemini classification<br/>and field extraction]
+    C --> D[ReviewStation<br/>a person verifies<br/>every field]
+    D --> E[Portal<br/>compliance status,<br/>documents, packs, issues]
+    E -. client reports a problem .-> D
 ```
 
-- **ScanStation** handles capture and upload.
-- **OCR / AI Pipeline** preprocesses files, runs OCR, and performs structured extraction.
-- **ReviewStation** supports verification, correction, merge, and split workflows.
-- **Portal** provides authenticated, tenant-scoped access to documents, compliance state, and issue workflows.
+1. **Capture.** Documents are photographed or uploaded per agency and property.
+2. **OCR.** Images are cleaned up and turned into searchable PDFs.
+3. **AI prefill.** Gemini identifies the document type and extracts the fields defined for that type (for a gas certificate: engineer, Gas Safe number, inspection and expiry dates). Results get completeness flags so weak extractions are routed for attention.
+4. **Human verification.** Nothing reaches a client until a reviewer has checked the fields against the source document.
+5. **Portal.** Verified records appear for that agency only, with each property's certificates marked valid, expiring, expired or missing.
+6. **Issue loop.** If a client challenges a delivered document, it goes back through review and is only replaced once re-verified.
 
 ---
 
-## Tech Stack
+## Engineering highlights
+
+| Area | What's in place |
+|---|---|
+| Evaluation | An offline harness replays recorded model outputs against a synthetic golden set of 132 documents across 6 types, and CI fails a pull request if quality drops below thresholds. Current offline run: detection accuracy 0.93, required-field recall 0.89, completeness correlation 0.94, attention-flag F1 0.86. These measure the pipeline logic on replayed outputs; `--live` measures the real model. |
+| Security | A pre-launch review (white-box plus testing on an isolated synthetic instance) led to fail-closed tenant isolation, a boot guard against weak session secrets, per-account login lockout, path-traversal protection and strict security headers, each covered by regression tests. See [SECURITY_REVIEW_SUMMARY.md](docs/SECURITY_REVIEW_SUMMARY.md). |
+| Configurable documents | Document types, their extraction fields and their compliance rules are data ([document_config.py](portal_new/document_config.py)), so adding a document type is configuration, not code. |
+| Tests | 102 pytest tests plus a Playwright browser smoke test. CI runs the tests and a dependency vulnerability scan on every pull request. |
+
+---
+
+## Try the demo
+
+No OCR tools or API key needed.
+
+```bash
+pip install -r requirements.txt
+python scripts/seed_demo_data.py
+```
+
+Then follow the two commands it prints, or see [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md#2-demo-portal). The demo agency has 10 properties and 45 certificates, with dates set relative to today so the dashboard always shows a realistic mix of valid, expiring, expired and missing documents. Every name, address and certificate in it is made up.
+
+---
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Compliance](docs/screenshots/04_portal_compliance.png) Compliance status per property | ![Property](docs/screenshots/06_portal_property_detail.png) One property's certificates |
+| ![Documents](docs/screenshots/07_portal_documents.png) Document library | ![Document](docs/screenshots/08_portal_document_view.png) Verified fields beside the source PDF |
+| ![Issues](docs/screenshots/09_portal_issues_admin.png) Admin issue workspace | ![ScanStation](docs/screenshots/01_scanstation.png) ScanStation capture |
+
+---
+
+## Tech stack
 
 | Layer | Technology |
-|-------|-----------|
-| OCR pipeline | Tesseract, OCRmyPDF, ImageMagick |
-| AI classification & extraction | Gemini Flash |
-| Backend / API | Python 3, Flask, Flask-Login |
-| Database | SQLite (`portal.db`) |
-| Document processing | pypdf, ReportLab, pdfminer |
-| Frontend | Vanilla JS, PDF.js (no framework) |
-| Testing | pytest, Playwright |
+|---|---|
+| OCR | Tesseract, OCRmyPDF, ImageMagick |
+| AI | Gemini 2.5 Flash (classification, extraction, Ask AI) |
+| Backend | Python 3.11+, Flask, Flask-Login |
+| Database | SQLite |
+| Documents | pypdf, pdfplumber, ReportLab, pdf.js |
+| Frontend | Jinja templates, vanilla JavaScript, CSS |
+| Testing | pytest, Playwright, GitHub Actions, pip-audit |
 
 ---
 
-## Key Features
-
-**AI Document Pipeline**
-- Multiple supported document types with type-specific extraction prompts
-- Completeness scoring and attention flags for low-confidence results
-- Batch re-processing support
-
-**Human-in-the-Loop Verification**
-- Side-by-side extracted fields and source document review
-- Verification gates for required data
-- Merge and split support for multi-page documents
-
-**Compliance Workflows**
-- Certificate tracking and expiry monitoring
-- Property or account-level status views
-- Portal issue workflow for challenged documents and rework handling
-
-**Tenant-Scoped Portal**
-- Authenticated access with client scoping
-- Document search, filter, and review flows
-- Pack building and export support
-
----
-
-## Setup
-
-See **[docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)** for full instructions.
-
-**Prerequisites**
+## Repository layout
 
 ```text
-Python 3.11+
-Tesseract OCR
-OCRmyPDF
-ImageMagick
-Gemini API key (set in .env - see .env.example)
-```
-
-**Quick start (Windows)**
-
-```bat
-pip install -r requirements.txt
-copy .env.example .env
-REM edit .env and add your Gemini key and portal secret
-Start_System_v2.bat
+scan_station.html, review_station.html   capture and verification UIs
+server.py                                ScanStation API server
+auto_ocr_watch.py                        intake watcher: OCR, then AI prefill
+ai_prefill.py                            Gemini classification and extraction
+sync_to_portal.py                        verified records into portal.db
+portal_new/                              the client portal (Flask app, schema, config)
+eval/                                    evaluation harness and golden dataset
+scripts/                                 database setup, demo data, admin tools
+tests/                                   pytest suite and Playwright smoke test
+docs/                                    setup guide, security summary, vision
 ```
 
 ---
 
-## Project Structure
+## How it was built
 
-```text
-MorphIQ/Product/
-|-- scan_station.html
-|-- review_station.html
-|-- viewer.html
-|-- server.py
-|-- auto_ocr_watch.py
-|-- ai_prefill.py
-|-- sync_to_portal.py
-|-- export_client.py
-|-- portal_new/
-|-- Templates/
-|-- Clients/                # runtime data, gitignored
-|-- scripts/
-|-- docs/
-|-- tests/
-|-- Start_System_v2.bat
-|-- Stop_System.bat
-`-- setup_check.bat
-```
-
----
-
-## Running Evaluations
-
-The `eval/` package measures the AI pipeline (detection + extraction) against a
-synthetic golden dataset and gates merges on configurable quality thresholds.
-
-```bat
-make eval
-:: or, on Windows without make:
-python eval/golden/generate_golden.py
-python -m eval.run_eval
-```
-
-`run_eval` builds the dataset if needed, runs the tasks in parallel, writes a
-report to `eval/report/latest/` (open `index.html`), and exits non-zero if any
-threshold gate is breached.
-
-**Flags**
-
-```bat
-python -m eval.run_eval --only detection   :: run a single task (detection|extraction|pipeline)
-python -m eval.run_eval --live             :: call the real Gemini API (needs GEMINI_API_KEY)
-python -m eval.run_eval --workers 4        :: parallel worker threads
-python -m eval.run_eval --no-report        :: skip writing the HTML/MD/JSON report
-```
-
-**How it works.** The golden PDFs are synthetic, so the correct answer for every
-case is known. Recorded Gemini-style responses (with deterministic injected
-errors) are committed in `eval/golden/manifest.json`, letting CI replay them
-fully offline — no API key, identical results every run. `--live` swaps in the
-real model to measure actual quality. The PDFs themselves are generated on
-demand and gitignored.
-
-**Thresholds** (override via environment variables; CI fails on breach):
-
-| Metric | Env var | Default |
-|--------|---------|---------|
-| Detection accuracy | `EVAL_MIN_DETECTION_ACC` | 0.90 |
-| Required-field recall | `EVAL_MIN_FIELD_RECALL` | 0.85 |
-| Completeness Pearson r | `EVAL_MIN_COMPLETENESS_R` | 0.85 |
-| `needs_attention` F1 | `EVAL_MIN_ATTENTION_F1` | 0.80 |
-
-`python -m eval.ci_gate` re-applies the current env thresholds to the last
-`results.json` without re-running the eval.
-
-**Expanding the dataset.** Edit `eval/golden/generate_golden.py` (bump
-`CASES_PER_TYPE`, adjust `EDGE_LAYOUT`, or add value pools), then regenerate and
-commit the manifest:
-
-```bat
-python eval/golden/generate_golden.py
-git add eval/golden/manifest.json
-```
-
-CI (`.github/workflows/eval.yml`) runs this offline on every PR to `main` and
-nightly, uploads the HTML report as an artifact, and posts the summary as a PR
-comment.
-
----
-
-## Status
-
-**Active development - pre-launch.**
-
-The core flow is operational:
-
-- capture
-- OCR
-- AI extraction
-- verification
-- portal delivery
-- issue handling
-
-Current emphasis is on broadening test coverage, refining internal rework workflows, and keeping the repo clean, reusable, and deployment-ready.
-
-**Reference docs**
-- [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md)
-- [docs/PROJECT_BRAIN.md](docs/PROJECT_BRAIN.md)
-- [docs/VISION.md](docs/VISION.md)
-
-**Testing**
-
-```bat
-python -m pytest tests -q
-npm install
-npm run playwright:install
-npm run test:smoke
-python scripts/scan_tracked_secrets.py
-```
-
----
-
-## Repo Hygiene
-
-- Secrets belong in `.env`, not Git.
-- Runtime databases, logs, and generated test artifacts stay out of version control.
-- Sample data should stay synthetic and clearly marked as such.
-- Public docs should avoid internal machine paths, operational notes, and client-specific details.
+I designed MorphIQ and built it with AI coding agents (Claude Code, Codex and Cursor). I set the requirements and acceptance checks, directed the agents, reviewed their output and ran the testing and security review. [docs/VISION.md](docs/VISION.md) describes where the product was heading; this README is the record of what is built.

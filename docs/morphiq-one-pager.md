@@ -35,7 +35,7 @@ Many teams still manage compliance documents across inboxes, folders, spreadshee
 - Backend: Python and Flask
 - Database: SQLite
 - OCR pipeline: OCRmyPDF, Tesseract, ImageMagick
-- AI extraction: Gemini by default, Anthropic optional
+- AI extraction: Gemini 2.5 Flash
 - Frontend: Jinja templates, vanilla JavaScript, CSS
 - Testing: pytest and Playwright
 

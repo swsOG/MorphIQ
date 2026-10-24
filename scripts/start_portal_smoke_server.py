@@ -1,4 +1,5 @@
 import os
+import secrets
 import sqlite3
 import sys
 import tempfile
@@ -155,7 +156,10 @@ def main() -> None:
 
     os.environ["DATABASE_URL"] = str(DB_PATH)
     os.environ["MORPHIQ_CLIENTS_DIR"] = str(CLIENTS_DIR)
-    os.environ.setdefault("PORTAL_SECRET_KEY", "morphiq-smoke-secret")
+    # The portal refuses weak secrets, so the throwaway smoke server gets a random one.
+    os.environ.setdefault("PORTAL_SECRET_KEY", secrets.token_urlsafe(48))
+    # Smoke runs never call the model; a placeholder satisfies the startup check.
+    os.environ.setdefault("GEMINI_API_KEY", "smoke-test-placeholder")
 
     sys.path.insert(0, str(PROJECT_ROOT))
     sys.path.insert(0, str(PORTAL_DIR))

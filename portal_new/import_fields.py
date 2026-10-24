@@ -116,7 +116,7 @@ def import_fields(db_path, review_jsons):
 
 
 def main():
-    print(f"\nMorphIQ — Import Fields from review.json")
+    print("\nMorphIQ — Import Fields from review.json")
     print(f"{'='*50}")
     print(f"  Database: {DB_PATH}")
     print(f"  Clients:  {CLIENTS_DIR}")
@@ -142,7 +142,7 @@ def main():
     # Import
     imported, skipped, not_found = import_fields(DB_PATH, review_jsons)
 
-    print(f"\n  Results:")
+    print("\n  Results:")
     print(f"    Fields imported: {imported}")
     print(f"    Files skipped:   {skipped}")
     print(f"    Docs not in DB:  {not_found}")

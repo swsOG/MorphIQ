@@ -45,37 +45,37 @@
                 <div class="portal-page-inner portal-workspace-shell">
                     <section class="reports-section portal-surface-card">
                         <h2 class="reports-section-title">Report templates</h2>
-                        <p class="reports-section-lead">Generate PDFs from live portfolio data. Scheduled delivery is still coming, but the reporting surface already mirrors the real product language.</p>
+                        <p class="reports-section-lead">The compliance summary builds a PDF from live portfolio data. The other templates are planned and not built yet.</p>
                         <div class="reports-template-grid portal-nav-grid" style="margin-bottom: 0;">
-                            <button type="button" class="reports-template-card portal-nav-card" title="Compliance summary">
+                            <a class="reports-template-card portal-nav-card" title="Download compliance summary (PDF)" href="{{ url_for('api_compliance_report', format='pdf') }}">
                                 <span class="reports-template-icon" aria-hidden="true">&#10003;</span>
                                 <span class="reports-template-name">Compliance summary</span>
-                                <span class="reports-template-desc">Certificates, gaps, and deadlines</span>
-                            </button>
-                            <button type="button" class="reports-template-card portal-nav-card" title="Portfolio overview">
+                                <span class="reports-template-desc">Certificates, gaps, and deadlines (PDF)</span>
+                            </a>
+                            <button type="button" class="reports-template-card portal-nav-card" disabled aria-disabled="true" style="opacity:.55;cursor:not-allowed;" title="Portfolio overview">
                                 <span class="reports-template-icon" aria-hidden="true">&#9674;</span>
                                 <span class="reports-template-name">Portfolio overview</span>
-                                <span class="reports-template-desc">Properties, docs, and health at a glance</span>
+                                <span class="reports-template-desc">Properties, docs, and health at a glance · Coming soon</span>
                             </button>
-                            <button type="button" class="reports-template-card portal-nav-card" title="Expiry forecast">
+                            <button type="button" class="reports-template-card portal-nav-card" disabled aria-disabled="true" style="opacity:.55;cursor:not-allowed;" title="Expiry forecast">
                                 <span class="reports-template-icon" aria-hidden="true">&#9705;</span>
                                 <span class="reports-template-name">Expiry forecast</span>
-                                <span class="reports-template-desc">Rolling 90-day renewal outlook</span>
+                                <span class="reports-template-desc">Rolling 90-day renewal outlook · Coming soon</span>
                             </button>
-                            <button type="button" class="reports-template-card portal-nav-card" title="Tenancy schedule">
+                            <button type="button" class="reports-template-card portal-nav-card" disabled aria-disabled="true" style="opacity:.55;cursor:not-allowed;" title="Tenancy schedule">
                                 <span class="reports-template-icon" aria-hidden="true">&#9784;</span>
                                 <span class="reports-template-name">Tenancy schedule</span>
-                                <span class="reports-template-desc">Tenants, rents, and term dates</span>
+                                <span class="reports-template-desc">Tenants, rents, and term dates · Coming soon</span>
                             </button>
-                            <button type="button" class="reports-template-card portal-nav-card" title="Activity log">
+                            <button type="button" class="reports-template-card portal-nav-card" disabled aria-disabled="true" style="opacity:.55;cursor:not-allowed;" title="Activity log">
                                 <span class="reports-template-icon" aria-hidden="true">&#8635;</span>
                                 <span class="reports-template-name">Activity log</span>
-                                <span class="reports-template-desc">Uploads, resolutions, and changes</span>
+                                <span class="reports-template-desc">Uploads, resolutions, and changes · Coming soon</span>
                             </button>
-                            <button type="button" class="reports-template-card portal-nav-card" title="Custom report">
+                            <button type="button" class="reports-template-card portal-nav-card" disabled aria-disabled="true" style="opacity:.55;cursor:not-allowed;" title="Custom report">
                                 <span class="reports-template-icon" aria-hidden="true">+</span>
                                 <span class="reports-template-name">Custom</span>
-                                <span class="reports-template-desc">Pick fields and filters</span>
+                                <span class="reports-template-desc">Pick fields and filters · Coming soon</span>
                             </button>
                         </div>
                     </section>
@@ -95,73 +95,11 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Compliance summary - Q1 2026</td>
-                                        <td>PDF</td>
-                                        <td>18 Mar 2026, 09:14</td>
-                                        <td><span class="reports-status-pill reports-status-pill--ok">Ready</span></td>
-                                        <td>
-                                            <div class="reports-row-actions portal-row-actions">
-                                                <button type="button" class="reports-row-btn portal-action-btn portal-action-btn--icon" title="Download">
-                                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="1.5" x2="8" y2="10"/><polyline points="5,7 8,10 11,7"/><path d="M2 13.5h12"/></svg>
-                                                </button>
-                                                <button type="button" class="reports-row-btn portal-action-btn portal-action-btn--icon" title="Share">
-                                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l4 4-4 4"/><path d="M14 6H5a3 3 0 000 6h1"/></svg>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Portfolio overview</td>
-                                        <td>PDF</td>
-                                        <td>12 Mar 2026, 16:02</td>
-                                        <td><span class="reports-status-pill reports-status-pill--ok">Ready</span></td>
-                                        <td>
-                                            <div class="reports-row-actions portal-row-actions">
-                                                <button type="button" class="reports-row-btn portal-action-btn portal-action-btn--icon" title="Download">
-                                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="1.5" x2="8" y2="10"/><polyline points="5,7 8,10 11,7"/><path d="M2 13.5h12"/></svg>
-                                                </button>
-                                                <button type="button" class="reports-row-btn portal-action-btn portal-action-btn--icon" title="Share">
-                                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l4 4-4 4"/><path d="M14 6H5a3 3 0 000 6h1"/></svg>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Expiry forecast (90 days)</td>
-                                        <td>PDF</td>
-                                        <td>3 Mar 2026, 11:30</td>
-                                        <td><span class="reports-status-pill reports-status-pill--muted">Expired link</span></td>
-                                        <td>
-                                            <div class="reports-row-actions portal-row-actions">
-                                                <button type="button" class="reports-row-btn portal-action-btn portal-action-btn--icon" title="Download" disabled style="opacity:0.35;cursor:not-allowed;">
-                                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="1.5" x2="8" y2="10"/><polyline points="5,7 8,10 11,7"/><path d="M2 13.5h12"/></svg>
-                                                </button>
-                                                <button type="button" class="reports-row-btn portal-action-btn portal-action-btn--icon" title="Share" disabled style="opacity:0.35;cursor:not-allowed;">
-                                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l4 4-4 4"/><path d="M14 6H5a3 3 0 000 6h1"/></svg>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Tenancy schedule</td>
-                                        <td>XLSX</td>
-                                        <td>27 Feb 2026, 08:45</td>
-                                        <td><span class="reports-status-pill reports-status-pill--ok">Ready</span></td>
-                                        <td>
-                                            <div class="reports-row-actions portal-row-actions">
-                                                <button type="button" class="reports-row-btn portal-action-btn portal-action-btn--icon" title="Download">
-                                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="1.5" x2="8" y2="10"/><polyline points="5,7 8,10 11,7"/><path d="M2 13.5h12"/></svg>
-                                                </button>
-                                                <button type="button" class="reports-row-btn portal-action-btn portal-action-btn--icon" title="Share">
-                                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l4 4-4 4"/><path d="M14 6H5a3 3 0 000 6h1"/></svg>
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <td colspan="5" class="reports-empty-row">Generated reports download straight away. Report history is not stored yet.</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <p class="reports-placeholder-note">Recent report history lives here and keeps the same action language as the rest of the portal.</p>
                     </section>
 
                     <section class="reports-section reports-section--audit portal-surface-card">

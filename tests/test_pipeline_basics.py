@@ -55,6 +55,22 @@ class AutoOcrWatchTests(unittest.TestCase):
         self.assertEqual(payload["doc_name"], "Tenancy Agreement")
 
 
+    def test_write_review_json_carries_upload_notes(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            review_path = self.auto_ocr_watch.write_review_json(
+                doc_folder=Path(tmpdir),
+                doc_id="DOC-00002",
+                pdf_name="doc.pdf",
+                image_name="doc.jpg",
+                template={},
+                notes="Uploaded by the agency with a note",
+            )
+            with review_path.open("r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+
+        self.assertEqual(payload["review"]["notes"], "Uploaded by the agency with a note")
+
+
 class AiPrefillTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -74,16 +90,11 @@ class AiPrefillTests(unittest.TestCase):
                 "call_gemini_with_pdf",
                 return_value="gemini-result",
             ) as gemini_mock:
-                with mock.patch.object(
-                    self.ai_prefill,
-                    "call_claude_with_pdf",
-                    return_value="anthropic-result",
-                ) as anthropic_mock:
-                    result = self.ai_prefill.call_model_with_pdf(
-                        pdf_b64="abc123",
-                        system_prompt="system",
-                        user_prompt="user",
-                    )
+                result = self.ai_prefill.call_model_with_pdf(
+                    pdf_b64="abc123",
+                    system_prompt="system",
+                    user_prompt="user",
+                )
 
         self.assertEqual(result, "gemini-result")
         gemini_mock.assert_called_once_with(
@@ -92,7 +103,6 @@ class AiPrefillTests(unittest.TestCase):
             "user",
             model="gemini-2.5-flash",
         )
-        anthropic_mock.assert_not_called()
 
 
 class SyncToPortalTests(unittest.TestCase):

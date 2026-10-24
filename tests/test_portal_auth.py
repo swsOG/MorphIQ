@@ -1,3 +1,4 @@
+import json
 import importlib.util
 import io
 import sqlite3
@@ -478,6 +479,28 @@ def test_manager_cannot_upload_document_for_other_client_property(portal_app):
 
     assert response.status_code == 404
     assert response.get_json() == {"error": "Property not found"}
+
+
+def test_upload_notes_are_kept_in_metadata_sidecar(portal_app, tmp_path):
+    client = portal_app.app.test_client()
+    login_as(client, 2)
+
+    response = client.post(
+        "/api/documents/upload",
+        data={
+            "property_id": "102",
+            "document_type": "Gas Safety Certificate",
+            "notes": "Boiler replaced in March, new cert to follow",
+            "file": (io.BytesIO(b"%PDF-1.4 test"), "gas.pdf"),
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 200
+    sidecars = list((tmp_path / "Clients" / "Sample Agency Beta" / "raw").glob("*.meta.json"))
+    assert len(sidecars) == 1
+    meta = json.loads(sidecars[0].read_text(encoding="utf-8"))
+    assert meta["notes"] == "Boiler replaced in March, new cert to follow"
 
 
 def test_manager_cannot_resolve_compliance_for_other_client_property(portal_app):

@@ -284,7 +284,9 @@ def enforce_csrf_for_mutations():
 _CSP_POLICY = (
     "default-src 'self'; "
     "img-src 'self' data:; "
-    "style-src 'self' 'unsafe-inline'; "
+    # Google Fonts serves the portal typefaces (stylesheet + font files).
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
     "script-src 'self' 'unsafe-inline'; "
     "frame-ancestors 'none'; "
     "base-uri 'self'; "
@@ -2801,11 +2803,11 @@ def admin_soft_delete_client(client_id: int):
         conn.execute("BEGIN IMMEDIATE")
         name, ts = soft_delete.soft_delete_client(conn, client_id)
         conn.commit()
-    except ValueError as e:
+    except ValueError:
         conn.rollback()
         app.logger.exception("Request failed")
         return jsonify({"error": "Operation failed"}), 404
-    except Exception as e:
+    except Exception:
         conn.rollback()
         app.logger.exception("Request failed")
         return jsonify({"error": "Operation failed"}), 500
@@ -2842,7 +2844,7 @@ def admin_create_client():
         cur = conn.execute("INSERT INTO clients (name) VALUES (?)", (name,))
         conn.commit()
         return jsonify({"success": True, "id": cur.lastrowid, "name": name}), 201
-    except Exception as e:
+    except Exception:
         conn.rollback()
         app.logger.exception("Request failed")
         return jsonify({"error": "Operation failed"}), 500
@@ -2890,7 +2892,7 @@ def admin_create_user():
         )
         conn.commit()
         return jsonify({"success": True, "id": cur.lastrowid, "email": email}), 201
-    except Exception as e:
+    except Exception:
         conn.rollback()
         app.logger.exception("Request failed")
         return jsonify({"error": "Operation failed"}), 500
@@ -2925,7 +2927,7 @@ def api_change_password():
         )
         conn.commit()
         return jsonify({"success": True})
-    except Exception as e:
+    except Exception:
         conn.rollback()
         app.logger.exception("Request failed")
         return jsonify({"error": "Operation failed"}), 500
@@ -4392,6 +4394,8 @@ def api_documents_upload():
         "property_address": property_address,
         "doc_type_template": document_type,
     }
+    if notes:
+        meta["notes"] = notes
     meta_path = save_path + ".meta.json"
     try:
         with open(meta_path, "w", encoding="utf-8") as f:
@@ -4972,7 +4976,6 @@ def api_pack_export_pdf(pack_id: int):
     except ImportError:
         # pypdf not available — return cover page only with a note
         cover_buf.seek(0)
-        from reportlab.platypus import Frame, PageTemplate
         note_buf = io.BytesIO()
         note_doc = SimpleDocTemplate(note_buf, pagesize=A4, topMargin=28 * mm, bottomMargin=25 * mm, leftMargin=22 * mm, rightMargin=22 * mm)
         note_story = [Paragraph(
@@ -6769,10 +6772,10 @@ with app.app_context():
         print(f"Startup soft-delete purge warning: {e}")
 
 if __name__ == "__main__":
-    print(f"\n  MorphIQ Portal")
+    print("\n  MorphIQ Portal")
     print(f"  Database: {DATABASE_URL}")
     print(f"  Clients:  {get_clients_dir()}")
-    print(f"  Open: http://127.0.0.1:5000\n")
+    print("  Open: http://127.0.0.1:5000\n")
     _debug = _is_debug_enabled()
     if _debug and os.environ.get("MORPHIQ_ALLOW_DEBUG", "").strip().lower() not in {"1", "true", "yes", "on"}:
         # SECURITY (M-3): the Werkzeug debugger is remote code execution. Require an

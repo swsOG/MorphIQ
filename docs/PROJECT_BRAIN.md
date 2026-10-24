@@ -1,6 +1,6 @@
 # Project Brain - Public Engineering Overview
 
-> Last updated: 2026-04-21
+> Last updated: 2026-10-24
 > Purpose: concise, repo-safe technical context for contributors.
 
 ## What MorphIQ Does
@@ -30,14 +30,19 @@ MorphIQ is a document processing and compliance platform. It ingests scans and u
 - Tenant-scoped portal with compliance views
 - Exception workflow for post-delivery issue handling
 - Pack building and export support
-- Baseline automated tests in pytest and Playwright
+- Automated tests in pytest and Playwright, run in CI with a dependency vulnerability scan
+- Offline evaluation harness that gates merges on extraction quality thresholds
+- Pre-launch security hardening (see SECURITY_REVIEW_SUMMARY.md)
+- Synthetic demo environment (`scripts/seed_demo_data.py`)
 
-## Current Priorities
+## Status
 
-- Broaden browser smoke coverage around issue handling and admin workflows
-- Continue tightening portal scoping and auth boundaries
-- Improve internal rework workflows for rescans and review correction
-- Keep documentation and setup paths professional and public-safe
+Pre-launch. Development paused in June 2026. The next steps if work resumes:
+
+- Hosted deployment (Gunicorn behind Nginx with HTTPS)
+- Password reset by email
+- The remaining report templates on the Reports page
+- Live-model evaluation runs (`python -m eval.run_eval --live`) to measure real extraction accuracy
 
 ## Repo Hygiene Rules
 
