@@ -58,7 +58,7 @@ def main():
     
     if not raw_dir.exists():
         print(f"ERROR: Client raw folder not found: {raw_dir}")
-        print(f"Available clients:")
+        print("Available clients:")
         clients_dir = BASE / "Clients"
         if clients_dir.exists():
             for d in clients_dir.iterdir():
@@ -127,7 +127,7 @@ def main():
     
     print(f"\n  Marker written: {marker_path.name}")
     print(f"\nDone. The watcher should now detect {group_id}.group_complete and process the group.")
-    print(f"Watch pipeline.log for progress.")
+    print("Watch pipeline.log for progress.")
 
 if __name__ == "__main__":
     main()

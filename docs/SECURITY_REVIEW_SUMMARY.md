@@ -28,5 +28,5 @@ are tracked privately.
 
 ## Reporting a vulnerability
 
-Found a security issue? Please email `<add security contact, e.g. security@morphiqtechnologies.com>`
-instead of opening a public issue.
+Found a security issue? Please report it privately through this repository's
+**Security** tab (Report a vulnerability) instead of opening a public issue.

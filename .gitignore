@@ -59,3 +59,4 @@ test_doc_generator/
 eval/golden/pdfs/
 eval/report/
 eval/.cache/
+demo/

@@ -4759,31 +4759,6 @@
         const portalConfig = window.MORPHIQ_PORTAL || {};
         const isClientPicker = !!document.querySelector("#client-picker-root") && !!portalConfig.showClientPicker;
 
-        // #region agent log
-        fetch('http://127.0.0.1:7655/ingest/814a10d9-1e67-436f-8e4c-0c9d8d30f299', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Debug-Session-Id': 'c11422',
-            },
-            body: JSON.stringify({
-                sessionId: 'c11422',
-                runId: 'pre-fix',
-                hypothesisId: 'H1',
-                location: 'portal_new/static/portal.js:init',
-                message: 'Portal init flags',
-                data: {
-                    path: window.location.pathname,
-                    isDocumentViewPage,
-                    isPropertyPage,
-                    isCompliancePage,
-                    isAiChatPage,
-                    isClientPicker,
-                },
-                timestamp: Date.now(),
-            }),
-        }).catch(() => {});
-        // #endregion agent log
 
         initSignOutConfirmation();
 

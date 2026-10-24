@@ -277,7 +277,7 @@ def process_single_image(
     # Mark as synthetic bulk-imported document so cleanup can safely remove it.
     write_bulk_marker(doc_folder, client, src_image, property_address)
 
-    # Trigger AI prefill (Claude) via existing helper. Best-effort; errors are logged and
+    # Trigger AI prefill (Gemini) via existing helper. Best-effort; errors are logged and
     # do not stop the bulk run. Respect a small delay between API calls for rate limiting.
     try:
         run_ai_prefill(doc_folder, client.name)

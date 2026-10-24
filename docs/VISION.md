@@ -1,6 +1,8 @@
 # MORPH IQ — END-STATE PRODUCT VISION
 
-> **Purpose of this document:** This describes where Morph IQ is going — the fully built product operating at scale. Use this to understand the destination, not the current state. For current state, see PROJECT_BRAIN.md. For AI session context, see MASTER_PROMPT.md.
+> **Status (October 2026):** this is the end-state vision written in March 2026. The product reached pre-launch in June 2026 and development is paused. The README is the record of what is built; this document describes where the product was heading.
+>
+> **Purpose of this document:** This describes where Morph IQ is going — the fully built product operating at scale. Use this to understand the destination, not the current state. For current state, see PROJECT_BRAIN.md.
 >
 > **Last updated:** 2026-03-15
 > **Updated by:** Filip (Founder)
@@ -43,7 +45,7 @@ A dedicated ingestion tool (working name: **DriveStation**) handles this. It is 
 The backend processing engine handles every document from raw image to verified, structured data. At full maturity, this pipeline is heavily AI-assisted:
 
 - **Auto-capture quality check:** The system detects blur, skew, missing pages, and poor lighting before a document enters the pipeline. Operator gets immediate feedback to re-scan.
-- **AI-assisted field extraction:** Claude API (or equivalent) reads the OCR output and pre-fills all key fields per document type. Confidence scores are attached to each extracted field.
+- **AI-assisted field extraction:** Gemini (or an equivalent model) reads the OCR output and pre-fills all key fields per document type. Confidence scores are attached to each extracted field.
 - **Human-in-the-loop verification:** A trained reviewer confirms or corrects AI-extracted fields. The AI learns from corrections over time, improving accuracy and reducing review time.
 - **Auto-classification:** Documents are automatically identified by type (tenancy agreement, CP12, EICR, EPC, etc.) without the operator manually selecting. The system recognises document structure, headers, and content patterns.
 - **Batch processing at speed:** Large backlog jobs (thousands of documents) are processed with minimal human intervention — AI handles 80%+ of field extraction accurately, humans verify the remaining edge cases.
@@ -62,7 +64,7 @@ The client-facing portal is the primary product experience. This is what clients
 - **Compliance tracker:** The crown jewel. A live matrix showing every property against every required certificate, with clear status indicators: valid (green), expiring soon (amber), expired (red), missing (grey). Filterable by property, document type, date range, status.
 - **Expiry alerts:** Automated email and in-portal notifications when certificates approach expiry. Configurable lead times (30 days, 60 days, 90 days). Escalation if not actioned.
 - **Search:** Full-text search across all documents and verified fields. "Find every tenancy agreement expiring in Q2 2027." "Show me all properties where the gas cert engineer was [name]." Instant results.
-- **AI chat assistant:** A conversational interface powered by Claude API where clients ask natural language questions about their portfolio. "Which properties have overdue EICRs?" "What's the total monthly rent across my portfolio?" "Show me all tenancies signed in the last 6 months." The AI has access to all of the client's verified document data and returns accurate, sourced answers.
+- **AI chat assistant:** A conversational interface powered by Gemini where clients ask natural language questions about their portfolio. "Which properties have overdue EICRs?" "What's the total monthly rent across my portfolio?" "Show me all tenancies signed in the last 6 months." The AI has access to all of the client's verified document data and returns accurate, sourced answers.
 - **Scan requests:** Clients can request document scanning through the portal — upload photos of documents directly, or request a collection/drop-off. Status tracking for each request.
 - **Audit trail:** Full history of every document — when it was scanned, who verified it, what was changed, when it was accessed. GDPR-compliant, exportable for regulatory audits.
 - **User management:** Multiple user accounts per organisation with role-based access. Agency owner sees everything. Individual negotiators see only their properties. Admin roles can manage users and settings.
@@ -161,9 +163,9 @@ At maturity, Morph IQ handles every standard property document type in the UK le
 
 **Scanning stations:** Custom ScanStation browser app + overhead DSLR cameras + calibrated lighting rigs. Standardised hardware kit that can be deployed anywhere in under an hour.
 
-**Processing pipeline:** Python backend with ImageMagick preprocessing, Tesseract/OCRmyPDF for OCR, Claude API for AI-assisted field extraction, confidence scoring, and auto-classification. Queue-based architecture for handling high-volume batch jobs.
+**Processing pipeline:** Python backend with ImageMagick preprocessing, Tesseract/OCRmyPDF for OCR, Gemini for AI-assisted field extraction, confidence scoring, and auto-classification. Queue-based architecture for handling high-volume batch jobs.
 
-**Client portal:** Flask with SQLite initially, migrating to PostgreSQL at scale. Role-based access control, real-time compliance dashboards, AI chat (Claude API), full-text search (PostgreSQL full-text or Elasticsearch at scale), GDPR audit logging, responsive web design.
+**Client portal:** Flask with SQLite initially, migrating to PostgreSQL at scale. Role-based access control, real-time compliance dashboards, AI chat (Gemini), full-text search (PostgreSQL full-text or Elasticsearch at scale), GDPR audit logging, responsive web design.
 
 **Infrastructure:** Cloud-hosted (AWS/GCP/Azure), automated backups, encryption at rest and in transit, SOC 2 compliance target, 99.9% uptime SLA for enterprise clients.
 

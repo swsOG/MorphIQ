@@ -228,11 +228,11 @@
         archiveUrl: {{ _archive_url|tojson|safe }},
     };
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='vendor/pdfjs/pdf.min.js') }}"></script>
 <script>
     if (typeof pdfjsLib !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc =
-            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+            "{{ url_for('static', filename='vendor/pdfjs/pdf.worker.min.js') }}";
     }
 </script>
 <script src="{{ url_for('static', filename='portal-document-pdf.js') }}"></script>

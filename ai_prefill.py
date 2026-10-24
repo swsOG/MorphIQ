@@ -121,20 +121,14 @@ def call_gemini_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str, mod
     )
 
 
-def call_claude_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str, model: str | None = None) -> str:
-    raise RuntimeError("Claude provider is no longer supported")
-
-
 def call_model_with_pdf(pdf_b64: str, system_prompt: str, user_prompt: str) -> str:
-    provider = get_ai_provider()
-    if provider == "gemini":
-        return call_gemini_with_pdf(
-            pdf_b64,
-            system_prompt,
-            user_prompt,
-            model=get_model_name("extraction"),
-        )
-    return call_claude_with_pdf(pdf_b64, system_prompt, user_prompt)
+    """Send a PDF to the configured extraction model (Gemini is the only provider)."""
+    return call_gemini_with_pdf(
+        pdf_b64,
+        system_prompt,
+        user_prompt,
+        model=get_model_name("extraction"),
+    )
 
 
 # An AI client is any callable matching generate_gemini_text's keyword signature

@@ -3,8 +3,6 @@ import json
 import shutil
 import subprocess
 import sys
-import os
-import re
 from pathlib import Path
 from datetime import datetime
 
@@ -123,7 +121,7 @@ def process_group(group_id: str, members: list[tuple[Path, dict]],
     # ── Edge case: single page → delegate to normal pipeline ──
     if len(members) == 1:
         image_path = members[0][0]
-        log(f"  Single-page group — processing as normal document", client_name)
+        log("  Single-page group — processing as normal document", client_name)
         process_file(image_path, raw_folder, batches_folder, client_name)
         _cleanup_group_files(group_id, members, raw_folder)
         return
@@ -205,7 +203,7 @@ def process_group(group_id: str, members: list[tuple[Path, dict]],
                 "reviewed_at": "",
                 "exported_at": "",
                 "scanned_at": scanned_at,
-                "notes": "",
+                "notes": (first_meta.get("notes") or "").strip(),
             },
             "group_id": group_id,
             "page_count": len(members),
@@ -358,6 +356,7 @@ def write_review_json(
     doc_name: str | None = None,
     initial_fields: dict | None = None,
     raw_source_name: str | None = None,
+    notes: str = "",
 ):
     scanned_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     fields = dict(initial_fields or {})
@@ -382,7 +381,7 @@ def write_review_json(
             "reviewed_at": "",
             "exported_at": "",
             "scanned_at": scanned_at,
-            "notes": ""
+            "notes": notes or ""
         }
     }
     if doc_name:
@@ -541,9 +540,11 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
 
     meta = read_meta_if_present(image_path, raw_folder)
     doc_name = None
+    upload_notes = ""
     initial_fields = {}
     if meta:
         doc_name = (meta.get("doc_name") or "").strip() or None
+        upload_notes = (meta.get("notes") or "").strip()
         if doc_name:
             log(f"  Doc name: {doc_name}", client_name)
         prop = (meta.get("property_address") or "").strip()
@@ -590,6 +591,7 @@ def process_file(image_path: Path, raw_folder: Path, batches_folder: Path, clien
             doc_name=doc_name,
             initial_fields=initial_fields or None,
             raw_source_name=raw_source_name,
+            notes=upload_notes,
         )
 
         # Trigger AI pre-fill (best-effort, non-blocking for the main pipeline).

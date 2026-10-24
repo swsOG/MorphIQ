@@ -5,7 +5,7 @@ Client soft-delete: schema helpers, timestamped soft delete, manual hard-delete 
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 def quote_ident(name: str) -> str:
